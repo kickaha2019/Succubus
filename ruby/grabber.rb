@@ -44,7 +44,7 @@ class Grabber
           if login_redirect?( body)
             @traced[url] = {'timestamp' => ts, 'secured' => true}
           else
-            @traced[url] = {'timestamp' => ts, 'comment' => body}
+            @traced[url] = {'timestamp' => ts, 'comment' => body, 'redirect' => true}
           end
         else
           File.open( "#{@cache}/#{ts}.html", 'w') do |io|
@@ -102,16 +102,25 @@ class Grabber
 
   def trace( url)
     if trace?( url)
-      body = IO.read( @cache + "/#{@pages[url]['timestamp']}.html")
-      body.scan( /<\s*a\s+[^>]*>/).each do |link|
-        if m = /href\s*=\s*"([^"]*)"/.match( link)
-          found = m[1].gsub( /#.*$/, '')
-          found = @root + found[1..-1] if /^\/./ =~ found
-          if @root == found[0...(@root.size)]
-            if @pages[found]
-              @traced[found] = @pages[found]
-            else
-              @traced[found] = {'timestamp' => 0}
+      if @pages[url]['redirect']
+        found = @pages[url]['comment']
+        if @pages[found]
+          trace( found)
+        else
+          @traced[found] = {'timestamp' => 0}
+        end
+      elsif @pages[url]['comment'].nil?
+        body = IO.read( @cache + "/#{@pages[url]['timestamp']}.html")
+        body.scan( /<\s*a\s+[^>]*>/).each do |link|
+          if m = /href\s*=\s*"([^"]*)"/.match( link)
+            found = m[1].gsub( /#.*$/, '')
+            found = @root + found[1..-1] if /^\/./ =~ found
+            if @root == found[0...(@root.size)]
+              if @pages[found]
+                @traced[found] = @pages[found]
+              else
+                @traced[found] = {'timestamp' => 0}
+              end
             end
           end
         end

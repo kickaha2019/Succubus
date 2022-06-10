@@ -65,7 +65,7 @@ DUMP2
     io.print "</div>"
 
     io.print "<span class=\"label\">"
-    io.print( struct.doc.name + ': ' + struct.doc.classes.join( ' '))
+    io.print( struct.doc.name + ': ' + struct.describe)
     io.puts "</span><br>"
 
     io.puts before
@@ -100,12 +100,14 @@ HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
         next if @pages[addr]['timestamp'] == 0
-        io.puts "<tr><td><a href=\"#{i}.html\">#{addr}</a></td>"
+        io.puts "<tr><td><a href=\"#{@cache}/#{@pages[addr]['timestamp']}.html\">#{addr}</a></td>"
         io.puts "<td>#{@pages[addr]['secure'] ? 'Y' : ''}</td>"
-        io.puts "<td><a href=\"#{@cache}/#{@pages[addr]['timestamp']}.html\">Status?</a></td>"
+        io.puts "<td><a href=\"#{i}.html\">Status?</a></td>"
         io.puts "<td>#{@pages[addr]['comment']}</td>"
         io.puts "<td>#{Time.at(@pages[addr]['timestamp']).strftime( '%Y-%m-%d')}</td></tr>"
-        dump( @pages[addr]['timestamp'], dir + "/#{i}.html")
+        unless @pages[addr]['comment']
+          dump( @pages[addr]['timestamp'], dir + "/#{i}.html")
+        end
       end
 
       io.puts <<FOOTER

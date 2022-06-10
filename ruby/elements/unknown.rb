@@ -1,11 +1,29 @@
 module Elements
   class Unknown
     attr_reader :index, :doc, :contents
+    @@next_index = 0
 
-    def initialize( index, doc, contents)
-      @index    = index
-      @doc      = doc
-      @contents = contents
+    def initialize( doc, contents)
+      @@next_index += 1
+      @index       = @@next_index
+      @doc         = doc
+      @contents    = contents
+    end
+
+    def content?
+      false
+    end
+
+    def describe
+      @doc.classes.join( ' ')
+    end
+
+    def grokked?
+      false
+    end
+
+    def self.reset_next_index
+      @@next_index = 0
     end
   end
 end
