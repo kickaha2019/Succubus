@@ -1,3 +1,4 @@
+require_relative 'elements/anchor'
 require_relative 'elements/text'
 
 class Parser
@@ -19,9 +20,18 @@ class Parser
   def initialize
     Elements::Unknown.reset_next_index
     @rules = Hash.new {|h,k| h[k] = []}
-    @rules['TEXT'] << Rule.new( Proc.new {
+
+    on 'a' do
+      if element['href']
+        Elements::Anchor.new( element, element['href'], children)
+      else
+        nil
+      end
+    end
+
+    on 'text' do
       Elements::Text.new( element, element.content)
-    })
+    end
   end
 
   def children
@@ -30,6 +40,10 @@ class Parser
 
   def element
     @element
+  end
+
+  def on( name, args={}, &block)
+    @rules[name.upcase] << Rule.new( block, args)
   end
 
   def parse( doc)

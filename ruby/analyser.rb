@@ -24,6 +24,7 @@ class Analyser
 .indent {font-family: courier; font-size: 30px; width: 20px; height: 20px; display: inline-block;
          cursor: pointer}
 .label {font-size: 20px; height: 20px}
+.grokked {background: #D8D8D8}
 </style>
 <script>
 function expand( index) {
@@ -57,14 +58,14 @@ DUMP2
     io.print "<div class=\"indent\">"
     before, after = '', ''
     if struct.contents.size > 0
-      io.print "<span id=\"r#{struct.index}\" style=\"display: none\" onclick=\"expand(#{struct.index})\">&rtri;</span>"
-      io.print "<span id=\"e#{struct.index}\" onclick=\"reduce(#{struct.index})\">&dtri;</span>"
-      before = "<div id=\"d#{struct.index}\">"
+      io.print "<span id=\"r#{struct.index}\"#{struct.grokked? ? '' : ' style="display: none"'} onclick=\"expand(#{struct.index})\">&rtri;</span>"
+      io.print "<span id=\"e#{struct.index}\"#{struct.grokked? ? ' style="display: none"' : ''} onclick=\"reduce(#{struct.index})\">&dtri;</span>"
+      before = "<div id=\"d#{struct.index}\"#{struct.grokked? ? ' style="display: none"' : ''}>"
       after  = '</div>'
     end
     io.print "</div>"
 
-    io.print "<span class=\"label\">"
+    io.print "<span class=\"label#{struct.grokked? ? ' grokked' : ''}\">"
     io.print( struct.doc.name + ': ' + struct.describe)
     io.puts "</span><br>"
 
@@ -106,7 +107,12 @@ HEADER1
         io.puts "<td>#{@pages[addr]['comment']}</td>"
         io.puts "<td>#{Time.at(@pages[addr]['timestamp']).strftime( '%Y-%m-%d')}</td></tr>"
         unless @pages[addr]['comment']
-          dump( @pages[addr]['timestamp'], dir + "/#{i}.html")
+          begin
+            dump( @pages[addr]['timestamp'], dir + "/#{i}.html")
+          rescue
+            puts "*** File: #{@pages[addr]['timestamp']}.html"
+            raise
+          end
         end
       end
 
