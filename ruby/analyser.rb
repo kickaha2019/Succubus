@@ -15,7 +15,7 @@ class Analyser
   def dump( ts, filename)
     body = IO.read( "#{@cache}/#{ts}.html")
     html_doc = Nokogiri::HTML( body)
-    struct   = Parser.new.parse( html_doc.root.at_xpath( '//body'))
+    struct   = Parser.new( @config).parse( html_doc.root.at_xpath( '//body'))
 
     File.open( filename, 'w') do |io|
       io.puts <<"DUMP1"

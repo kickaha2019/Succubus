@@ -1,18 +1,18 @@
 require_relative 'unknown'
 
 module Elements
-  class Text < Unknown
-    def initialize( doc, text)
-      super( doc, [])
-      @text = text
+  class Heading < Unknown
+    def initialize( doc, level, children)
+      super( doc, children)
+      @level = level
     end
 
     def content?
-      @text.strip != ''
+      true
     end
 
     def describe
-      @text
+      @level
     end
 
     def grokked?

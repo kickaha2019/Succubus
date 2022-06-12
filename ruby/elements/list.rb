@@ -1,18 +1,18 @@
 require_relative 'unknown'
 
 module Elements
-  class Text < Unknown
-    def initialize( doc, text)
-      super( doc, [])
-      @text = text
+  class List < Unknown
+    def initialize( doc, type, children)
+      super( doc, children)
+      @type = type
     end
 
     def content?
-      @text.strip != ''
+      true
     end
 
     def describe
-      @text
+      @type.to_s
     end
 
     def grokked?

@@ -1,18 +1,18 @@
 require_relative 'unknown'
 
 module Elements
-  class Text < Unknown
-    def initialize( doc, text)
+  class Image < Unknown
+    def initialize( doc, path)
       super( doc, [])
-      @text = text
+      @path = path
     end
 
     def content?
-      @text.strip != ''
+      true
     end
 
     def describe
-      @text
+      @path
     end
 
     def grokked?
@@ -20,5 +20,4 @@ module Elements
     end
   end
 end
-
 
