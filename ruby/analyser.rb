@@ -101,12 +101,12 @@ HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
         next if @pages[addr]['timestamp'] == 0
-        io.puts "<tr><td><a href=\"#{@cache}/#{@pages[addr]['timestamp']}.html\">#{addr}</a></td>"
+        io.puts "<tr><td><a href=\"#{@cache}/#{@pages[addr]['timestamp']}.#{addr.split('.')[-1]}\">#{addr}</a></td>"
         io.puts "<td>#{@pages[addr]['secure'] ? 'Y' : ''}</td>"
         io.puts "<td><a href=\"#{i}.html\">Status?</a></td>"
         io.puts "<td>#{@pages[addr]['comment']}</td>"
         io.puts "<td>#{Time.at(@pages[addr]['timestamp']).strftime( '%Y-%m-%d')}</td></tr>"
-        unless @pages[addr]['comment']
+        if File.exist?( dir + "/#{i}.html")
           begin
             dump( @pages[addr]['timestamp'], dir + "/#{i}.html")
           rescue

@@ -2,6 +2,8 @@ require 'net/http'
 require 'uri'
 require 'openssl'
 require 'yaml'
+require 'nokogiri'
+require "open-uri"
 
 class Grabber
   def initialize( config, cache)
@@ -32,23 +34,44 @@ class Grabber
   end
 
   def get_candidates( limit)
-    @candidates = @traced.keys.sort_by {|url| @traced[url]['timestamp']}[0...limit]
+    @candidates = []
+
+    @traced.each_pair do |url, info|
+      if info['asset']
+        if info['timestamp'] == 0
+          @candidates << url
+        end
+      else
+        @candidates << url
+      end
+    end
+
+    @candidates = @candidates.sort_by {|url| @traced[url]['timestamp']}[0...limit]
   end
 
   def grab_candidates
     @candidates.each do |url|
+      puts "... Grabbing #{url}"
       ts = Time.now.to_i
+
       begin
-        redirect, body = http_get( url)
+        if @traced[url]['asset']
+          File.open( "#{@cache}/#{ts}.#{url.split('.')[-1]}", 'wb') do |fo|
+            fo.write open( url).read
+          end
+          next
+        end
+
+        redirect, body_or_url = http_get( url)
         if redirect
-          if login_redirect?( body)
+          if login_redirect?( body_or_url)
             @traced[url] = {'timestamp' => ts, 'secured' => true}
           else
-            @traced[url] = {'timestamp' => ts, 'comment' => body, 'redirect' => true}
+            @traced[url] = {'timestamp' => ts, 'comment' => body_or_url, 'redirect' => true}
           end
         else
           File.open( "#{@cache}/#{ts}.html", 'w') do |io|
-            io.print body
+            io.print body_or_url
           end
           @traced[url] = {'timestamp' => ts}
         end
@@ -110,27 +133,61 @@ class Grabber
           @traced[found] = {'timestamp' => 0}
         end
       elsif @pages[url]['comment'].nil?
-        body = IO.read( @cache + "/#{@pages[url]['timestamp']}.html")
-        body.scan( /<\s*a\s+[^>]*>/).each do |link|
-          if m = /href\s*=\s*"([^"]*)"/.match( link)
-            found = m[1].gsub( /#.*$/, '')
-            found = @root + found[1..-1] if /^\/./ =~ found
-            if @root == found[0...(@root.size)]
-              if @pages[found]
-                @traced[found] = @pages[found]
-              else
-                @traced[found] = {'timestamp' => 0}
-              end
-            end
-          end
+        path = @cache + "/#{@pages[url]['timestamp']}.html"
+        if File.exist?( path)
+          html_doc = Nokogiri::HTML( IO.read( path))
+          trace_doc( html_doc.root.at_xpath( '//body'))
         end
       end
     end
   end
 
-  def trace_from_root
+  def trace_doc( doc)
+    if doc.name == 'a'
+      if doc['href']
+        found = doc['href'].gsub( /#.*$/, '')
+        found = @root + found[1..-1] if /^\/./ =~ found
+        if @root == found[0...(@root.size)]
+          if @pages[found]
+            @traced[found] = @pages[found]
+          else
+            @traced[found] = {
+                'timestamp' => 0,
+                'asset'     => (/\.(jpg|jpeg|png|pdf|gif)$/i =~ found)
+            }
+          end
+        end
+      end
+    end
+
+    if doc.name == 'img'
+      found = doc['src'].gsub( /#.*$/, '')
+      found = @root + found[1..-1] if /^\/./ =~ found
+      if @root == found[0...(@root.size)]
+        if @pages[found]
+          @traced[found] = @pages[found]
+        else
+          @traced[found] = {'timestamp' => 0, 'asset' => true}
+        end
+      end
+    end
+
+    doc.children.each {|child| trace_doc( child)}
+  end
+
+  def trace_from_roots
     @traced = {@root => (@pages[@root] ? @pages[@root] : {'timestamp' => 0})}
+    if @config['include_urls']
+      @config['include_urls'].each do |url|
+        @traced[url] = @pages[url] ? @pages[url] : {'timestamp' => 0}
+      end
+    end
     trace( @root)
+    if @config['include_urls']
+      @config['include_urls'].each do |url|
+        trace url
+      end
+    end
   end
 
   def trace?( url)
@@ -139,7 +196,7 @@ class Grabber
 end
 
 g = Grabber.new( ARGV[0], ARGV[1])
-g.trace_from_root
+g.trace_from_roots
 g.get_candidates( ARGV[2].to_i)
 g.grab_candidates
 g.clean_cache
