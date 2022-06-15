@@ -3,7 +3,6 @@ require 'uri'
 require 'openssl'
 require 'yaml'
 require 'nokogiri'
-require "open-uri"
 
 class Grabber
   def initialize( config, cache)
@@ -23,17 +22,21 @@ class Grabber
 
     to_delete = []
     Dir.entries( @cache).each do |f|
-      if m = /^(.*)\.html$/.match( f)
-        to_delete << m[1] unless extant[ m[1].to_i]
+      if m = /^(.*)\.(html|png|gif|jpg|jpeg)$/.match( f)
+        to_delete << f unless extant[ m[1].to_i]
       end
     end
 
-    to_delete.each do |ts|
-      File.delete( "#{@cache}/#{ts}.html")
+    to_delete.each do |f|
+      File.delete( "#{@cache}/#{f}")
     end
   end
 
-  def get_candidates( limit)
+  def get_candidates( limit, explicit)
+    if explicit
+      @candidates = [explicit]
+      return
+    end
     @candidates = []
 
     @traced.each_pair do |url, info|
@@ -55,13 +58,6 @@ class Grabber
       ts = Time.now.to_i
 
       begin
-        if @traced[url]['asset']
-          File.open( "#{@cache}/#{ts}.#{url.split('.')[-1]}", 'wb') do |fo|
-            fo.write open( url).read
-          end
-          next
-        end
-
         redirect, body_or_url = http_get( url)
         if redirect
           if login_redirect?( body_or_url)
@@ -70,13 +66,19 @@ class Grabber
             @traced[url] = {'timestamp' => ts, 'comment' => body_or_url, 'redirect' => true}
           end
         else
-          File.open( "#{@cache}/#{ts}.html", 'w') do |io|
-            io.print body_or_url
+          if @traced[url]['asset']
+            File.open( "#{@cache}/#{ts}.#{url.split('.')[-1]}", 'wb') do |fo|
+              fo.write body_or_url
+            end
+          else
+            File.open( "#{@cache}/#{ts}.html", 'w') do |io|
+              io.print body_or_url
+            end
           end
-          @traced[url] = {'timestamp' => ts}
+          @traced[url] = {'timestamp' => ts, 'asset' => @traced[url]['asset']}
         end
       rescue Exception => bang
-        @traced[url] = {'timestamp' => ts, 'comment' => bang.message}
+        @traced[url] = {'timestamp' => 0, 'comment' => bang.message}
       end
     end
 
@@ -130,7 +132,7 @@ class Grabber
         if @pages[found]
           trace( found)
         else
-          @traced[found] = {'timestamp' => 0}
+          @traced[found] = {'timestamp' => 0, 'asset' => @pages[url]['asset']}
         end
       elsif @pages[url]['comment'].nil?
         path = @cache + "/#{@pages[url]['timestamp']}.html"
@@ -166,6 +168,7 @@ class Grabber
       if @root == found[0...(@root.size)]
         if @pages[found]
           @traced[found] = @pages[found]
+          @traced[found]['asset'] = true
         else
           @traced[found] = {'timestamp' => 0, 'asset' => true}
         end
@@ -197,7 +200,7 @@ end
 
 g = Grabber.new( ARGV[0], ARGV[1])
 g.trace_from_roots
-g.get_candidates( ARGV[2].to_i)
+g.get_candidates( ARGV[2].to_i, ARGV[3])
 g.grab_candidates
 g.clean_cache
 g.save_info

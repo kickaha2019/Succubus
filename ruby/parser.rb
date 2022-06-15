@@ -1,12 +1,16 @@
 require_relative 'elements/anchor'
 require_relative 'elements/break'
+require_relative 'elements/cell'
 require_relative 'elements/heading'
+require_relative 'elements/ignore'
 require_relative 'elements/image'
 require_relative 'elements/list'
 require_relative 'elements/list_item'
 require_relative 'elements/paragraph'
+require_relative 'elements/row'
 require_relative 'elements/span'
 require_relative 'elements/styling'
+require_relative 'elements/table'
 require_relative 'elements/text'
 
 class Parser
@@ -16,7 +20,14 @@ class Parser
       @block = block
     end
 
-    def applies?
+    def applies?( element)
+      if @args['class']
+        if args['class'] == ''
+          return false if @args['class']
+        else
+          return false unless @args['class'] && @args['class'].split( ' ').includes?( @args['class'])
+        end
+      end
       true
     end
 
@@ -42,12 +53,24 @@ class Parser
       end
     end
 
+    on 'b' do
+      Elements::Styling.new( element, :bold, children)
+    end
+
     on 'br' do
       Elements::Break.new( element)
     end
 
     on 'h2' do
       Elements::Heading.new( element, 2, children)
+    end
+
+    on 'h3' do
+      Elements::Heading.new( element, 3, children)
+    end
+
+    on 'i' do
+      Elements::Styling.new( element, :italic, children)
     end
 
     on 'img' do
@@ -66,8 +89,24 @@ class Parser
       Elements::Span.new( element, children)
     end
 
+    on 'table' do
+      Elements::Table.new( element, children)
+    end
+
+    on 'td' do
+      Elements::Cell.new( element, children)
+    end
+
     on 'text' do
       Elements::Text.new( element, element.content)
+    end
+
+    on 'th' do
+      Elements::Cell.new( element, children)
+    end
+
+    on 'tr' do
+      Elements::Row.new( element, children)
     end
 
     on 'ul' do
@@ -98,7 +137,7 @@ class Parser
       @children = contents
 
       @rules[doc.name.upcase].each do |rule|
-        if rule.applies?
+        if rule.applies?( doc)
           if result = rule.apply
             return result
           end

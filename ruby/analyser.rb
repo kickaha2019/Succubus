@@ -100,13 +100,19 @@ td, th {border: 1px solid black; font-size: 30px}
 HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
-        next if @pages[addr]['timestamp'] == 0
-        io.puts "<tr><td><a href=\"#{@cache}/#{@pages[addr]['timestamp']}.#{addr.split('.')[-1]}\">#{addr}</a></td>"
+        ts = @pages[addr]['timestamp']
+
+        next if ts == 0
+        io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{addr.split('.')[-1]}\">#{addr}</a></td>"
         io.puts "<td>#{@pages[addr]['secure'] ? 'Y' : ''}</td>"
-        io.puts "<td><a href=\"#{i}.html\">Status?</a></td>"
+        if File.exist?( @cache + "/#{ts}.html")
+          io.puts "<td><a href=\"#{i}.html\">Status?</a></td>"
+        else
+          io.puts "<td></td>"
+        end
         io.puts "<td>#{@pages[addr]['comment']}</td>"
-        io.puts "<td>#{Time.at(@pages[addr]['timestamp']).strftime( '%Y-%m-%d')}</td></tr>"
-        if File.exist?( dir + "/#{i}.html")
+        io.puts "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td></tr>"
+        if File.exist?( @cache + "/#{ts}.html")
           begin
             dump( @pages[addr]['timestamp'], dir + "/#{i}.html")
           rescue
