@@ -1,6 +1,7 @@
 require_relative 'elements/anchor'
 require_relative 'elements/break'
 require_relative 'elements/cell'
+require_relative 'elements/date'
 require_relative 'elements/heading'
 require_relative 'elements/ignore'
 require_relative 'elements/image'
@@ -20,7 +21,13 @@ class Parser
       @block = block
     end
 
-    def applies?( element)
+    def applies?( element, children)
+      if (! @args.has_key?( :grokked)) || @args[:grokked]
+        children.each do |child|
+          return false unless child.grokked?
+        end
+      end
+
       if @args[:class]
         if @args[:class] == ''
           # p [element['class'].nil?, element['class'], element.classes]
@@ -70,6 +77,11 @@ class Parser
 
     on 'comment' do
       Elements::Ignore.new( element, children)
+    end
+
+    on 'div' do
+      content = children.inject( false) {|flag, child| flag | child.content?}
+      content ? nil : Elements::Ignore.new( element, children)
     end
 
     on 'em' do
@@ -158,24 +170,21 @@ class Parser
   end
 
   def parse( doc)
-    contents = doc.children.collect {|child| parse( child)}
+    @children = doc.children.collect {|child| parse( child)}
+    @element  = doc
 
-    grokked = true
-    contents.each {|child| grokked = false unless child.grokked?}
-
-    if grokked
-      @element  = doc
-      @children = contents
-
-      @rules[doc.name.upcase].each do |rule|
-        if rule.applies?( doc)
-          if result = rule.apply
-            return result
-          end
+    @rules[doc.name.upcase].each do |rule|
+      if rule.applies?( doc, @children)
+        if result = rule.apply
+          return result
         end
       end
     end
 
-    Elements::Unknown.new( doc, contents)
+    Elements::Unknown.new( doc, @children)
+  end
+
+  def to_text( children)
+    children.inject( '') {|text, child| text + ' ' + child.text}
   end
 end

@@ -11,7 +11,7 @@ module Elements
     end
 
     def content?
-      false
+      @contents.inject( false) {|flag, child| flag | child.content?}
     end
 
     def describe
@@ -24,6 +24,10 @@ module Elements
 
     def self.reset_next_index
       @@next_index = 0
+    end
+
+    def text
+      @contents.inject( '') {|text, child| text + ' ' + child.text}
     end
   end
 end

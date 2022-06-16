@@ -7,10 +7,6 @@ module Elements
       @types = types
     end
 
-    def content?
-      true
-    end
-
     def describe
       if @types.size > 0
         @types.collect {|type| type.to_s}.join( ' ') + ': ' + super

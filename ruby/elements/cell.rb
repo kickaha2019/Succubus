@@ -15,5 +15,3 @@ module Elements
     end
   end
 end
-
-

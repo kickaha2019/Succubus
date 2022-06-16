@@ -18,6 +18,10 @@ module Elements
     def grokked?
       true
     end
+
+    def text
+      @text
+    end
   end
 end
 
