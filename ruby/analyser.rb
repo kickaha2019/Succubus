@@ -12,11 +12,7 @@ class Analyser
     @pages  = YAML.load( IO.read( @cache + '/grabbed.yaml'))
   end
 
-  def dump( ts, filename)
-    body = IO.read( "#{@cache}/#{ts}.html")
-    html_doc = Nokogiri::HTML( body)
-    struct   = Parser.new( @config).parse( html_doc.root.at_xpath( '//body'))
-
+  def dump( struct, filename)
     File.open( filename, 'w') do |io|
       io.puts <<"DUMP1"
 <html><head>
@@ -24,7 +20,9 @@ class Analyser
 .indent {font-family: courier; font-size: 30px; width: 20px; height: 20px; display: inline-block;
          cursor: pointer}
 .label {font-size: 20px; height: 20px}
-.grokked {background: #D8D8D8}
+.grokked {background: lime}
+.grokked_and_content {background: yellow}
+.content {background: red}
 </style>
 <script>
 function expand( index) {
@@ -65,7 +63,20 @@ DUMP2
     end
     io.print "</div>"
 
-    io.print "<span class=\"label#{struct.grokked? ? ' grokked' : ''}\">"
+    scheme = ''
+    if struct.grokked?
+      if struct.content?
+        scheme = 'grokked_and_content'
+      else
+        scheme = 'grokked'
+      end
+    else
+      if struct.content?
+        scheme = 'content'
+      end
+    end
+
+    io.print "<span class=\"label #{scheme}\">"
     io.print( struct.doc.name + ': ' + struct.describe)
     io.puts "</span><br>"
 
@@ -74,6 +85,12 @@ DUMP2
       dump_structure(  child, indent+1, io)
     end
     io.puts after
+  end
+
+  def parse( ts)
+    body = IO.read( "#{@cache}/#{ts}.html")
+    html_doc = Nokogiri::HTML( body)
+    Parser.new( @config).parse( html_doc.root.at_xpath( '//body'))
   end
 
   def report( dir)
@@ -96,30 +113,35 @@ table {border-collapse: collapse}
 td, th {border: 1px solid black; font-size: 30px}
 </style>
 </head>
-<body><div><table><tr><th>Page</th><th>Login</th><th>Analysis</th><th>Comment</th><th>Timestamp</th></tr>
+<body><div><table><tr><th>Page</th><th>Login</th><th>State</th><th>Comment</th><th>Timestamp</th></tr>
 HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
         ts   = @pages[addr]['timestamp']
         ext  = @pages[addr]['asset'] ? addr.split('.')[-1] : 'html'
-
         next if ts == 0
+
+        parsed = nil
+        if File.exist?( @cache + "/#{ts}.html")
+          begin
+            parsed = parse( @pages[addr]['timestamp'])
+          rescue
+            puts "*** File: #{@pages[addr]['timestamp']}.html"
+            raise
+          end
+        end
+
         io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
         io.puts "<td>#{@pages[addr]['secure'] ? 'Y' : ''}</td>"
-        if File.exist?( @cache + "/#{ts}.html")
-          io.puts "<td><a href=\"#{i}.html\">Status?</a></td>"
+        if parsed
+          io.puts "<th bgcolor=\"#{parsed.content? ? 'red' : 'lime'}\"><a href=\"#{i}.html\">#{parsed.content? ? '&cross;' : '&check;'}</a></th>"
         else
           io.puts "<td></td>"
         end
         io.puts "<td>#{@pages[addr]['comment']}</td>"
         io.puts "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td></tr>"
-        if File.exist?( @cache + "/#{ts}.html")
-          begin
-            dump( @pages[addr]['timestamp'], dir + "/#{i}.html")
-          rescue
-            puts "*** File: #{@pages[addr]['timestamp']}.html"
-            raise
-          end
+        if parsed
+          dump( parsed, dir + "/#{i}.html")
         end
       end
 
