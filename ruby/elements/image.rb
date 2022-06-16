@@ -12,7 +12,7 @@ module Elements
     end
 
     def describe
-      @path
+      @path + ': ' + super
     end
 
     def grokked?

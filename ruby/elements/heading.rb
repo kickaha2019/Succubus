@@ -12,7 +12,7 @@ module Elements
     end
 
     def describe
-      @level.to_s
+      @level.to_s + ': ' + super
     end
 
     def grokked?

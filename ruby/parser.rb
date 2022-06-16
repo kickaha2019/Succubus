@@ -21,14 +21,17 @@ class Parser
     end
 
     def applies?( element)
-      if @args['class']
-        if args['class'] == ''
-          return false if @args['class']
+      if @args[:class]
+        if @args[:class] == ''
+          # p [element['class'].nil?, element['class'], element.classes]
+          # raise 'Dev'
+          element['class'].nil?
         else
-          return false unless @args['class'] && @args['class'].split( ' ').includes?( @args['class'])
+          element.classes.include?( @args[:class])
         end
+      else
+        true
       end
-      true
     end
 
     def apply
@@ -54,11 +57,27 @@ class Parser
     end
 
     on 'b' do
-      Elements::Styling.new( element, :bold, children)
+      Elements::Styling.new( element, [:bold], children)
+    end
+
+    on 'big' do
+      Elements::Styling.new( element, [:big], children)
     end
 
     on 'br' do
       Elements::Break.new( element)
+    end
+
+    on 'comment' do
+      Elements::Ignore.new( element, children)
+    end
+
+    on 'em' do
+      Elements::Styling.new( element, [:emphasized], children)
+    end
+
+    on 'form' do
+      Elements::Ignore.new( element, children)
     end
 
     on 'h2' do
@@ -70,15 +89,27 @@ class Parser
     end
 
     on 'i' do
-      Elements::Styling.new( element, :italic, children)
+      Elements::Styling.new( element, [:italic], children)
     end
 
     on 'img' do
       Elements::Image.new( element, element['src'])
     end
 
+    on 'input' do
+      Elements::Ignore.new( element, children)
+    end
+
+    on 'label' do
+      Elements::Ignore.new( element, children)
+    end
+
     on 'li' do
       Elements::ListItem.new( element, children)
+    end
+
+    on 'nav' do
+      Elements::Ignore.new( element, children)
     end
 
     on 'p' do

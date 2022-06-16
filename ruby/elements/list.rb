@@ -12,7 +12,7 @@ module Elements
     end
 
     def describe
-      @type.to_s
+      @type.to_s + ': ' + super
     end
 
     def grokked?

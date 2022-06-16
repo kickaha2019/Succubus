@@ -100,10 +100,11 @@ td, th {border: 1px solid black; font-size: 30px}
 HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
-        ts = @pages[addr]['timestamp']
+        ts   = @pages[addr]['timestamp']
+        ext  = @pages[addr]['asset'] ? addr.split('.')[-1] : 'html'
 
         next if ts == 0
-        io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{addr.split('.')[-1]}\">#{addr}</a></td>"
+        io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
         io.puts "<td>#{@pages[addr]['secure'] ? 'Y' : ''}</td>"
         if File.exist?( @cache + "/#{ts}.html")
           io.puts "<td><a href=\"#{i}.html\">Status?</a></td>"

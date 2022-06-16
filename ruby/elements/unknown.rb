@@ -15,7 +15,7 @@ module Elements
     end
 
     def describe
-      @doc.classes.join( ' ')
+      @doc['class'] ? @doc['class'] : ''
     end
 
     def grokked?

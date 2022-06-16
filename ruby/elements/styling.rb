@@ -2,9 +2,9 @@ require_relative 'unknown'
 
 module Elements
   class Styling < Unknown
-    def initialize( doc, type, children)
+    def initialize( doc, types, children)
       super( doc, children)
-      @type = type
+      @types = types
     end
 
     def content?
@@ -12,7 +12,11 @@ module Elements
     end
 
     def describe
-      @type.to_s
+      if @types.size > 0
+        @types.collect {|type| type.to_s}.join( ' ') + ': ' + super
+      else
+        super
+      end
     end
 
     def grokked?
