@@ -1,7 +1,7 @@
 require_relative 'unknown'
 
 module Elements
-  class Section < Unknown
+  class Article < Unknown
     def initialize( doc, children)
       super( doc, children)
     end

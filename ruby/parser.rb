@@ -1,16 +1,17 @@
 require_relative 'elements/anchor'
+require_relative 'elements/article'
 require_relative 'elements/break'
 require_relative 'elements/cell'
 require_relative 'elements/date'
 require_relative 'elements/font'
 require_relative 'elements/heading'
+require_relative 'elements/horizontal_rule'
 require_relative 'elements/ignore'
 require_relative 'elements/image'
 require_relative 'elements/list'
 require_relative 'elements/list_item'
 require_relative 'elements/paragraph'
 require_relative 'elements/row'
-require_relative 'elements/section'
 require_relative 'elements/span'
 require_relative 'elements/styling'
 require_relative 'elements/table'
@@ -65,6 +66,11 @@ class Parser
       end
     end
 
+    on 'article' do
+      content = children.inject( false) {|flag, child| flag | child.content?}
+      content ? nil : Elements::Ignore.new( element, children)
+    end
+
     on 'b' do
       Elements::Styling.new( element, [:bold], children)
     end
@@ -100,6 +106,10 @@ class Parser
 
     on 'form' do
       Elements::Ignore.new( element, children)
+    end
+
+    on 'hr' do
+      Elements::HorizontalRule.new( element)
     end
 
     on 'h1' do
@@ -142,6 +152,10 @@ class Parser
       Elements::ListItem.new( element, children)
     end
 
+    on 'medium' do
+      Elements::Styling.new( element, [:medium], children)
+    end
+
     on 'nav', :grokked => false do
       Elements::Ignore.new( element, children)
     end
@@ -156,6 +170,11 @@ class Parser
 
     on 'pre' do
       Elements::Styling.new( element, [:pre], children)
+    end
+
+    on 'section' do
+      content = children.inject( false) {|flag, child| flag | child.content?}
+      content ? nil : Elements::Ignore.new( element, children)
     end
 
     on 'small' do
@@ -174,6 +193,10 @@ class Parser
       Elements::Table.new( element, children)
     end
 
+    on 'tbody' do
+      Elements::Styling.new( element, [], children)
+    end
+
     on 'td' do
       Elements::Cell.new( element, children)
     end
@@ -184,6 +207,10 @@ class Parser
 
     on 'th' do
       Elements::Cell.new( element, children)
+    end
+
+    on 'thead' do
+      Elements::Styling.new( element, [], children)
     end
 
     on 'tr' do

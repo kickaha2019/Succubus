@@ -7,9 +7,10 @@ class Analyser
   @@indents = [' ', '|', '&boxur;', '&boxvr;']
 
   def initialize( config, cache)
-    @config = config
-    @cache  = cache
-    @pages  = YAML.load( IO.read( @cache + '/grabbed.yaml'))
+    @config     = YAML.load( IO.read( config + '/config.yaml'))
+    @config_dir = config
+    @cache      = cache
+    @pages      = YAML.load( IO.read( @cache + '/grabbed.yaml'))
   end
 
   def dump( struct, filename)
@@ -94,7 +95,7 @@ DUMP2
   def parse( ts)
     body = IO.read( "#{@cache}/#{ts}.html")
     html_doc = Nokogiri::HTML( body)
-    Parser.new( @config).parse( html_doc.root.at_xpath( '//body'))
+    Parser.new( @config_dir).parse( html_doc.root.at_xpath( '//body'))
   end
 
   def report( dir)
@@ -124,6 +125,8 @@ HEADER1
         ts   = @pages[addr]['timestamp']
         ext  = @pages[addr]['asset'] ? addr.split('.')[-1] : 'html'
         next if ts == 0
+
+        next if @config['exclude_urls'] && @config['exclude_urls'].include?( addr)
 
         parsed = nil
         if File.exist?( @cache + "/#{ts}.html")

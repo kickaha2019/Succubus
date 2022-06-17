@@ -149,7 +149,7 @@ class Grabber
       if doc['href']
         found = doc['href'].gsub( /#.*$/, '')
         found = @root + found[1..-1] if /^\/./ =~ found
-        if @root == found[0...(@root.size)]
+        if trace_doc?( found)
           if @pages[found]
             @traced[found] = @pages[found]
           else
@@ -165,7 +165,7 @@ class Grabber
     if doc.name == 'img'
       found = doc['src'].gsub( /#.*$/, '')
       found = @root + found[1..-1] if /^\/./ =~ found
-      if @root == found[0...(@root.size)]
+      if trace_doc?( found)
         if @pages[found]
           @traced[found] = @pages[found]
           @traced[found]['asset'] = true
@@ -176,6 +176,11 @@ class Grabber
     end
 
     doc.children.each {|child| trace_doc( child)}
+  end
+
+  def trace_doc?( url)
+    return false unless @root == found[0...(@root.size)]
+    ! ( @config['exclude_urls'] && @config['exclude_urls'].include?( url))
   end
 
   def trace_from_roots
