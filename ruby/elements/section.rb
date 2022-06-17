@@ -11,7 +11,7 @@ module Elements
     end
 
     def grokked?
-      true
+      false
     end
 
     def text

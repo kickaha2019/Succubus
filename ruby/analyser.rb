@@ -76,6 +76,10 @@ DUMP2
       end
     end
 
+    # if struct.doc.name == 'nav'
+    #   p [struct.doc.name, scheme, struct.class.name, struct.grokked?, struct.content?]
+    # end
+
     io.print "<span class=\"label #{scheme}\">"
     io.print( struct.doc.name + ': ' + struct.describe)
     io.puts "</span><br>"

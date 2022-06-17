@@ -2,6 +2,7 @@ require_relative 'elements/anchor'
 require_relative 'elements/break'
 require_relative 'elements/cell'
 require_relative 'elements/date'
+require_relative 'elements/font'
 require_relative 'elements/heading'
 require_relative 'elements/ignore'
 require_relative 'elements/image'
@@ -76,6 +77,10 @@ class Parser
       Elements::Break.new( element)
     end
 
+    on 'code' do
+      Elements::Styling.new( element, [:code], children)
+    end
+
     on 'comment' do
       Elements::Ignore.new( element, children)
     end
@@ -89,8 +94,16 @@ class Parser
       Elements::Styling.new( element, [:emphasized], children)
     end
 
+    on 'font' do
+      Elements::Font.new( element, children)
+    end
+
     on 'form' do
       Elements::Ignore.new( element, children)
+    end
+
+    on 'h1' do
+      Elements::Heading.new( element, 1, children)
     end
 
     on 'h2' do
@@ -98,6 +111,14 @@ class Parser
     end
 
     on 'h3' do
+      Elements::Heading.new( element, 3, children)
+    end
+
+    on 'h4' do
+      Elements::Heading.new( element, 3, children)
+    end
+
+    on 'h5' do
       Elements::Heading.new( element, 3, children)
     end
 
@@ -121,16 +142,32 @@ class Parser
       Elements::ListItem.new( element, children)
     end
 
-    on 'nav' do
+    on 'nav', :grokked => false do
       Elements::Ignore.new( element, children)
+    end
+
+    on 'ol' do
+      Elements::List.new( element, :ordered, children)
     end
 
     on 'p' do
       Elements::Paragraph.new( element, children)
     end
 
+    on 'pre' do
+      Elements::Styling.new( element, [:pre], children)
+    end
+
+    on 'small' do
+      Elements::Styling.new( element, [:small], children)
+    end
+
     on 'span' do
       Elements::Span.new( element, children)
+    end
+
+    on 'strong' do
+      Elements::Styling.new( element, [:bold], children)
     end
 
     on 'table' do

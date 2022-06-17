@@ -191,8 +191,6 @@ class Grabber
         trace url
       end
     end
-    p @traced.keys
-    raise 'Dev'
   end
 
   def trace?( url)
