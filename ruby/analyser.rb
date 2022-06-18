@@ -1,4 +1,3 @@
-require 'nokogiri'
 require 'yaml'
 
 require_relative 'parser'
@@ -10,6 +9,7 @@ class Analyser
     @config     = YAML.load( IO.read( config + '/config.yaml'))
     @config_dir = config
     @cache      = cache
+    @parser     = Parser.new( config)
     @pages      = YAML.load( IO.read( @cache + '/grabbed.yaml'))
   end
 
@@ -92,10 +92,9 @@ DUMP2
     io.puts after
   end
 
-  def parse( ts)
+  def parse( url, ts)
     body = IO.read( "#{@cache}/#{ts}.html")
-    html_doc = Nokogiri::HTML( body)
-    Parser.new( @config_dir).parse( html_doc.root.at_xpath( '//body'))
+    @parser.parse( url, body)
   end
 
   def report( dir)
@@ -123,7 +122,7 @@ HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
         ts   = @pages[addr]['timestamp']
-        ext  = @pages[addr]['asset'] ? addr.split('.')[-1] : 'html'
+        ext  = @parser.asset_url(addr) ? addr.split('.')[-1] : 'html'
         next if ts == 0
 
         next if @config['exclude_urls'] && @config['exclude_urls'].include?( addr)
@@ -131,7 +130,7 @@ HEADER1
         parsed = nil
         if File.exist?( @cache + "/#{ts}.html")
           begin
-            parsed = parse( @pages[addr]['timestamp'])
+            parsed = parse( addr, @pages[addr]['timestamp'])
           rescue
             puts "*** File: #{@pages[addr]['timestamp']}.html"
             raise

@@ -2,7 +2,8 @@ require 'net/http'
 require 'uri'
 require 'openssl'
 require 'yaml'
-require 'nokogiri'
+
+require_relative 'parser'
 
 class Grabber
   def initialize( config, cache)
@@ -10,6 +11,7 @@ class Grabber
     @root   = @config['root_url']
     @cache  = cache
     @pages  = {}
+    @parser = Parser.new( config)
 
     if File.exist?( cache + '/grabbed.yaml')
       @pages = YAML.load( IO.read( cache + '/grabbed.yaml'))
@@ -40,7 +42,7 @@ class Grabber
     @candidates = []
 
     @traced.each_pair do |url, info|
-      if info['asset']
+      if @parser.asset_url info['url']
         if info['timestamp'] == 0
           @candidates << url
         end
@@ -66,16 +68,10 @@ class Grabber
             @traced[url] = {'timestamp' => ts, 'comment' => body_or_url, 'redirect' => true}
           end
         else
-          if @traced[url]['asset']
-            File.open( "#{@cache}/#{ts}.#{url.split('.')[-1]}", 'wb') do |fo|
-              fo.write body_or_url
-            end
-          else
-            File.open( "#{@cache}/#{ts}.html", 'w') do |io|
-              io.print body_or_url
-            end
+          File.open( "#{@cache}/#{ts}.html", 'wb') do |io|
+            io.write body_or_url
           end
-          @traced[url] = {'timestamp' => ts, 'asset' => @traced[url]['asset']}
+          @traced[url] = {'timestamp' => ts}
         end
       rescue Exception => bang
         @traced[url] = {'timestamp' => 0, 'comment' => bang.message}
@@ -132,54 +128,30 @@ class Grabber
         if @pages[found]
           trace( found)
         else
-          @traced[found] = {'timestamp' => 0, 'asset' => @pages[url]['asset']}
+          @traced[found] = {'timestamp' => 0}
         end
       elsif @pages[url]['comment'].nil?
         path = @cache + "/#{@pages[url]['timestamp']}.html"
         if File.exist?( path)
-          html_doc = Nokogiri::HTML( IO.read( path))
-          trace_doc( html_doc.root.at_xpath( '//body'))
-        end
-      end
-    end
-  end
-
-  def trace_doc( doc)
-    if doc.name == 'a'
-      if doc['href']
-        found = doc['href'].gsub( /#.*$/, '')
-        found = @root + found[1..-1] if /^\/./ =~ found
-        if trace_doc?( found)
-          if @pages[found]
-            @traced[found] = @pages[found]
-          else
-            @traced[found] = {
-                'timestamp' => 0,
-                'asset'     => (/\.(jpg|jpeg|png|pdf|gif)$/i =~ found)
-            }
+          parsed = @parser.parse( url, IO.read( path))
+          parsed.links do |found|
+            found = found.split( /[#\?]/)[0]
+            p found
+            if trace_doc?( found)
+              if @pages[found]
+                @traced[found] = @pages[found]
+              else
+                @traced[found] = {'timestamp' => 0}
+              end
+            end
           end
         end
       end
     end
-
-    if doc.name == 'img'
-      found = doc['src'].gsub( /#.*$/, '')
-      found = @root + found[1..-1] if /^\/./ =~ found
-      if trace_doc?( found)
-        if @pages[found]
-          @traced[found] = @pages[found]
-          @traced[found]['asset'] = true
-        else
-          @traced[found] = {'timestamp' => 0, 'asset' => true}
-        end
-      end
-    end
-
-    doc.children.each {|child| trace_doc( child)}
   end
 
   def trace_doc?( url)
-    return false unless @root == found[0...(@root.size)]
+    return false unless @root == url[0...(@root.size)]
     ! ( @config['exclude_urls'] && @config['exclude_urls'].include?( url))
   end
 

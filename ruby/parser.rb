@@ -1,3 +1,6 @@
+require 'nokogiri'
+require 'yaml'
+
 require_relative 'elements/anchor'
 require_relative 'elements/article'
 require_relative 'elements/break'
@@ -50,8 +53,8 @@ class Parser
   end
 
   def initialize( dir)
-    Elements::Unknown.reset_next_index
-    @rules = Hash.new {|h,k| h[k] = []}
+    @config = YAML.load( IO.read( dir + '/config.yaml'))
+    @rules  = Hash.new {|h,k| h[k] = []}
 
     if File.exist?( dir + '/rules.rb')
       require dir + '/rules.rb'
@@ -60,7 +63,7 @@ class Parser
 
     on 'a' do
       if element['href']
-        Elements::Anchor.new( element, element['href'], children)
+        Elements::Anchor.new( element, absolute_url( element['href']), children)
       else
         Elements::Text.new( element, '')
       end
@@ -137,7 +140,7 @@ class Parser
     end
 
     on 'img' do
-      Elements::Image.new( element, element['src'])
+      Elements::Image.new( element, absolute_url( element['src']))
     end
 
     on 'input' do
@@ -222,6 +225,38 @@ class Parser
     end
   end
 
+  def absolute_url( url)
+    dir_url = @page_url
+    if /\/$/ =~ dir_url
+      dir_url = dir_url[0..-2]
+    else
+      dir_url = dir_url.split('/')[0..-2].join('/')
+    end
+
+    while /^\.\.\// =~ url
+      url     = url[3..-1]
+      dir_url = dir_url.split('/')[0..-2].join('/')
+    end
+
+    if /^\// =~ url
+      return @base_url + url[1..-1]
+    end
+
+    if /^\w*:/ =~ url
+      url
+    else
+      dir_url + '/' + url
+    end
+  end
+
+  def asset_url( url)
+    /\.(jpeg|jpg|gif|png|pdf)$/i =~ url
+  end
+
+  def base_url
+    @base_url
+  end
+
   def children
     @children
   end
@@ -234,8 +269,20 @@ class Parser
     @rules[name.upcase] << Rule.new( block, args)
   end
 
-  def parse( doc)
-    @children = doc.children.collect {|child| parse( child)}
+  def page_url
+    @page_url
+  end
+
+  def parse( url, page)
+    Elements::Unknown.reset_next_index
+    html_doc = Nokogiri::HTML( page)
+    @base_url = @config['root_url']
+    @page_url = url
+    parse1( html_doc.root.at_xpath( '//body'))
+  end
+
+  def parse1( doc)
+    @children = doc.children.collect {|child| parse1( child)}
     @element  = doc
 
     @rules[doc.name.upcase].each do |rule|

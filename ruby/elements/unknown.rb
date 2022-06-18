@@ -22,6 +22,12 @@ module Elements
       false
     end
 
+    def links
+      @contents.each do |child|
+        child.links {|link| yield link}
+      end
+    end
+
     def self.reset_next_index
       @@next_index = 0
     end

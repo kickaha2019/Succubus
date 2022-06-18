@@ -18,6 +18,11 @@ module Elements
     def grokked?
       true
     end
+
+    def links
+      super {|link| yield link}
+      yield @href
+    end
   end
 end
 
