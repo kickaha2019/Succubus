@@ -16,9 +16,29 @@ class Grabber
     if File.exist?( cache + '/grabbed.yaml')
       @pages = YAML.load( IO.read( cache + '/grabbed.yaml'))
     end
+
+    @traced    = {}
+    @reachable = {}
+  end
+
+  def check_files_deleted
+    @pages.each_pair do |url, page|
+      ext = 'html'
+      if @parser.asset_url( url)
+        ext = url.split('.')[-1]
+      end
+      unless File.exist?( @cache + "/#{page['timestamp']}.#{ext}")
+        page['timestamp'] = 0
+      end
+    end
   end
 
   def clean_cache
+    @pages, old_pages = {}, @pages
+    old_pages.each_pair do |url, info|
+      @pages[url] = info if @reachable[url]
+    end
+
     extant = {}
     @pages.each_value {|page| extant[page['timestamp'].to_i] = true}
 
@@ -41,7 +61,7 @@ class Grabber
     end
     @candidates = []
 
-    @traced.each_pair do |url, info|
+    @pages.each_pair do |url, info|
       if @parser.asset_url info['url']
         if info['timestamp'] == 0
           @candidates << url
@@ -51,7 +71,7 @@ class Grabber
       end
     end
 
-    @candidates = @candidates.sort_by {|url| @traced[url]['timestamp']}[0...limit]
+    @candidates = @candidates.sort_by {|url| @pages[url]['timestamp']}[0...limit]
   end
 
   def grab_candidates
@@ -63,22 +83,24 @@ class Grabber
         redirect, body_or_url = http_get( url)
         if redirect
           if login_redirect?( body_or_url)
-            @traced[url] = {'timestamp' => ts, 'secured' => true}
+            @pages[url] = {'timestamp' => ts, 'secured' => true}
           else
-            @traced[url] = {'timestamp' => ts, 'comment' => body_or_url, 'redirect' => true}
+            @pages[url] = {'timestamp' => ts, 'comment' => body_or_url, 'redirect' => true}
           end
         else
-          File.open( "#{@cache}/#{ts}.html", 'wb') do |io|
+          ext = 'html'
+          if @parser.asset_url( url)
+            ext = url.split('.')[-1]
+          end
+          File.open( "#{@cache}/#{ts}.#{ext}", 'wb') do |io|
             io.write body_or_url
           end
-          @traced[url] = {'timestamp' => ts}
+          @pages[url] = {'timestamp' => ts}
         end
       rescue Exception => bang
-        @traced[url] = {'timestamp' => 0, 'comment' => bang.message}
+        @pages[url] = {'timestamp' => 0, 'comment' => bang.message}
       end
     end
-
-    @pages = @traced
   end
 
   def http_get( url, delay = 30, headers = {})
@@ -109,10 +131,26 @@ class Grabber
     return false, response.body
   end
 
+  def initialise_reachable
+    reached( @root)
+    if @config['include_urls']
+      @config['include_urls'].each do |url|
+        reached( url)
+      end
+    end
+  end
+
   def login_redirect?( url)
     lru = @config['login_redirect_url']
     return false if lru.nil?
     (lru + '?') == url[0..(lru.size)]
+  end
+
+  def reached( url)
+    @reachable[url] = true
+    unless @pages[url]
+      @pages[url] = {'timestamp' => 0}
+    end
   end
 
   def save_info
@@ -121,62 +159,51 @@ class Grabber
     end
   end
 
-  def trace( url)
-    if trace?( url)
-      if @pages[url]['redirect']
-        found = @pages[url]['comment']
-        if @pages[found]
-          trace( found)
-        else
-          @traced[found] = {'timestamp' => 0}
-        end
-      elsif @pages[url]['comment'].nil?
-        path = @cache + "/#{@pages[url]['timestamp']}.html"
-        if File.exist?( path)
-          parsed = @parser.parse( url, IO.read( path))
-          parsed.links do |found|
-            found = found.split( /[#\?]/)[0]
-            p found
-            if trace_doc?( found)
-              if @pages[found]
-                @traced[found] = @pages[found]
-              else
-                @traced[found] = {'timestamp' => 0}
-              end
-            end
-          end
-        end
-      end
+  def to_trace
+    @pages.each_pair do |url, info|
+      next if @traced[url]
+      return url if @reachable[url]
     end
+    nil
   end
 
-  def trace_doc?( url)
+  def trace?( url)
     return false unless @root == url[0...(@root.size)]
     ! ( @config['exclude_urls'] && @config['exclude_urls'].include?( url))
   end
 
-  def trace_from_roots
-    @traced = {@root => (@pages[@root] ? @pages[@root] : {'timestamp' => 0})}
-    if @config['include_urls']
-      @config['include_urls'].each do |url|
-        @traced[url] = @pages[url] ? @pages[url] : {'timestamp' => 0}
-      end
-    end
-    trace( @root)
-    if @config['include_urls']
-      @config['include_urls'].each do |url|
-        trace url
-      end
-    end
-  end
+  def trace_from_reachable
+    while url = to_trace
+      @traced[url] = true
+      next if @pages[url]['timestamp'] == 0
+      next if @parser.asset_url( url)
 
-  def trace?( url)
-    @pages[url] && @pages[url].has_key?( 'timestamp') && (url != @config['login_redirect_url'])
+      if @pages[url]['redirect']
+        reached( @pages[url]['comment'])
+        next
+      end
+      next if @pages[url]['comment']
+
+      path = @cache + "/#{@pages[url]['timestamp']}.html"
+      if File.exist?( path)
+        parsed = @parser.parse( url, IO.read( path))
+        parsed.links do |found|
+          found = found.split( /[#\?]/)[0]
+          if trace?( found)
+            reached( found)
+          end
+        end
+      else
+        @pages[url]['timestamp'] = 0
+      end
+    end
   end
 end
 
 g = Grabber.new( ARGV[0], ARGV[1])
-g.trace_from_roots
+g.check_files_deleted
+g.initialise_reachable
+g.trace_from_reachable
 g.get_candidates( ARGV[2].to_i, ARGV[3])
 g.grab_candidates
 g.clean_cache

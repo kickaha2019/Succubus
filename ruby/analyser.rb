@@ -121,6 +121,7 @@ td, th {border: 1px solid black; font-size: 30px}
 HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
+        p addr
         ts   = @pages[addr]['timestamp']
         ext  = @parser.asset_url(addr) ? addr.split('.')[-1] : 'html'
         next if ts == 0
@@ -128,7 +129,7 @@ HEADER1
         next if @config['exclude_urls'] && @config['exclude_urls'].include?( addr)
 
         parsed = nil
-        if File.exist?( @cache + "/#{ts}.html")
+        if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
           begin
             parsed = parse( addr, @pages[addr]['timestamp'])
           rescue
