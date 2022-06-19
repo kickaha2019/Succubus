@@ -23,6 +23,9 @@ class Grabber
 
   def check_files_deleted
     @pages.each_pair do |url, page|
+      next if page['redirect']
+      next if page['secured']
+
       ext = 'html'
       if @parser.asset_url( url)
         ext = url.split('.')[-1]
@@ -67,10 +70,14 @@ class Grabber
           @candidates << url
         end
       else
-        @candidates << url
+        @candidates << url unless info['secured']
       end
     end
 
+    # list = @candidates.sort_by {|url| @pages[url]['timestamp']}
+    # list[0..3].each do |url|
+    #   p [url, @pages[url]]
+    # end
     @candidates = @candidates.sort_by {|url| @pages[url]['timestamp']}[0...limit]
   end
 
@@ -78,27 +85,29 @@ class Grabber
     @candidates.each do |url|
       puts "... Grabbing #{url}"
       ts = Time.now.to_i
+      info = @pages[url] = {'timestamp' => ts}
 
-      begin
-        redirect, body_or_url = http_get( url)
-        if redirect
-          if login_redirect?( body_or_url)
-            @pages[url] = {'timestamp' => ts, 'secured' => true}
-          else
-            @pages[url] = {'timestamp' => ts, 'comment' => body_or_url, 'redirect' => true}
-          end
-        else
-          ext = 'html'
-          if @parser.asset_url( url)
-            ext = url.split('.')[-1]
-          end
-          File.open( "#{@cache}/#{ts}.#{ext}", 'wb') do |io|
-            io.write body_or_url
-          end
-          @pages[url] = {'timestamp' => ts}
+      response = http_get( url)
+      if response.is_a?( Net::HTTPOK)
+        ext = 'html'
+        if @parser.asset_url( url)
+          ext = url.split('.')[-1]
         end
-      rescue Exception => bang
-        @pages[url] = {'timestamp' => 0, 'comment' => bang.message}
+        File.open( "#{@cache}/#{ts}.#{ext}", 'wb') do |io|
+          io.write response.body
+        end
+
+      elsif response.is_a?( Net::HTTPRedirection)
+        url = response['Location']
+        if login_redirect?( url)
+          info['secured'] = true
+        else
+          info['comment']  = url
+          info['redirect'] = true
+        end
+
+      else
+        info['comment'] = "#{response.class.name}: #{response.code}"
       end
     end
   end
@@ -119,16 +128,9 @@ class Grabber
     use_ssl     = uri.scheme == 'https'
     verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-    response = Net::HTTP.start( uri.hostname, uri.port, :use_ssl => use_ssl, :verify_mode => verify_mode) {|http|
+    Net::HTTP.start( uri.hostname, uri.port, :use_ssl => use_ssl, :verify_mode => verify_mode) {|http|
       http.request( request)
     }
-
-    if response.is_a?( Net::HTTPRedirection)
-      return true, response['Location']
-    end
-
-    response.value
-    return false, response.body
   end
 
   def initialise_reachable
