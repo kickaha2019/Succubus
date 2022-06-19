@@ -121,10 +121,9 @@ td, th {border: 1px solid black; font-size: 30px}
 HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
-        p addr
         ts   = @pages[addr]['timestamp']
         ext  = @parser.asset_url(addr) ? addr.split('.')[-1] : 'html'
-        next if ts == 0
+        #next if ts == 0
 
         next if @config['exclude_urls'] && @config['exclude_urls'].include?( addr)
 
@@ -138,15 +137,33 @@ HEADER1
           end
         end
 
-        io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
+        if ts == 0
+          io.puts "<tr><td>#{addr}</td>"
+        else
+          io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
+        end
+
         io.puts "<td>#{@pages[addr]['secure'] ? 'Y' : ''}</td>"
+
         if parsed
           io.puts "<th bgcolor=\"#{parsed.content? ? 'red' : 'lime'}\"><a href=\"#{i}.html\">#{parsed.content? ? '&cross;' : '&check;'}</a></th>"
+        elsif @pages[addr]['redirect']
+          io.puts "<th bgcolor=\"lime\">&rArr;</th>"
+        elsif ts == 0
+          io.puts "<th bgcolor=\"yellow\">?</th>"
+        elsif @parser.asset_url(addr)
+          io.puts "<th bgcolor=\"lime\">&check;</th>"
         else
-          io.puts "<td></td>"
+          io.puts "<th bgcolor=\"red\">&cross;</th>"
         end
+
         io.puts "<td>#{@pages[addr]['comment']}</td>"
-        io.puts "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td></tr>"
+
+        if ts == 0
+          io.puts "<td></td></tr>"
+        else
+          io.puts "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td></tr>"
+        end
         if parsed
           dump( parsed, dir + "/#{i}.html")
         end
