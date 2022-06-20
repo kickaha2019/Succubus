@@ -134,10 +134,10 @@ class Grabber
   end
 
   def initialise_reachable
-    reached( @root)
+    reached( nil, @root)
     if @config['include_urls']
       @config['include_urls'].each do |url|
-        reached( url)
+        reached( nil, url)
       end
     end
   end
@@ -148,10 +148,12 @@ class Grabber
     (lru + '?') == url[0..(lru.size)]
   end
 
-  def reached( url)
+  def reached( referral, url)
     @reachable[url] = true
-    unless @pages[url]
-      @pages[url] = {'timestamp' => 0}
+    if @pages[url]
+      @pages[url]['referral'] = referral
+    else
+      @pages[url] = {'timestamp' => 0, 'referral' => referral}
     end
   end
 
@@ -181,7 +183,7 @@ class Grabber
       next if @parser.asset_url( url)
 
       if @pages[url]['redirect']
-        reached( @pages[url]['comment'])
+        reached( url, @pages[url]['comment'])
         next
       end
       next if @pages[url]['comment']
@@ -192,7 +194,7 @@ class Grabber
         parsed.links do |found|
           found = found.split( /[#\?]/)[0]
           if trace?( found)
-            reached( found)
+            reached( url, found)
           end
         end
       else

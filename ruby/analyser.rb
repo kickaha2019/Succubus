@@ -24,6 +24,7 @@ class Analyser
 .grokked {background: lime}
 .grokked_and_content {background: yellow}
 .content {background: red}
+.section {background: cyan}
 </style>
 <script>
 function expand( index) {
@@ -56,16 +57,20 @@ DUMP2
 
     io.print "<div class=\"indent\">"
     before, after = '', ''
+    expand = (struct.contains_article? && (! struct.article?)) || (! struct.grokked?)
+
     if struct.contents.size > 0
-      io.print "<span id=\"r#{struct.index}\"#{struct.grokked? ? '' : ' style="display: none"'} onclick=\"expand(#{struct.index})\">&rtri;</span>"
-      io.print "<span id=\"e#{struct.index}\"#{struct.grokked? ? ' style="display: none"' : ''} onclick=\"reduce(#{struct.index})\">&dtri;</span>"
-      before = "<div id=\"d#{struct.index}\"#{struct.grokked? ? ' style="display: none"' : ''}>"
+      io.print "<span id=\"r#{struct.index}\"#{expand ? ' style="display: none"' : ''} onclick=\"expand(#{struct.index})\">&rtri;</span>"
+      io.print "<span id=\"e#{struct.index}\"#{expand ? '' : ' style="display: none"'} onclick=\"reduce(#{struct.index})\">&dtri;</span>"
+      before = "<div id=\"d#{struct.index}\"#{expand ? '' : ' style="display: none"'}>"
       after  = '</div>'
     end
     io.print "</div>"
 
     scheme = ''
-    if struct.grokked?
+    if struct.article?
+      scheme = 'section'
+    elsif struct.grokked?
       if struct.content?
         scheme = 'grokked_and_content'
       else
@@ -117,7 +122,7 @@ table {border-collapse: collapse}
 td, th {border: 1px solid black; font-size: 30px}
 </style>
 </head>
-<body><div><table><tr><th>Page</th><th>Login</th><th>State</th><th>Comment</th><th>Timestamp</th></tr>
+<body><div><table><tr><th>Page</th><th>Referral</th><th>State</th><th>Comment</th><th>Timestamp</th></tr>
 HEADER1
       addresses.each_index do |i|
         addr = addresses[i]
@@ -143,10 +148,13 @@ HEADER1
           io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
         end
 
-        io.puts "<td>#{@pages[addr]['secure'] ? 'Y' : ''}</td>"
+        io.puts "<td>#{@pages[addr]['referral']}</td>"
 
         if parsed
-          io.puts "<th bgcolor=\"#{parsed.content? ? 'red' : 'lime'}\"><a href=\"#{i}.html\">#{parsed.content? ? '&cross;' : '&check;'}</a></th>"
+          io.print "<th bgcolor=\"#{parsed.content? ? 'red' : 'lime'}\">"
+          io.print "<a href=\"#{i}.html\">"
+          io.print (parsed.content? ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
+          io.puts "</a></th>"
         elsif @pages[addr]['redirect']
           io.puts "<th bgcolor=\"lime\">&rArr;</th>"
         elsif ts == 0

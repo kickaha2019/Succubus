@@ -10,6 +10,14 @@ module Elements
       @contents    = contents
     end
 
+    def article?
+      false
+    end
+
+    def contains_article?
+      @contents.inject( article?) {|flag, child| flag | child.contains_article?}
+    end
+
     def content?
       @contents.inject( false) {|flag, child| flag | child.content?}
     end

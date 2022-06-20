@@ -6,6 +6,10 @@ module Elements
       super( doc, children)
     end
 
+    def article?
+      true
+    end
+
     def content?
       false
     end
