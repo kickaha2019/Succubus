@@ -43,5 +43,9 @@ module Elements
     def text
       @contents.inject( '') {|text, child| text + ' ' + child.text}
     end
+
+    def tooltip
+      nil
+    end
   end
 end

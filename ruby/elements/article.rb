@@ -4,6 +4,7 @@ module Elements
   class Article < Unknown
     def initialize( doc, children)
       super( doc, children)
+      @title = nil
     end
 
     def article?
@@ -20,6 +21,15 @@ module Elements
 
     def text
       ''
+    end
+
+    def tooltip
+      @title
+    end
+
+    def title( text)
+      @title = text
+      self
     end
   end
 end

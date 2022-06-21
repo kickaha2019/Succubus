@@ -86,7 +86,7 @@ DUMP2
     #   p [struct.doc.name, scheme, struct.class.name, struct.grokked?, struct.content?]
     # end
 
-    io.print "<span class=\"label #{scheme}\">"
+    io.print "<span class=\"label #{scheme}\" title=\"#{struct.tooltip}\">"
     io.print( struct.doc.name + ': ' + struct.describe)
     io.puts "</span><br>"
 
@@ -119,7 +119,7 @@ DUMP2
 <style>
 body {display: flex; align-items: center; flex-direction: column}
 table {border-collapse: collapse}
-td, th {border: 1px solid black; font-size: 30px}
+td, th {border: 1px solid black; font-size: 20px}
 </style>
 </head>
 <body><div><table><tr><th>Page</th><th>Referral</th><th>State</th><th>Comment</th><th>Timestamp</th></tr>
