@@ -2,8 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Styling < Unknown
-    def initialize( doc, types, children)
-      super( doc, children)
+    def initialize( place, types)
+      super( place)
       @types = types
     end
 

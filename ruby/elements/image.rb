@@ -2,8 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Image < Unknown
-    def initialize( doc, path)
-      super( doc, [])
+    def initialize( place, path)
+      super( place)
       @path = path
     end
 

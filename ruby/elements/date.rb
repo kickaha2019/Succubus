@@ -2,8 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Date < Unknown
-    def initialize( doc, date)
-      super( doc, [])
+    def initialize( place, date)
+      super( place)
       @date = date
     end
 

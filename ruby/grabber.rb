@@ -47,7 +47,7 @@ class Grabber
 
     to_delete = []
     Dir.entries( @cache).each do |f|
-      if m = /^(.*)\.(html|png|gif|jpg|jpeg)$/.match( f)
+      if m = /^(.*)\.(html|png|gif|jpg|jpeg|svg)$/.match( f)
         to_delete << f unless extant[ m[1].to_i]
       end
     end

@@ -2,8 +2,11 @@ require_relative 'unknown'
 
 module Elements
   class Font < Unknown
-    def initialize( doc, children)
-      super( doc, children)
+    def initialize( place)
+      super
+      @colour = place['color']
+      @face   = place['face']
+      @size   = place['size']
     end
 
     def content?
@@ -12,14 +15,14 @@ module Elements
 
     def describe
       text = []
-      if doc['color']
-        text << "Colour: #{doc['color']}"
+      if @colour
+        text << "Colour: #{@colour}"
       end
-      if doc['face']
-        text << "Face: #{doc['face']}"
+      if @face
+        text << "Face: #{@face}"
       end
-      if doc['size']
-        text << "Size: #{doc['size']}"
+      if @size
+        text << "Size: #{@size}"
       end
       text.join( ' ')
     end

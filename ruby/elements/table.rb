@@ -2,8 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Table < Unknown
-    def initialize( doc, children)
-      super( doc, children)
+    def initialize( place)
+      super
     end
 
     def content?

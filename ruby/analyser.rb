@@ -87,7 +87,7 @@ DUMP2
     # end
 
     io.print "<span class=\"label #{scheme}\" title=\"#{struct.tooltip}\">"
-    io.print( struct.doc.name + ': ' + struct.describe)
+    io.print( struct.describe)
     io.puts "</span><br>"
 
     io.puts before

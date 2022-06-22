@@ -2,8 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class List < Unknown
-    def initialize( doc, type, children)
-      super( doc, children)
+    def initialize( place, type)
+      super( place)
       @type = type
     end
 

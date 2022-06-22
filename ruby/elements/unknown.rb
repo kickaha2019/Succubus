@@ -1,13 +1,16 @@
 module Elements
   class Unknown
-    attr_reader :index, :doc, :contents
+    attr_reader :index, :contents
     @@next_index = 0
 
-    def initialize( doc, contents)
+    def initialize( place)
       @@next_index += 1
       @index       = @@next_index
-      @doc         = doc
-      @contents    = contents
+      @contents    = place.children
+      @describe    = place.element.name
+      if place.element['class']
+        @describe += ': ' + place.element['class']
+      end
     end
 
     def article?
@@ -23,7 +26,7 @@ module Elements
     end
 
     def describe
-      @doc['class'] ? @doc['class'] : ''
+      @describe
     end
 
     def grokked?

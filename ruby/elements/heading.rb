@@ -2,8 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Heading < Unknown
-    def initialize( doc, level, children)
-      super( doc, children)
+    def initialize( place, level)
+      super( place)
       @level = level
     end
 

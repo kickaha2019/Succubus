@@ -2,8 +2,9 @@ require_relative 'unknown'
 
 module Elements
   class Cell < Unknown
-    def initialize( doc, children)
-      super( doc, children)
+    def initialize( place)
+      super
+      @styling = (place.name == 'TH') ? [:bold, :centre] : [:left]
     end
 
     def content?

@@ -2,8 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Text < Unknown
-    def initialize( doc, text)
-      super( doc, [])
+    def initialize( place, text)
+      super( place)
       @text = text
     end
 

@@ -1,6 +1,8 @@
 require 'nokogiri'
 require 'yaml'
 
+require_relative 'place'
+require_relative 'page'
 require_relative 'elements/anchor'
 require_relative 'elements/article'
 require_relative 'elements/break'
@@ -47,8 +49,8 @@ class Parser
       end
     end
 
-    def apply( element, children)
-      @block.call( element, children)
+    def apply( place)
+      @block.call( place)
     end
   end
 
@@ -85,170 +87,168 @@ class Parser
       define_rules
     end
 
-    on_element 'a' do  |element, children|
-      if element['href']
-        Elements::Anchor.new( element, absolute_url( element['href']), children)
+    on_element 'a' do  |place|
+      if place['href']
+        Elements::Anchor.new( place, absolute_url( place['href']))
       else
-        Elements::Text.new( element, '')
+        Elements::Text.new( place, '')
       end
     end
-    on_element 'article' do  |element, children|
-      content = children.inject( false) {|flag, child| flag | child.content?}
-      content ? nil : Elements::Ignore.new( element, children)
+
+    on_element 'article' do  |place|
+      place.content? ? nil : Elements::Ignore.new( place)
     end
 
-    on_element 'b' do  |element, children|
-      Elements::Styling.new( element, [:bold], children)
+    on_element 'b' do  |place|
+      Elements::Styling.new( place, [:bold])
     end
 
-    on_element 'big' do  |element, children|
-      Elements::Styling.new( element, [:big], children)
+    on_element 'big' do  |place|
+      Elements::Styling.new( place, [:big])
     end
 
-    on_element 'br' do  |element, children|
-      Elements::Break.new( element)
+    on_element 'br' do  |place|
+      Elements::Break.new( place)
     end
 
-    on_element 'code' do  |element, children|
-      Elements::Styling.new( element, [:code], children)
+    on_element 'code' do  |place|
+      Elements::Styling.new( place, [:code])
     end
 
-    on_element 'comment' do  |element, children|
-      Elements::Ignore.new( element, children)
+    on_element 'comment' do  |place|
+      Elements::Ignore.new( place)
     end
 
-    on_element 'div' do  |element, children|
-      content = children.inject( false) {|flag, child| flag | child.content?}
-      content ? nil : Elements::Ignore.new( element, children)
+    on_element 'div' do  |place|
+      place.content? ? nil : Elements::Ignore.new( place)
     end
 
-    on_element 'em' do  |element, children|
-      Elements::Styling.new( element, [:emphasized], children)
+    on_element 'em' do  |place|
+      Elements::Styling.new( place, [:emphasized])
     end
 
-    on_element 'font' do  |element, children|
-      Elements::Font.new( element, children)
+    on_element 'font' do  |place|
+      Elements::Font.new( place)
     end
 
-    on_element 'form' do  |element, children|
-      Elements::Ignore.new( element, children)
+    on_element 'form' do  |place|
+      Elements::Ignore.new( place)
     end
 
-    on_element 'hr' do  |element, children|
-      Elements::HorizontalRule.new( element)
+    on_element 'hr' do  |place|
+      Elements::HorizontalRule.new( place)
     end
 
-    on_element 'h1' do  |element, children|
-      Elements::Heading.new( element, 1, children)
+    on_element 'h1' do  |place|
+      Elements::Heading.new( place, 1)
     end
 
-    on_element 'h2' do  |element, children|
-      Elements::Heading.new( element, 2, children)
+    on_element 'h2' do  |place|
+      Elements::Heading.new( place, 2)
     end
 
-    on_element 'h3' do  |element, children|
-      Elements::Heading.new( element, 3, children)
+    on_element 'h3' do  |place|
+      Elements::Heading.new( place, 3)
     end
 
-    on_element 'h4' do  |element, children|
-      Elements::Heading.new( element, 3, children)
+    on_element 'h4' do  |place|
+      Elements::Heading.new( place, 3)
     end
 
-    on_element 'h5' do  |element, children|
-      Elements::Heading.new( element, 3, children)
+    on_element 'h5' do  |place|
+      Elements::Heading.new( place, 3)
     end
 
-    on_element 'i' do  |element, children|
-      Elements::Styling.new( element, [:italic], children)
+    on_element 'i' do  |place|
+      Elements::Styling.new( place, [:italic])
     end
 
-    on_element 'img' do  |element, children|
-      Elements::Image.new( element, absolute_url( element['src']))
+    on_element 'img' do  |place|
+      Elements::Image.new( place, absolute_url( place['src']))
     end
 
-    on_element 'image' do  |element, children|
-      Elements::Image.new( element, absolute_url( element['src']))
+    on_element 'image' do  |place|
+      Elements::Image.new( place, absolute_url( place['src']))
     end
 
-    on_element 'input' do  |element, children|
-      Elements::Ignore.new( element, children)
+    on_element 'input' do  |place|
+      Elements::Ignore.new( place)
     end
 
-    on_element 'label' do  |element, children|
-      Elements::Ignore.new( element, children)
+    on_element 'label' do  |place|
+      Elements::Ignore.new( place)
     end
 
-    on_element 'li' do  |element, children|
-      Elements::ListItem.new( element, children)
+    on_element 'li' do  |place|
+      Elements::ListItem.new( place)
     end
 
-    on_element 'medium' do  |element, children|
-      Elements::Styling.new( element, [:medium], children)
+    on_element 'medium' do  |place|
+      Elements::Styling.new( place, [:medium])
     end
 
-    on_element 'nav', :grokked => false do  |element, children|
-      Elements::Ignore.new( element, children)
+    on_element 'nav', :grokked => false do  |place|
+      Elements::Ignore.new( place)
     end
 
-    on_element 'ol' do  |element, children|
-      Elements::List.new( element, :ordered, children)
+    on_element 'ol' do  |place|
+      Elements::List.new( place, :ordered)
     end
 
-    on_element 'p' do  |element, children|
-      Elements::Paragraph.new( element, children)
+    on_element 'p' do  |place|
+      Elements::Paragraph.new( place)
     end
 
-    on_element 'pre' do  |element, children|
-      Elements::Styling.new( element, [:pre], children)
+    on_element 'pre' do  |place|
+      Elements::Styling.new( place, [:pre])
     end
 
-    on_element 'section' do  |element, children|
-      content = children.inject( false) {|flag, child| flag | child.content?}
-      content ? nil : Elements::Ignore.new( element, children)
+    on_element 'section' do  |place|
+      place.content? ? nil : Elements::Ignore.new( place)
     end
 
-    on_element 'small' do  |element, children|
-      Elements::Styling.new( element, [:small], children)
+    on_element 'small' do  |place|
+      Elements::Styling.new( place, [:small])
     end
 
-    on_element 'span' do  |element, children|
-      Elements::Span.new( element, children)
+    on_element 'span' do  |place|
+      Elements::Span.new( place)
     end
 
-    on_element 'strong' do  |element, children|
-      Elements::Styling.new( element, [:bold], children)
+    on_element 'strong' do  |place|
+      Elements::Styling.new( place, [:bold])
     end
 
-    on_element 'table' do  |element, children|
-      Elements::Table.new( element, children)
+    on_element 'table' do  |place|
+      Elements::Table.new( place)
     end
 
-    on_element 'tbody' do  |element, children|
-      Elements::Styling.new( element, [], children)
+    on_element 'tbody' do  |place|
+      Elements::Styling.new( place, [])
     end
 
-    on_element 'td' do  |element, children|
-      Elements::Cell.new( element, children)
+    on_element 'td' do  |place|
+      Elements::Cell.new( place)
     end
 
-    on_element 'text' do  |element, children|
-      Elements::Text.new( element, element.content)
+    on_element 'text' do  |place|
+      Elements::Text.new( place, place.text)
     end
 
-    on_element 'th' do  |element, children|
-      Elements::Cell.new( element, children)
+    on_element 'th' do  |place|
+      Elements::Cell.new( place)
     end
 
-    on_element 'thead' do  |element, children|
-      Elements::Styling.new( element, [], children)
+    on_element 'thead' do  |place|
+      Elements::Styling.new( place, [])
     end
 
-    on_element 'tr' do  |element, children|
-      Elements::Row.new( element, children)
+    on_element 'tr' do  |place|
+      Elements::Row.new( place)
     end
 
-    on_element 'ul' do  |element, children|
-      Elements::List.new( element, :unordered, children)
+    on_element 'ul' do  |place|
+      Elements::List.new( place, :unordered)
     end
 
     @initialised = true
@@ -279,7 +279,7 @@ class Parser
   end
 
   def asset_url( url)
-    /\.(jpeg|jpg|gif|png|pdf)$/i =~ url
+    /\.(jpeg|jpg|gif|png|pdf|svg)$/i =~ url
   end
 
   def base_url
@@ -329,16 +329,17 @@ class Parser
   def parse1( doc)
     children = doc.children.collect {|child| parse1( child)}
     element  = doc
+    place    = Place.new( nil, element, children)
 
     @element_rules[doc.name.upcase].each do |rule|
       if rule.applies?( doc, children)
-        if result = rule.apply( element, children)
+        if result = rule.apply( place)
           return result
         end
       end
     end
 
-    Elements::Unknown.new( doc, children)
+    Elements::Unknown.new( place)
   end
 
   def taxonomy( name, plural = nil)
@@ -349,9 +350,5 @@ class Parser
 
   def title( text)
     @page_title = text
-  end
-
-  def to_text( children)
-    children.inject( '') {|text, child| text + ' ' + child.text}
   end
 end
