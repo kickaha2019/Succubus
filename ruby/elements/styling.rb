@@ -9,7 +9,7 @@ module Elements
 
     def describe
       if @types.size > 0
-        @types.collect {|type| type.to_s}.join( ' ') + ': ' + super
+        super + ': ' + @types.collect {|type| type.to_s}.join( ' ') + ': ' + super
       else
         super
       end

@@ -11,6 +11,10 @@ class Place
     @element[name]
   end
 
+  def absolutise( url)
+    @page.absolutise( url)
+  end
+
   def content?
     @children.inject( false) {|flag, child| flag | child.content?}
   end

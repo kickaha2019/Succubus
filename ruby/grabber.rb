@@ -26,8 +26,9 @@ class Grabber
       next if page['redirect']
       next if page['secured']
 
+      #p ['check_files_deleted', url, @parser.asset?( url)]
       ext = 'html'
-      if @parser.asset_url( url)
+      if @parser.asset?( url)
         ext = url.split('.')[-1]
       end
       unless File.exist?( @cache + "/#{page['timestamp']}.#{ext}")
@@ -47,7 +48,7 @@ class Grabber
 
     to_delete = []
     Dir.entries( @cache).each do |f|
-      if m = /^(.*)\.(html|png|gif|jpg|jpeg|svg)$/.match( f)
+      if m = /^(\d+)\.\w*$/.match( f)
         to_delete << f unless extant[ m[1].to_i]
       end
     end
@@ -65,7 +66,7 @@ class Grabber
     @candidates = []
 
     @pages.each_pair do |url, info|
-      if @parser.asset_url info['url']
+      if @parser.asset? info['url']
         if info['timestamp'] == 0
           @candidates << url
         end
@@ -90,7 +91,7 @@ class Grabber
       response = http_get( url)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
-        if @parser.asset_url( url)
+        if @parser.asset?( url)
           ext = url.split('.')[-1]
         end
         File.open( "#{@cache}/#{ts}.#{ext}", 'wb') do |io|
@@ -178,9 +179,11 @@ class Grabber
 
   def trace_from_reachable
     while url = to_trace
+      #p ['trace_from_reachable1', url, @pages[url]['timestamp']]
       @traced[url] = true
       next if @pages[url]['timestamp'] == 0
-      next if @parser.asset_url( url)
+      #p ['trace_from_reachable2', url, @parser.asset?( url)]
+      next if @parser.asset?( url)
 
       if @pages[url]['redirect']
         reached( url, @pages[url]['comment'])
@@ -201,6 +204,9 @@ class Grabber
         @pages[url]['timestamp'] = 0
       end
     end
+
+    # p @reachable
+    # raise 'Dev'
   end
 end
 

@@ -12,7 +12,7 @@ module Elements
     end
 
     def describe
-      @href + ': ' + super
+      super + ': ' + @href
     end
 
     def grokked?

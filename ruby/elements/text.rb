@@ -15,6 +15,10 @@ module Elements
       @text
     end
 
+    def error?
+      content?
+    end
+
     def grokked?
       true
     end

@@ -14,6 +14,10 @@ module Elements
       true
     end
 
+    def error?
+      false
+    end
+
     def text
       ''
     end

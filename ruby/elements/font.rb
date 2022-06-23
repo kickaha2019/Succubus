@@ -24,7 +24,8 @@ module Elements
       if @size
         text << "Size: #{@size}"
       end
-      text.join( ' ')
+
+      super + ': ' + text.join( ' ')
     end
 
     def grokked?

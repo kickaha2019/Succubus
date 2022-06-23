@@ -69,8 +69,8 @@ class Parser
       end
     end
 
-    def apply( relative_url, document)
-      @block.call( relative_url, document)
+    def apply( page)
+      @block.call( page)
     end
   end
 
@@ -89,7 +89,7 @@ class Parser
 
     on_element 'a' do  |place|
       if place['href']
-        Elements::Anchor.new( place, absolute_url( place['href']))
+        Elements::Anchor.new( place, place.absolutise( place['href']))
       else
         Elements::Text.new( place, '')
       end
@@ -164,11 +164,11 @@ class Parser
     end
 
     on_element 'img' do  |place|
-      Elements::Image.new( place, absolute_url( place['src']))
+      Elements::Image.new( place, place.absolutise( place['src']))
     end
 
     on_element 'image' do  |place|
-      Elements::Image.new( place, absolute_url( place['src']))
+      Elements::Image.new( place, place.absolutise( place['src']))
     end
 
     on_element 'input' do  |place|
@@ -254,40 +254,16 @@ class Parser
     @initialised = true
   end
 
-  def absolute_url( url)
-    dir_url = @page_url
-    if /\/$/ =~ dir_url
-      dir_url = dir_url[0..-2]
-    else
-      dir_url = dir_url.split('/')[0..-2].join('/')
-    end
-
-    while /^\.\.\// =~ url
-      url     = url[3..-1]
-      dir_url = dir_url.split('/')[0..-2].join('/')
-    end
-
-    if /^\// =~ url
-      return @base_url + url[1..-1]
-    end
-
-    if /^\w*:/ =~ url
-      url
-    else
-      dir_url + '/' + url
-    end
-  end
-
-  def asset_url( url)
-    /\.(jpeg|jpg|gif|png|pdf|svg)$/i =~ url
-  end
-
-  def base_url
-    @base_url
+  def asset?( url)
+    ! html?( url)
   end
 
   def get_text_by_class( document, clazz)
     document.css( '.' + clazz).text.strip
+  end
+
+  def html?( url)
+    /\/[^\.\/]*(|\.htm|\.html)$/ =~ url
   end
 
   def on_element(name, args={}, &block)
@@ -302,34 +278,26 @@ class Parser
     @page_initialised = false
   end
 
-  def page_url
-    @page_url
-  end
-
   def parse( url, page)
     Elements::Unknown.reset_next_index
 
     html_doc    = Nokogiri::HTML( page)
-    @base_url   = @config['root_url']
-    @page_url   = url
-    @page_title = nil
+    page = Page.new( @config['root_url'], @taxonomy, url, html_doc)
 
-    relative_url = @page_url[@base_url.size..-1]
+    relative_url = url[@config['root_url'].size..-1]
 
     @page_rules.each do |rule|
       if rule.applies?( relative_url, html_doc)
-        rule.apply( relative_url, html_doc)
-        break
+        break if rule.apply( page)
       end
     end
 
-    parse1( html_doc.root.at_xpath( '//body'))
+    parse1( page, html_doc.root.at_xpath( '//body'))
   end
 
-  def parse1( doc)
-    children = doc.children.collect {|child| parse1( child)}
-    element  = doc
-    place    = Place.new( nil, element, children)
+  def parse1( page, doc)
+    children = doc.children.collect {|child| parse1( page, child)}
+    place    = Place.new( page, doc, children)
 
     @element_rules[doc.name.upcase].each do |rule|
       if rule.applies?( doc, children)
@@ -343,12 +311,8 @@ class Parser
   end
 
   def taxonomy( name, plural = nil)
-    raise 'Taxonomy must be defined in initialisation of parser' unless @initialised
+    raise 'Taxonomy must be defined in initialisation of parser' if @initialised
     raise "Taxonomy #{name} already defined" if @taxonomy[name]
     @taxonomy[name] = plural ? plural : name
-  end
-
-  def title( text)
-    @page_title = text
   end
 end

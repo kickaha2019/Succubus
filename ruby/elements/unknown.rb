@@ -29,6 +29,10 @@ module Elements
       @describe
     end
 
+    def error?
+      @contents.inject( false) {|flag, child| flag | child.error?}
+    end
+
     def grokked?
       false
     end

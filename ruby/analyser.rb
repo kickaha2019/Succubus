@@ -13,6 +13,10 @@ class Analyser
     @pages      = YAML.load( IO.read( @cache + '/grabbed.yaml'))
   end
 
+  def close_files
+    @files.each {|io| io.close}
+  end
+
   def dump( struct, filename)
     File.open( filename, 'w') do |io|
       io.puts <<"DUMP1"
@@ -23,7 +27,7 @@ class Analyser
 .label {font-size: 20px; height: 20px}
 .grokked {background: lime}
 .grokked_and_content {background: yellow}
-.content {background: red}
+.error {background: red}
 .section {background: cyan}
 </style>
 <script>
@@ -68,7 +72,9 @@ DUMP2
     io.print "</div>"
 
     scheme = ''
-    if struct.article?
+    if struct.error?
+      scheme = 'error'
+    elsif struct.article?
       scheme = 'section'
     elsif struct.grokked?
       if struct.content?
@@ -78,7 +84,7 @@ DUMP2
       end
     else
       if struct.content?
-        scheme = 'content'
+        scheme = 'error'
       end
     end
 
@@ -97,6 +103,14 @@ DUMP2
     io.puts after
   end
 
+  def open_files( dir)
+    @files = [
+        File.open( dir + '/index.html', 'w'),
+        File.open( dir + '/index1.html', 'w')
+    ]
+    @is_asset = false
+  end
+
   def parse( url, ts)
     body = IO.read( "#{@cache}/#{ts}.html")
     @parser.parse( url, body)
@@ -111,76 +125,96 @@ DUMP2
       File.delete( "#{dir}/#{f}")
     end
 
+    open_files( dir)
+
     addresses = @pages.keys.sort
-    File.open( dir + '/index.html', 'w') do |io|
-      io.puts <<HEADER1
+    write_files <<HEADER1
 <html>
 <head>
 <style>
-body {display: flex; align-items: center; flex-direction: column}
+body {display: flex; align-items: center; flex-direction: column; justify-content: center;}
 table {border-collapse: collapse}
-td, th {border: 1px solid black; font-size: 20px}
+.pages td, .pages th {border: 1px solid black; font-size: 20px}
+.menu {padding-bottom: 20px}
+.menu td {font-size: 30px}
 </style>
 </head>
-<body><div><table><tr><th>Page</th><th>Referral</th><th>State</th><th>Comment</th><th>Timestamp</th></tr>
+<body><div class="menu"><table><tr>
 HEADER1
-      addresses.each_index do |i|
-        addr = addresses[i]
-        ts   = @pages[addr]['timestamp']
-        ext  = @parser.asset_url(addr) ? addr.split('.')[-1] : 'html'
-        #next if ts == 0
 
-        next if @config['exclude_urls'] && @config['exclude_urls'].include?( addr)
+    @files[0].print "<td><a href=\"index1.html\">Hide assets</a><td>"
+    @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
 
-        parsed = nil
-        if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
-          begin
-            parsed = parse( addr, @pages[addr]['timestamp'])
-          rescue
-            puts "*** File: #{@pages[addr]['timestamp']}.html"
-            raise
-          end
-        end
+    write_files <<HEADER2
+</tr></table></div><div class="pages"><table><tr><th>Page</th><th>Referral</th><th>State</th><th>Comment</th><th>Timestamp</th></tr>
+HEADER2
 
-        if ts == 0
-          io.puts "<tr><td>#{addr}</td>"
-        else
-          io.puts "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
-        end
+    addresses.each_index do |i|
+      addr = addresses[i]
+      @is_asset = @parser.asset?(addr)
+      ts   = @pages[addr]['timestamp']
+      ext  = @is_asset ? addr.split('.')[-1] : 'html'
+      #next if ts == 0
 
-        io.puts "<td>#{@pages[addr]['referral']}</td>"
+      next if @config['exclude_urls'] && @config['exclude_urls'].include?( addr)
 
-        if parsed
-          io.print "<th bgcolor=\"#{parsed.content? ? 'red' : 'lime'}\">"
-          io.print "<a href=\"#{i}.html\">"
-          io.print (parsed.content? ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
-          io.puts "</a></th>"
-        elsif @pages[addr]['redirect']
-          io.puts "<th bgcolor=\"lime\">&rArr;</th>"
-        elsif ts == 0
-          io.puts "<th bgcolor=\"yellow\">?</th>"
-        elsif @parser.asset_url(addr)
-          io.puts "<th bgcolor=\"lime\">&check;</th>"
-        else
-          io.puts "<th bgcolor=\"red\">&cross;</th>"
-        end
-
-        io.puts "<td>#{@pages[addr]['comment']}</td>"
-
-        if ts == 0
-          io.puts "<td></td></tr>"
-        else
-          io.puts "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td></tr>"
-        end
-        if parsed
-          dump( parsed, dir + "/#{i}.html")
+      parsed = nil
+      if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
+        begin
+          parsed = parse( addr, @pages[addr]['timestamp'])
+        rescue
+          puts "*** File: #{@pages[addr]['timestamp']}.html"
+          raise
         end
       end
 
-      io.puts <<FOOTER
+      if ts == 0
+        write_files "<tr><td>#{addr}</td>"
+      else
+        write_files "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
+      end
+
+      write_files "<td>#{@pages[addr]['referral']}</td>"
+
+      if parsed
+        write_files "<th bgcolor=\"#{parsed.error? ? 'red' : 'lime'}\">"
+        write_files "<a href=\"#{i}.html\">"
+        write_files (parsed.error? ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
+        write_files "</a></th>"
+      elsif @pages[addr]['redirect']
+        write_files "<th bgcolor=\"lime\">&rArr;</th>"
+      elsif ts == 0
+        write_files "<th bgcolor=\"yellow\">?</th>"
+      elsif @parser.asset?(addr)
+        write_files "<th bgcolor=\"lime\">&check;</th>"
+      else
+        write_files "<th bgcolor=\"red\">&cross;</th>"
+      end
+
+      write_files "<td>#{@pages[addr]['comment']}</td>"
+
+      if ts == 0
+        write_files "<td></td></tr>"
+      else
+        write_files "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td></tr>"
+      end
+
+      if parsed
+        dump( parsed, dir + "/#{i}.html")
+      end
+    end
+
+    @is_asset = false
+    write_files <<FOOTER
 </table><div></body></html>
 FOOTER
-    end
+
+    close_files
+  end
+
+  def write_files( text)
+    @files[0].print text
+    @files[1].print text unless @is_asset
   end
 end
 
