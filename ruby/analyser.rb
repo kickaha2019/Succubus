@@ -146,7 +146,15 @@ HEADER1
     @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
 
     write_files <<HEADER2
-</tr></table></div><div class="pages"><table><tr><th>Page</th><th>Referral</th><th>State</th><th>Comment</th><th>Timestamp</th></tr>
+</tr></table></div><div class="pages"><table><tr>
+<th>Page</th>
+<th>State</th>
+<th>Articles</th>
+<th>Date</th>
+<th>Tags</th>
+<th>Comment</th>
+<th>Timestamp</th>
+</tr>
 HEADER2
 
     addresses.each_index do |i|
@@ -174,12 +182,12 @@ HEADER2
         write_files "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
       end
 
-      write_files "<td>#{@pages[addr]['referral']}</td>"
-
       if parsed
-        write_files "<th bgcolor=\"#{parsed.error? ? 'red' : 'lime'}\">"
+        error = parsed.content?
+        parsed.tree {|child| error = true if child.error?}
+        write_files "<th bgcolor=\"#{error ? 'red' : 'lime'}\">"
         write_files "<a href=\"#{i}.html\">"
-        write_files (parsed.error? ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
+        write_files( error ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
         write_files "</a></th>"
       elsif @pages[addr]['redirect']
         write_files "<th bgcolor=\"lime\">&rArr;</th>"
@@ -191,6 +199,24 @@ HEADER2
         write_files "<th bgcolor=\"red\">&cross;</th>"
       end
 
+      n_articles, date, tags = 0, '', ''
+      if parsed
+        parsed.tree do |child|
+          if child.is_a?( Elements::Article)
+            n_articles += 1
+            if child.date
+              date = child.date.strftime( '%Y-%m-%d')
+            end
+            if child.tags
+              tags = child.tags.collect {|tag| tag[1]}.join( ' ')
+            end
+          end
+        end
+      end
+
+      write_files "<td>#{n_articles}</td>"
+      write_files "<td>#{date}</td>"
+      write_files "<td>#{tags}</td>"
       write_files "<td>#{@pages[addr]['comment']}</td>"
 
       if ts == 0

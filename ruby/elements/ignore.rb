@@ -14,12 +14,12 @@ module Elements
       true
     end
 
-    def error?
-      false
-    end
-
     def text
       ''
+    end
+
+    def tree
+      yield self
     end
   end
 end

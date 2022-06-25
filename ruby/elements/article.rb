@@ -2,6 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Article < Unknown
+    attr_reader :date, :title, :tags, :mode
+
     def initialize( place)
       super
       @title = place.page.title
@@ -18,11 +20,6 @@ module Elements
       false
     end
 
-    def date( time)
-      @date = time if time
-      self
-    end
-
     def error?
       return true unless @mode
       return true unless @title
@@ -37,17 +34,26 @@ module Elements
       false
     end
 
+    def set_date( time)
+      @date = time if time
+      self
+    end
+
+    def set_title( text)
+      @title = text if text
+      self
+    end
+
     def text
       ''
     end
 
     def tooltip
-      "Title: #{@title} Date: #{@date}"
+      "Title: #{@title} Date: #{@date} Mode: #{@mode} Tags: #{@tags.collect {|tag| tag[1]}.join( ' ')}"
     end
 
-    def title( text)
-      @title = text if text
-      self
+    def tree
+      yield self
     end
   end
 end

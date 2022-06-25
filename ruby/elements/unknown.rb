@@ -30,7 +30,7 @@ module Elements
     end
 
     def error?
-      @contents.inject( false) {|flag, child| flag | child.error?}
+      false
     end
 
     def grokked?
@@ -53,6 +53,13 @@ module Elements
 
     def tooltip
       nil
+    end
+
+    def tree
+      @contents.each do |child|
+        child.tree {|el| yield el}
+      end
+      yield self
     end
   end
 end

@@ -16,7 +16,7 @@ module Elements
     end
 
     def error?
-      content?
+      false
     end
 
     def grokked?
