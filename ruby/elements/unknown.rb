@@ -33,6 +33,10 @@ module Elements
       false
     end
 
+    def find_children( clazz)
+      @contents.select {|child| child.is_a?( clazz)}
+    end
+
     def grokked?
       false
     end

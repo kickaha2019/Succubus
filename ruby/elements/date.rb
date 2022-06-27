@@ -8,7 +8,7 @@ module Elements
     end
 
     def describe
-      super + ': ' + @date.to_s
+      super + ': ' + @date.strftime( '%Y-%m-%d')
     end
 
     def grokked?

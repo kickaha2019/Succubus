@@ -195,7 +195,7 @@ class Grabber
       if File.exist?( path)
         parsed = @parser.parse( url, IO.read( path))
         parsed.links do |found|
-          found = found.split( /[#\?]/)[0]
+          found = found.split( '#')[0]
           if trace?( found)
             reached( url, found)
           end

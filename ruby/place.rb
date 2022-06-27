@@ -19,6 +19,10 @@ class Place
     @children.inject( false) {|flag, child| flag | child.content?}
   end
 
+  def find_children( clazz)
+    @children.select {|child| child.is_a?( clazz)}
+  end
+
   def name
     @element.name
   end

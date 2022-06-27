@@ -12,7 +12,7 @@ module Elements
     end
 
     def describe
-      @text
+      super + ': ' + @text
     end
 
     def error?

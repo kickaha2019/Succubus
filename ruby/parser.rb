@@ -16,6 +16,7 @@ require_relative 'elements/image'
 require_relative 'elements/list'
 require_relative 'elements/list_item'
 require_relative 'elements/paragraph'
+require_relative 'elements/post_date'
 require_relative 'elements/row'
 require_relative 'elements/span'
 require_relative 'elements/styling'
@@ -75,12 +76,13 @@ class Parser
   end
 
   def initialize( dir)
-    @config           = YAML.load( IO.read( dir + '/config.yaml'))
-    @element_rules    = Hash.new {|h,k| h[k] = []}
-    @page_rules       = []
-    @taxonomy         = {}
-    @initialised      = false
-    @page_initialised = false
+    @config             = YAML.load( IO.read( dir + '/config.yaml'))
+    @element_rules      = Hash.new {|h,k| h[k] = []}
+    @page_rules         = []
+    @taxonomy           = {}
+    @initialised        = false
+    @page_initialised   = true
+    @page_element_rules = {}
 
     if File.exist?( dir + '/rules.rb')
       require dir + '/rules.rb'
@@ -175,6 +177,10 @@ class Parser
       Elements::Ignore.new( place)
     end
 
+    on_element 'kbd' do  |place|
+      Elements::Styling.new( place, [:keyboard])
+    end
+
     on_element 'label' do  |place|
       Elements::Ignore.new( place)
     end
@@ -267,8 +273,12 @@ class Parser
   end
 
   def on_element(name, args={}, &block)
-    raise 'Element rules must be defined in initialisation of parser' if @initialised #|| @page_initialised
-    @element_rules[name.upcase] << ElementRule.new(block, args)
+    raise 'Element rules must be defined in initialisation of parser or page' if @initialised && @page_initialised
+    if @initialised
+      @page_element_rules[name.upcase] << ElementRule.new(block, args)
+    else
+      @element_rules[name.upcase] << ElementRule.new(block, args)
+    end
   end
 
   def on_page( expression, args={}, &block)
@@ -286,18 +296,28 @@ class Parser
 
     relative_url = url[@config['root_url'].size..-1]
 
+    @page_initialised, @page_element_rules = false, Hash.new {|h,k| h[k] = []}
     @page_rules.each do |rule|
       if rule.applies?( relative_url, html_doc)
         break if rule.apply( page)
       end
     end
 
+    @page_initialised = true
     parse1( page, html_doc.root.at_xpath( '//body'))
   end
 
   def parse1( page, doc)
     children = doc.children.collect {|child| parse1( page, child)}
     place    = Place.new( page, doc, children)
+
+    @page_element_rules[doc.name.upcase].each do |rule|
+      if rule.applies?( doc, children)
+        if result = rule.apply( place)
+          return result
+        end
+      end
+    end
 
     @element_rules[doc.name.upcase].each do |rule|
       if rule.applies?( doc, children)

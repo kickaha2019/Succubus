@@ -14,6 +14,10 @@ class Page
   end
 
   def absolutise( url)
+    if /^\?/ =~ url
+      return @url + url
+    end
+
     dir_url = @url
 
     if /\/$/ =~ dir_url
@@ -45,5 +49,9 @@ class Page
 
   def css( expr)
     @document.css( expr)
+  end
+
+  def relative_path
+    @url[@root_url.size..-1].split('/')
   end
 end

@@ -2,6 +2,8 @@ require_relative 'unknown'
 
 module Elements
   class Anchor < Unknown
+    attr_reader :href
+
     def initialize( place, href)
       super( place)
       @href = href

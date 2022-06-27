@@ -179,7 +179,7 @@ HEADER2
       if ts == 0
         write_files "<tr><td>#{addr}</td>"
       else
-        write_files "<tr><td><a href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
+        write_files "<tr><td><a title=\"#{@pages[addr]['referral']}\" href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
       end
 
       if parsed
