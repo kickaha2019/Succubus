@@ -16,14 +16,13 @@ require_relative 'elements/image'
 require_relative 'elements/list'
 require_relative 'elements/list_item'
 require_relative 'elements/paragraph'
-require_relative 'elements/post_date'
 require_relative 'elements/row'
 require_relative 'elements/span'
 require_relative 'elements/styling'
 require_relative 'elements/table'
 require_relative 'elements/text'
 
-class Parser
+class Site
   class ElementRule
     def initialize( block, args = {})
       @args  = args
@@ -75,8 +74,8 @@ class Parser
     end
   end
 
-  def initialize( dir)
-    @config             = YAML.load( IO.read( dir + '/config.yaml'))
+  def initialize( config)
+    @config             = config
     @element_rules      = Hash.new {|h,k| h[k] = []}
     @page_rules         = []
     @taxonomy           = {}
@@ -84,11 +83,44 @@ class Parser
     @page_initialised   = true
     @page_element_rules = {}
 
-    if File.exist?( dir + '/rules.rb')
-      require dir + '/rules.rb'
-      define_rules
+    define_rules
+    @initialised = true
+  end
+
+  def self.absolutise( root_url, page_url, url)
+    dir_url = page_url.split('?')[0]
+
+    if /^\?/ =~ url
+      return dir_url + url
     end
 
+    if /\/$/ =~ dir_url
+      dir_url = dir_url[0..-2]
+    else
+      dir_url = dir_url.split('/')[0..-2].join('/')
+    end
+
+    while /^\.\.\// =~ url
+      url     = url[3..-1]
+      dir_url = dir_url.split('/')[0..-2].join('/')
+    end
+
+    if /^\// =~ url
+      return root_url + url[1..-1]
+    end
+
+    if /^\w*:/ =~ url
+      url
+    else
+      dir_url + '/' + url
+    end
+  end
+
+  def asset?( url)
+    ! html?( url)
+  end
+
+  def define_rules
     on_element 'a' do  |place|
       if place['href']
         Elements::Anchor.new( place, place.absolutise( place['href']))
@@ -256,12 +288,6 @@ class Parser
     on_element 'ul' do  |place|
       Elements::List.new( place, :unordered)
     end
-
-    @initialised = true
-  end
-
-  def asset?( url)
-    ! html?( url)
   end
 
   def get_text_by_class( document, clazz)
@@ -330,8 +356,10 @@ class Parser
     Elements::Unknown.new( place)
   end
 
+  def preparse( url, page)
+  end
+
   def taxonomy( name, plural = nil)
-    raise 'Taxonomy must be defined in initialisation of parser' if @initialised
     raise "Taxonomy #{name} already defined" if @taxonomy[name]
     @taxonomy[name] = plural ? plural : name
   end

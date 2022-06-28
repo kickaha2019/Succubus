@@ -1,0 +1,17 @@
+---
+root_url: https://britgo.org/
+include_urls:
+- https://britgo.org/membersarea
+exclude_urls:
+- https://britgo.org/ratings/current
+- https://britgo.org/node/6840
+- https://britgo.org/admin/structure/types/manage/page
+- https://britgo.org/admin/structure/types/manage/club
+- https://britgo.org/admin/structure/types/manage/story
+- "^https://britgo.org/join/form"
+- "^https://britgo.org/user/login"
+- https://britgo.org/howtoplaygo
+- https://britgo.org/renew
+- https://britgo.org/whatisgo
+login_redirect_url:   https://britgo.org/user/login
+class:  BGA

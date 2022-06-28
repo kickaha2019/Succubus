@@ -14,32 +14,7 @@ class Page
   end
 
   def absolutise( url)
-    if /^\?/ =~ url
-      return @url + url
-    end
-
-    dir_url = @url
-
-    if /\/$/ =~ dir_url
-      dir_url = dir_url[0..-2]
-    else
-      dir_url = dir_url.split('/')[0..-2].join('/')
-    end
-
-    while /^\.\.\// =~ url
-      url     = url[3..-1]
-      dir_url = dir_url.split('/')[0..-2].join('/')
-    end
-
-    if /^\// =~ url
-      return @root_url + url[1..-1]
-    end
-
-    if /^\w*:/ =~ url
-      url
-    else
-      dir_url + '/' + url
-    end
+    Site.absolutise( @root_url, @url, url)
   end
 
   def add_tag( species, name)

@@ -1,17 +1,9 @@
 require 'yaml'
 
-require_relative 'parser'
+require_relative 'processor'
 
-class Analyser
+class Analyser < Processor
   @@indents = [' ', '|', '&boxur;', '&boxvr;']
-
-  def initialize( config, cache)
-    @config     = YAML.load( IO.read( config + '/config.yaml'))
-    @config_dir = config
-    @cache      = cache
-    @parser     = Parser.new( config)
-    @pages      = YAML.load( IO.read( @cache + '/grabbed.yaml'))
-  end
 
   def close_files
     @files.each {|io| io.close}
@@ -111,12 +103,8 @@ DUMP2
     @is_asset = false
   end
 
-  def parse( url, ts)
-    body = IO.read( "#{@cache}/#{ts}.html")
-    @parser.parse( url, body)
-  end
-
   def report( dir)
+    preparse_all
     to_delete = []
     Dir.entries( dir).each do |f|
       to_delete << f if /\.html$/ =~ f
@@ -159,12 +147,12 @@ HEADER2
 
     addresses.each_index do |i|
       addr = addresses[i]
-      @is_asset = @parser.asset?(addr)
+      @is_asset = asset?(addr)
       ts   = @pages[addr]['timestamp']
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
       #next if ts == 0
 
-      next if @config['exclude_urls'] && @config['exclude_urls'].include?( addr)
+      next if exclude_url?( addr)
 
       parsed = nil
       if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
@@ -179,21 +167,21 @@ HEADER2
       if ts == 0
         write_files "<tr><td>#{addr}</td>"
       else
-        write_files "<tr><td><a title=\"#{@pages[addr]['referral']}\" href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
+        write_files "<tr><td><a title=\"#{@pages[addr]['referral']}\" target=\"_blank\" href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
       end
 
       if parsed
         error = parsed.content?
         parsed.tree {|child| error = true if child.error?}
         write_files "<th bgcolor=\"#{error ? 'red' : 'lime'}\">"
-        write_files "<a href=\"#{i}.html\">"
+        write_files "<a target=\"_blank\" href=\"#{i}.html\">"
         write_files( error ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
         write_files "</a></th>"
       elsif @pages[addr]['redirect']
         write_files "<th bgcolor=\"lime\">&rArr;</th>"
       elsif ts == 0
         write_files "<th bgcolor=\"yellow\">?</th>"
-      elsif @parser.asset?(addr)
+      elsif asset?(addr)
         write_files "<th bgcolor=\"lime\">&check;</th>"
       else
         write_files "<th bgcolor=\"red\">&cross;</th>"

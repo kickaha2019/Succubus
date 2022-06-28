@@ -3,20 +3,12 @@ require 'uri'
 require 'openssl'
 require 'yaml'
 
-require_relative 'parser'
+require_relative 'processor'
 
-class Grabber
+class Grabber < Processor
   def initialize( config, cache)
-    @config = YAML.load( IO.read( config + '/config.yaml'))
-    @root   = @config['root_url']
-    @cache  = cache
-    @pages  = {}
-    @parser = Parser.new( config)
-
-    if File.exist?( cache + '/grabbed.yaml')
-      @pages = YAML.load( IO.read( cache + '/grabbed.yaml'))
-    end
-
+    super
+    @root      = @config['root_url']
     @traced    = {}
     @reachable = {}
   end
@@ -26,9 +18,9 @@ class Grabber
       next if page['redirect']
       next if page['secured']
 
-      #p ['check_files_deleted', url, @parser.asset?( url)]
+      #p ['check_files_deleted', url, asset?( url)]
       ext = 'html'
-      if @parser.asset?( url)
+      if asset?( url)
         ext = url.split('.')[-1]
       end
       unless File.exist?( @cache + "/#{page['timestamp']}.#{ext}")
@@ -66,7 +58,7 @@ class Grabber
     @candidates = []
 
     @pages.each_pair do |url, info|
-      if @parser.asset? info['url']
+      if asset? info['url']
         if info['timestamp'] == 0
           @candidates << url
         end
@@ -91,7 +83,7 @@ class Grabber
       response = http_get( url)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
-        if @parser.asset?( url)
+        if asset?( url)
           ext = url.split('.')[-1]
         end
         File.open( "#{@cache}/#{ts}.#{ext}", 'wb') do |io|
@@ -174,7 +166,7 @@ class Grabber
 
   def trace?( url)
     return false unless @root == url[0...(@root.size)]
-    ! ( @config['exclude_urls'] && @config['exclude_urls'].include?( url))
+    ! exclude_url?( url)
   end
 
   def trace_from_reachable
@@ -182,8 +174,8 @@ class Grabber
       #p ['trace_from_reachable1', url, @pages[url]['timestamp']]
       @traced[url] = true
       next if @pages[url]['timestamp'] == 0
-      #p ['trace_from_reachable2', url, @parser.asset?( url)]
-      next if @parser.asset?( url)
+      #p ['trace_from_reachable2', url, asset?( url)]
+      next if asset?( url)
 
       if @pages[url]['redirect']
         reached( url, @pages[url]['comment'])
@@ -193,7 +185,7 @@ class Grabber
 
       path = @cache + "/#{@pages[url]['timestamp']}.html"
       if File.exist?( path)
-        parsed = @parser.parse( url, IO.read( path))
+        parsed = parse( url, @pages[url]['timestamp'])
         parsed.links do |found|
           found = found.split( '#')[0]
           if trace?( found)
