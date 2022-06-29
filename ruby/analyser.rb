@@ -98,7 +98,8 @@ DUMP2
   def open_files( dir)
     @files = [
         File.open( dir + '/index.html', 'w'),
-        File.open( dir + '/index1.html', 'w')
+        File.open( dir + '/index1.html', 'w'),
+        File.open( dir + '/index2.html', 'w')
     ]
     @is_asset = false
   end
@@ -116,15 +117,16 @@ DUMP2
     open_files( dir)
 
     addresses = @pages.keys.sort
+    @is_error = true
     write_files <<HEADER1
 <html>
 <head>
 <style>
-body {display: flex; align-items: center; flex-direction: column; justify-content: center;}
+body {display: flex; align-items: center; flex-direction: column}
 table {border-collapse: collapse}
 .pages td, .pages th {border: 1px solid black; font-size: 20px}
 .menu {padding-bottom: 20px}
-.menu td {font-size: 30px}
+.menu td {font-size: 30px; padding-left: 10px; padding-right: 10px}
 </style>
 </head>
 <body><div class="menu"><table><tr>
@@ -132,6 +134,9 @@ HEADER1
 
     @files[0].print "<td><a href=\"index1.html\">Hide assets</a><td>"
     @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
+    @files[0].print "<td><a href=\"index2.html\">Just errors</a><td>"
+    @files[1].print "<td><a href=\"index2.html\">Just errors</a><td>"
+    @files[2].print "<td><a href=\"index.html\">Show all</a><td>"
 
     write_files <<HEADER2
 </tr></table></div><div class="pages"><table><tr>
@@ -148,6 +153,7 @@ HEADER2
     addresses.each_index do |i|
       addr = addresses[i]
       @is_asset = asset?(addr)
+      @is_error = false
       ts   = @pages[addr]['timestamp']
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
       #next if ts == 0
@@ -164,6 +170,11 @@ HEADER2
         end
       end
 
+      if parsed
+        @is_error = parsed.content?
+        parsed.tree {|child| @is_error = true if child.error?}
+      end
+
       if ts == 0
         write_files "<tr><td>#{addr}</td>"
       else
@@ -171,11 +182,9 @@ HEADER2
       end
 
       if parsed
-        error = parsed.content?
-        parsed.tree {|child| error = true if child.error?}
-        write_files "<th bgcolor=\"#{error ? 'red' : 'lime'}\">"
+        write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">"
         write_files "<a target=\"_blank\" href=\"#{i}.html\">"
-        write_files( error ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
+        write_files( @is_error ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
         write_files "</a></th>"
       elsif @pages[addr]['redirect']
         write_files "<th bgcolor=\"lime\">&rArr;</th>"
@@ -219,6 +228,7 @@ HEADER2
     end
 
     @is_asset = false
+    @is_error = true
     write_files <<FOOTER
 </table><div></body></html>
 FOOTER
@@ -229,6 +239,7 @@ FOOTER
   def write_files( text)
     @files[0].print text
     @files[1].print text unless @is_asset
+    @files[2].print text if @is_error
   end
 end
 

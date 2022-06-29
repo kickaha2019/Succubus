@@ -13,5 +13,8 @@ exclude_urls:
 - https://britgo.org/howtoplaygo
 - https://britgo.org/renew
 - https://britgo.org/whatisgo
+- https://britgo.org/softwarereviews
+- https://britgo.org/tournams/welsh-open/tour-entries.html
+- https://britgo.org/tournams/welsh-open/welsh-open-form.html
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA

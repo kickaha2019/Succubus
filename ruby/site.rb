@@ -145,6 +145,10 @@ class Site
       Elements::Break.new( place)
     end
 
+    on_element 'center' do  |place|
+      Elements::Styling.new( place, [:centre])
+    end
+
     on_element 'code' do  |place|
       Elements::Styling.new( place, [:code])
     end
@@ -255,6 +259,10 @@ class Site
 
     on_element 'strong' do  |place|
       Elements::Styling.new( place, [:bold])
+    end
+
+    on_element 'style' do  |place|
+      Elements::Ignore.new( place)
     end
 
     on_element 'table' do  |place|

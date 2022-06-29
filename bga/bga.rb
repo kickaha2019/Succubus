@@ -217,6 +217,14 @@ class BGA < Site
       false
     end
 
+    on_page /.*/ do |page|
+      if date = @post_dates[page.url]
+        page.date= date
+        page.mode= :post
+      end
+      false
+    end
+
     super
   end
 
@@ -261,8 +269,25 @@ class BGA < Site
   end
 
   def preparse( url, page)
-    page.scan( %r{<a href="([^"]*)"[^>]*>[^<]*</a>\s*</td>\s*<td [^>]*>(\d\d\d\d)-(\d\d)-(\d\d)\s*</td>}m) do |m|
-      @post_dates[ Site.absolutise( @config['root_url'], url, m[0])] = Time.new( m[1].to_i, m[2].to_i, m[3].to_i)
+    link, counter = nil, 100
+    page.split("\n").each do |line|
+      if m = /><a href="([^"]*)"/.match( line)
+        link, counter = Site.absolutise( @config['root_url'], url, m[1]), 0
+      else
+        counter += 1
+      end
+
+      if counter == 1
+        if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( line)
+          @post_dates[link] = to_date( m[1], m[2], m[3])
+        end
+      end
+
+      if counter == 2
+        if m = /(\d+) (January|February|March|April|May|June|July|August|September|October|November|December) (\d\d\d\d)/i.match( line)
+          @post_dates[link] = to_date( m[3], m[2], m[1])
+        end
+      end
     end
   end
 
