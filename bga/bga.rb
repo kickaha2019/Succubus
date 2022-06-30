@@ -275,25 +275,26 @@ class BGA < Site
   end
 
   def preparse( url, page)
-    link, counter = nil, 100
-    page.split("\n").each do |line|
-      if m = /><a href="([^"]*)"/.match( line)
-        link, counter = Site.absolutise( @config['root_url'], url, m[1]), 0
-      else
-        counter += 1
-      end
+    nodes = page_to_nodes( page)
 
-      if counter == 1
-        if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( line)
-          @post_dates[link] = to_date( m[1], m[2], m[3])
-        end
+    nodes.css( 'td.views-field-title a') do |node|
+      [Site.absolutise( @config['root_url'], url, node['href'])]
+    end.parent.parent.css( 'td.views-field-created') do |node1, href|
+      if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( node1.text)
+        @post_dates[href] = to_date( m[1], m[2], m[3])
+        p [href, @post_dates[href]]
       end
+      false
+    end
 
-      if counter == 2
-        if m = /(\d+) (January|February|March|April|May|June|July|August|September|October|November|December) (\d\d\d\d)/i.match( line)
-          @post_dates[link] = to_date( m[3], m[2], m[1])
-        end
+    nodes.css( 'td.views-field-title a') do |node|
+      [Site.absolutise( @config['root_url'], url, node['href'])]
+    end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |node1, href|
+      if m = /(\d+) (\w*) (\d\d\d\d)/.match( node1.text)
+        @post_dates[href] = to_date( m[3], m[2], m[1])
+        p [href, @post_dates[href]]
       end
+      false
     end
   end
 

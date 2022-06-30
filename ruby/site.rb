@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'yaml'
 
+require_relative 'nodes'
 require_relative 'place'
 require_relative 'page'
 require_relative 'elements/anchor'
@@ -320,6 +321,10 @@ class Site
     @page_initialised = true
     @page_rules << PageRule.new( expression, block, args)
     @page_initialised = false
+  end
+
+  def page_to_nodes( page)
+    Nodes.new( [[Nokogiri::HTML( page).root.at_xpath( '//body')]])
   end
 
   def parse( url, page)
