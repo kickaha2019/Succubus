@@ -140,6 +140,12 @@ class BGA < Site
       end
     end
 
+    on_element 'text' do |place|
+      if /^Coronavirus: Most Go clubs stopped meeting in person/ =~ place.text
+        Elements::Ignore.new( place)
+      end
+    end
+
     on_element 'rss', :grokked => false do |place|
       Elements::Ignore.new( place)
     end

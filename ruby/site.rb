@@ -261,7 +261,7 @@ class Site
       Elements::Styling.new( place, [:bold])
     end
 
-    on_element 'style' do  |place|
+    on_element 'style', :grokked => false do  |place|
       Elements::Ignore.new( place)
     end
 
