@@ -376,4 +376,8 @@ class Site
     raise "Taxonomy #{name} already defined" if @taxonomy[name]
     @taxonomy[name] = plural ? plural : name
   end
+
+  def taxonomies
+    @taxonomy.each_pair {|k,v| yield k,v}
+  end
 end

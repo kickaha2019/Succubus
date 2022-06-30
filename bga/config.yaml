@@ -18,3 +18,9 @@ exclude_urls:
 - https://britgo.org/tournams/welsh-open/welsh-open-form.html
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
+generator:  Hugo
+hugo:
+  baseURL:      https://alofmethbin.com/experiment
+  title:        Experiment
+  languageCode: en-gb
+  theme:        ananke

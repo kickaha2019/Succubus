@@ -282,7 +282,6 @@ class BGA < Site
     end.parent.parent.css( 'td.views-field-created') do |node1, href|
       if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( node1.text)
         @post_dates[href] = to_date( m[1], m[2], m[3])
-        p [href, @post_dates[href]]
       end
       false
     end
@@ -292,7 +291,6 @@ class BGA < Site
     end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |node1, href|
       if m = /(\d+) (\w*) (\d\d\d\d)/.match( node1.text)
         @post_dates[href] = to_date( m[3], m[2], m[1])
-        p [href, @post_dates[href]]
       end
       false
     end
