@@ -107,14 +107,17 @@ class Site
     end
 
     if /^\// =~ url
-      return root_url + url[1..-1]
+      url = root_url + url[1..-1]
+    elsif /^\w*:/ =~ url
+    else
+      url = dir_url + '/' + url
     end
 
-    if /^\w*:/ =~ url
-      url
-    else
-      dir_url + '/' + url
+    if (url.size > root_url.size) && (/\/$/ =~ url)
+      url = url[0..-2]
     end
+
+    url
   end
 
   def asset?( url)
