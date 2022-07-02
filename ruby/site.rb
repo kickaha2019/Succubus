@@ -375,6 +375,9 @@ class Site
   def preparse( url, page)
   end
 
+  def redirect( url, target)
+  end
+
   def taxonomy( name, plural = nil)
     raise "Taxonomy #{name} already defined" if @taxonomy[name]
     @taxonomy[name] = plural ? plural : name

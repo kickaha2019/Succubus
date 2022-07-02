@@ -296,6 +296,13 @@ class BGA < Site
     end
   end
 
+  def redirect( url, target)
+    super
+    if @post_dates[url]
+      @post_dates[target] = @post_dates[url]
+    end
+  end
+
   def to_date( year, month, day)
     #p ['to_date1', year, month, day]
     year = year.to_i

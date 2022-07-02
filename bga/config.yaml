@@ -16,6 +16,7 @@ exclude_urls:
 - https://britgo.org/softwarereviews
 - https://britgo.org/tournams/welsh-open/tour-entries.html
 - https://britgo.org/tournams/welsh-open/welsh-open-form.html
+- https://britgo.org/views/news
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

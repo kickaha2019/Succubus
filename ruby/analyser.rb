@@ -115,65 +115,43 @@ DUMP2
     end
 
     open_files( dir)
+    n_all, n_error, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0
 
     addresses = @pages.keys.sort
     @is_error = true
-    write_files <<HEADER1
-<html>
-<head>
-<style>
-body {display: flex; align-items: center; flex-direction: column}
-table {border-collapse: collapse}
-.pages td, .pages th {border: 1px solid black; font-size: 20px}
-.menu {padding-bottom: 20px}
-.menu td {font-size: 30px; padding-left: 10px; padding-right: 10px}
-</style>
-</head>
-<body><div class="menu"><table><tr>
-HEADER1
-
-    @files[0].print "<td><a href=\"index1.html\">Hide assets</a><td>"
-    @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
-    @files[0].print "<td><a href=\"index2.html\">Just errors</a><td>"
-    @files[1].print "<td><a href=\"index2.html\">Just errors</a><td>"
-    @files[2].print "<td><a href=\"index.html\">Show all</a><td>"
-
-    write_files <<HEADER2
-</tr></table></div><div class="pages"><table><tr>
-<th>Page</th>
-<th>State</th>
-<th>Articles</th>
-<th>Date</th>
-<th>Tags</th>
-<th>Comment</th>
-<th>Timestamp</th>
-</tr>
-HEADER2
+    report_header
 
     addresses.each_index do |i|
       addr = addresses[i]
-      @is_asset = asset?(addr)
-      @is_error = false
+      next if exclude_url?( addr)
+
+      @is_asset, @is_error, redirect, parsed = examine( addr)
+      # @is_asset = asset?(addr)
+      # @is_error = false
       ts   = @pages[addr]['timestamp']
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
       #next if ts == 0
 
-      next if exclude_url?( addr)
+      n_all     += 1
+      n_grabbed += 1
 
-      parsed = nil
-      if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
-        begin
-          parsed = parse( addr, @pages[addr]['timestamp'])
-        rescue
-          puts "*** File: #{@pages[addr]['timestamp']}.html"
-          raise
-        end
-      end
-
-      if parsed
-        @is_error = parsed.content?
-        parsed.tree {|child| @is_error = true if child.error?}
-      end
+      # parsed = nil
+      # if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
+      #   begin
+      #     parsed = parse( addr, @pages[addr]['timestamp'])
+      #   rescue
+      #     puts "*** File: #{@pages[addr]['timestamp']}.html"
+      #     raise
+      #   end
+      # end
+      #
+      # if parsed
+      #   @is_error = parsed.content?
+      #   parsed.tree {|child| @is_error = true if child.error?}
+      # else
+      #   @is_error = (@pages[addr]['comment']  && (! @pages[addr]['redirect']))
+      # end
+      n_error += 1 if @is_error
 
       if ts == 0
         write_files "<tr><td>#{addr}</td>"
@@ -186,11 +164,14 @@ HEADER2
         write_files "<a target=\"_blank\" href=\"#{i}.html\">"
         write_files( @is_error ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
         write_files "</a></th>"
-      elsif @pages[addr]['redirect']
+      elsif redirect
+        n_redirect += 1
         write_files "<th bgcolor=\"lime\">&rArr;</th>"
       elsif ts == 0
         write_files "<th bgcolor=\"yellow\">?</th>"
-      elsif asset?(addr)
+        n_grabbed -= 1
+      elsif @is_asset
+        n_asset += 1
         write_files "<th bgcolor=\"lime\">&check;</th>"
       else
         write_files "<th bgcolor=\"red\">&cross;</th>"
@@ -229,11 +210,70 @@ HEADER2
 
     @is_asset = false
     @is_error = true
-    write_files <<FOOTER
-</table><div></body></html>
-FOOTER
-
+    report_footer( n_all, n_error, n_redirect, n_asset, n_grabbed)
     close_files
+  end
+
+  def report_footer( n_all, n_error, n_redirect, n_asset, n_grabbed)
+    write_files <<FOOTER1
+</table></div>
+<div class="menu"><table><tr>
+<td>Records: #{n_all}</td>
+<td>Assets: #{n_asset}</td>
+<td>Redirects: #{n_redirect}</td>
+<td>Errors: #{n_error}</td>
+<td>Grabbed: #{n_grabbed}</td>
+</tr></table></div>
+<div class="menu"><table><tr>
+FOOTER1
+
+    @files[0].print "<td><a href=\"index1.html\">Hide assets</a><td>"
+    @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
+    @files[0].print "<td><a href=\"index2.html\">Just errors</a><td>"
+    @files[1].print "<td><a href=\"index2.html\">Just errors</a><td>"
+    @files[2].print "<td><a href=\"index.html\">Show all</a><td>"
+
+    write_files <<FOOTER2
+</tr></table><div></body></html>
+FOOTER2
+  end
+
+  def report_header
+    write_files <<HEADER1
+<html>
+<head>
+<style>
+body {display: flex; align-items: center; flex-direction: column-reverse; justify-content: flex-end}
+table {border-collapse: collapse}
+.pages td, .pages th {border: 1px solid black; font-size: 20px}
+.menu {padding-bottom: 20px}
+.menu td {font-size: 30px; padding-left: 10px; padding-right: 10px}
+</style>
+</head>
+<body>
+HEADER1
+
+    n_all, n_error, n_redirect, n_asset = 0, 0, 0, 0
+    @pages.each_pair do |url, info|
+      n_all += 1
+      if info['redirect']
+        n_redirect += 1
+      elsif asset?( url)
+        n_asset += 1
+      end
+    end
+
+    write_files <<HEADER2
+</tr></table></div><div class="pages"><table><tr>
+<th>Page</th>
+<th>State</th>
+<th>Articles</th>
+<th>Date</th>
+<th>Tags</th>
+<th>Comment</th>
+<th>Timestamp</th>
+</tr>
+HEADER2
   end
 
   def write_files( text)

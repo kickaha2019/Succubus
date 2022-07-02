@@ -47,6 +47,43 @@ class Processor
     false
   end
 
+  def examine( url)
+    info = @pages[url]
+    ts   = info['timestamp']
+
+    if ts == 0
+      return asset?(url),
+             (info['comment']  && (! info['redirect'])),
+             info['redirect'],
+             nil
+    end
+
+    if asset?( url) || info['redirect']
+      return asset?( url), false, info['redirect'], nil
+    end
+
+    unless File.exist?( @cache + "/#{ts}.html")
+      return false, false, false, nil
+    end
+
+    begin
+      parsed = parse( url, ts)
+
+      error = parsed.content?
+      parsed.tree {|child| error = true if child.error?}
+
+      return false, error, false, parsed
+    rescue
+      puts "*** File: #{info['timestamp']}.html"
+      raise
+    end
+  end
+
+  def parse( url, ts)
+    body = IO.read( "#{@cache}/#{ts}.html")
+    @site.parse( url, body)
+  end
+
   def preparse_all
     @pages.each_pair do |url, info|
       if ts = info['timestamp']
@@ -58,8 +95,15 @@ class Processor
     end
   end
 
-  def parse( url, ts)
-    body = IO.read( "#{@cache}/#{ts}.html")
-    @site.parse( url, body)
+  def propagate_redirects
+    @pages.each_key do |url|
+      target = url
+      while @pages[target] && @pages[target]['redirect']
+        target = @pages[target]['comment']
+      end
+      if url != target
+        @site.redirect( url, target)
+      end
+    end
   end
 end

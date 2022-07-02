@@ -7,9 +7,39 @@ class Compiler < Processor
     @generator = Kernel.const_get( 'Generators::' + @config['generator']).new( @config, output_dir)
   end
 
+  def clean_old_files
+    @generator.clean_old_files
+  end
+
   def compile
     preparse_all
     compile_site
+    compile_pages
+    clean_old_files
+  end
+
+  def compile_article( url, article)
+    @generator.article_begin( url)
+    if article.date
+      @generator.article_date( article.date)
+    end
+    if article.title
+      @generator.article_title( article.title)
+    end
+    @generator.article_end
+  end
+
+  def compile_pages
+    @pages.each_pair do |url, info|
+      _, error, _, parsed = examine( url)
+      next unless parsed && (! error)
+
+      parsed.tree do |child|
+        if child.is_a?( Elements::Article)
+          compile_article( url, child)
+        end
+      end
+    end
   end
 
   def compile_site
