@@ -8,6 +8,17 @@ module Generators
       @generated  = {}
     end
 
+    def asset_copy( cached, url)
+      path = @output_dir + '/static/' + url[(@config['root_url'].size)..-1]
+      @generated[path] = true
+      unless File.exist?( path)
+        create_dir( File.dirname( path))
+        unless system( "cp #{cached} #{path}")
+          raise "Error copying  #{cached} to #{path}"
+        end
+      end
+    end
+
     def article_begin( url)
       @path = @output_dir + '/content/' + url[(@config['root_url'].size)..-1]
       if /\/$/ =~ @path
@@ -33,15 +44,19 @@ module Generators
     end
 
     def article_end
-      write_file( @path, "---\n#{@front_matter.to_yaml}\n---\n#{@markdown.join("\n")}")
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{@markdown.join("\n")}")
     end
 
     def article_title( title)
       @front_matter['title'] = title
     end
 
-    def clean_old_files( dir=nil)
-      dir   = @output_dir + '/content' unless dir
+    def clean_old_files
+      clean_old_files1( @output_dir + '/content')
+      clean_old_files1( @output_dir + '/static')
+    end
+
+    def clean_old_files1( dir)
       empty = true
 
       Dir.entries( dir).each do |f|
@@ -49,7 +64,7 @@ module Generators
         path = dir +'/' + f
 
         if File.directory?( path)
-          if clean_old_files( path)
+          if clean_old_files1( path)
             puts "... Would delete #{path}"
 #            File.delete( path)
           else

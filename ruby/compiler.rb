@@ -14,6 +14,7 @@ class Compiler < Processor
   def compile
     preparse_all
     compile_site
+    copy_assets
     compile_pages
     clean_old_files
   end
@@ -48,6 +49,15 @@ class Compiler < Processor
       @generator.site_taxonomy( singular, plural)
     end
     @generator.site_end
+  end
+
+  def copy_assets
+    @pages.each_pair do |url, info|
+      asset, error, redirect, _ = examine( url)
+      next unless asset && (! error) && (! redirect)
+      next unless info['timestamp'] > 0
+      @generator.asset_copy( "#{@cache}/#{info['timestamp']}.#{url.split('.')[-1]}", url)
+    end
   end
 end
 
