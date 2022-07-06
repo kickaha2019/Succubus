@@ -6,6 +6,11 @@ module Elements
       super
     end
 
+    def generate( generator, before, after)
+      generator.hr
+      super
+    end
+
     def grokked?
       true
     end

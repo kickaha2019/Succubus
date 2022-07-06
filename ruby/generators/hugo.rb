@@ -1,11 +1,13 @@
 module Generators
   class Hugo
     def initialize( config, output_dir)
-      @config     = config
-      @output_dir = output_dir
-      @taxonomies = {}
-      @written    = {}
-      @generated  = {}
+      @config        = config
+      @output_dir    = output_dir
+      @taxonomies    = {}
+      @written       = {}
+      @generated     = {}
+      @article_error = false
+      @article_url   = nil
     end
 
     def asset_copy( cached, url)
@@ -20,6 +22,8 @@ module Generators
     end
 
     def article_begin( url)
+      @article_url   = url
+      @article_error = false
       @path = @output_dir + '/content/' + url[(@config['root_url'].size)..-1]
       if /\/$/ =~ @path
         @path = @path + 'index.html'
@@ -44,7 +48,7 @@ module Generators
     end
 
     def article_end
-      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{@markdown.join("\n")}")
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{@markdown.join('')}")
     end
 
     def article_title( title)
@@ -88,6 +92,42 @@ module Generators
       end
     end
 
+    def error( msg)
+      unless @article_error
+        @article_error = true
+        puts "*** #{msg} in #{@article_url}"
+      end
+    end
+
+    def image( src)
+      newline
+      @markdown << "![](#{src})\n"
+    end
+
+    def link_begin( href)
+      @markdown << "["
+    end
+
+    def link_end( href)
+      @markdown << "](#{href}"
+    end
+
+    def method_missing( verb, *args)
+      error( verb.to_s + ": ???")
+    end
+
+    def newline
+      @markdown << "\n" unless @markdown[-1] && @markdown[-1][-1] == "\n"
+    end
+
+    def paragraph_begin
+      @markdown << "\n\n" unless @markdown[-1] == "\n\n"
+    end
+
+    def paragraph_end
+      paragraph_begin
+    end
+
     def site_begin
     end
 
@@ -99,6 +139,20 @@ module Generators
 
     def site_taxonomy( singular, plural)
       @taxonomies[singular] = plural
+    end
+
+    def style_begin( styles)
+      return if styles.empty?
+      error( "style_begin: #{styles.collect {|s| s.to_s}.join( ' ')}")
+    end
+
+    def style_end( styles)
+      return if styles.empty?
+      error( "style_end: #{styles.collect {|s| s.to_s}.join( ' ')}")
+    end
+
+    def text( str)
+      @markdown << str
     end
 
     def write_file( path, data)

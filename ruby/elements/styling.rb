@@ -15,6 +15,10 @@ module Elements
       end
     end
 
+    def generate( generator, before, after)
+      super( generator, (before + @types).uniq, (after + @types).uniq)
+    end
+
     def grokked?
       true
     end

@@ -15,6 +15,12 @@ module Elements
       super + ': ' + @level.to_s
     end
 
+    def generate( generator, before, after)
+      generator.heading_begin( @level)
+      super( generator, [], [])
+      generator.heading_end( @level)
+    end
+
     def grokked?
       true
     end

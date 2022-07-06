@@ -8,7 +8,6 @@ require_relative 'elements/anchor'
 require_relative 'elements/article'
 require_relative 'elements/break'
 require_relative 'elements/cell'
-require_relative 'elements/date'
 require_relative 'elements/font'
 require_relative 'elements/heading'
 require_relative 'elements/horizontal_rule'
@@ -86,9 +85,15 @@ class Site
 
     define_rules
     @initialised = true
+
+    @url_replaces = {}
+    @config['url_replace'].each do |replace|
+      @url_replaces[replace['from']] = replace['to']
+    end
   end
 
-  def self.absolutise( root_url, page_url, url)
+  def absolutise( page_url, url)
+    root_url = @config['root_url']
     dir_url = page_url.split('?')[0]
 
     if /^\?/ =~ url
@@ -117,6 +122,10 @@ class Site
       url = url[0..-2]
     end
 
+    if @url_replaces[url]
+      url = @url_replaces[url]
+    end
+
     url
   end
 
@@ -143,6 +152,10 @@ class Site
 
     on_element 'big' do  |place|
       Elements::Styling.new( place, [:big])
+    end
+
+    on_element 'blockquote' do  |place|
+      Elements::Styling.new( place, [:quote])
     end
 
     on_element 'br' do  |place|
@@ -334,7 +347,7 @@ class Site
     Elements::Unknown.reset_next_index
 
     html_doc    = Nokogiri::HTML( page)
-    page = Page.new( @config['root_url'], @taxonomy, url, html_doc)
+    page = Page.new( self, @config['root_url'], @taxonomy, url, html_doc)
 
     relative_url = url[@config['root_url'].size..-1]
 

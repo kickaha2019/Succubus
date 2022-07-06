@@ -27,6 +27,7 @@ class Compiler < Processor
     if article.title
       @generator.article_title( article.title)
     end
+    article.generate( @generator, [], [])
     @generator.article_end
   end
 

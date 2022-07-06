@@ -10,6 +10,12 @@ module Elements
       true
     end
 
+    def generate( generator, before, after)
+      generator.list_item_begin
+      super
+      generator.list_item_end
+    end
+
     def grokked?
       true
     end

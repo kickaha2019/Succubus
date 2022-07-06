@@ -10,6 +10,9 @@ module Elements
       false
     end
 
+    def generate( generator, before, after)
+    end
+
     def grokked?
       true
     end

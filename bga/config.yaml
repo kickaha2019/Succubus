@@ -17,6 +17,8 @@ exclude_urls:
 - https://britgo.org/tournams/welsh-open/tour-entries.html
 - https://britgo.org/tournams/welsh-open/welsh-open-form.html
 - https://britgo.org/views/news
+- https://britgo.org/bchamp/qualifiers
+- https://britgo.org/bchamp/qualifiers2022
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo
@@ -25,3 +27,16 @@ hugo:
   title:        Experiment
   languageCode: en-gb
   theme:        ananke
+url_replace:
+- from: "https://britgo.org/pairgo/photos2019 "
+  to:   https://britgo.org/pairgo/photos2019
+- from: "https://britgo.org/name/Jon Diamond"
+  to:   https://britgo.org/positions#honorary
+- from: "https://britgo.org/name/Matthew MacFadyen"
+  to:   https://britgo.org/positions#honorary
+- from: "https://britgo.org/name/Tony Atkins"
+  to:   https://britgo.org/positions#honorary
+- from: "https://britgo.org/name/T Mark Hall"
+  to:   https://britgo.org/positions#honorary
+- from: "https://britgo.org/name/Francis Roads"
+  to:   https://britgo.org/positions#honorary

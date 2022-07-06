@@ -37,6 +37,16 @@ module Elements
       @contents.select {|child| child.is_a?( clazz)}
     end
 
+    def generate( generator, before, after)
+      if @contents.size == 1
+        @contents[0].generate( generator, before, after)
+      elsif @contents.size > 1
+        @contents[0].generate( generator, before, [])
+        @contents[1..-2].each {|child| child.generate( generator, [], [])}
+        @contents[-1].generate( generator, [], after)
+      end
+    end
+
     def grokked?
       false
     end

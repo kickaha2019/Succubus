@@ -15,6 +15,10 @@ module Elements
       super + ': ' + @path
     end
 
+    def generate( generator, before, after)
+      generator.image( @path)
+    end
+
     def grokked?
       true
     end

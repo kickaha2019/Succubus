@@ -10,6 +10,12 @@ module Elements
       true
     end
 
+    def generate( generator, before, after)
+      generator.row_begin
+      super
+      generator.row_end
+    end
+
     def grokked?
       true
     end

@@ -281,7 +281,7 @@ class BGA < Site
     nodes = page_to_nodes( page)
 
     nodes.css( 'td.views-field-title a') do |node|
-      [Site.absolutise( @config['root_url'], url, node['href'])]
+      [absolutise( url, node['href'])]
     end.parent.parent.css( 'td.views-field-created') do |node1, href|
       if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( node1.text)
         @post_dates[href] = to_date( m[1], m[2], m[3])
@@ -290,7 +290,7 @@ class BGA < Site
     end
 
     nodes.css( 'td.views-field-title a') do |node|
-      [Site.absolutise( @config['root_url'], url, node['href'])]
+      [absolutise( url, node['href'])]
     end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |node1, href|
       if m = /(\d+) (\w*) (\d\d\d\d)/.match( node1.text)
         @post_dates[href] = to_date( m[3], m[2], m[1])

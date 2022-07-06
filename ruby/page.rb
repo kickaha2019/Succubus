@@ -2,7 +2,8 @@ class Page
   attr_reader :url, :document, :tags
   attr_accessor :date, :mode, :title
 
-  def initialize( root_url, taxonomy, url, document)
+  def initialize( site, root_url, taxonomy, url, document)
+    @site     = site
     @root_url = root_url
     @taxonomy = taxonomy
     @url      = url
@@ -14,7 +15,7 @@ class Page
   end
 
   def absolutise( url)
-    Site.absolutise( @root_url, @url, url)
+    @site.absolutise( @url, url)
   end
 
   def add_tag( species, name)
