@@ -19,6 +19,10 @@ class Place
     @children.inject( false) {|flag, child| flag | child.content?}
   end
 
+  def date
+    @page.date
+  end
+
   def find_children( clazz)
     @children.select {|child| child.is_a?( clazz)}
   end
@@ -37,5 +41,9 @@ class Place
 
   def title
     @page.title
+  end
+
+  def url
+    @page.url
   end
 end

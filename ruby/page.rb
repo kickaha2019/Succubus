@@ -25,6 +25,7 @@ class Page
 
   def css( expr)
     @document.css( expr)
+#    Nodes.new( @document.css( expr))
   end
 
   def relative_path

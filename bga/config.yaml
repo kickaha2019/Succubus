@@ -18,6 +18,8 @@ exclude_urls:
 - https://britgo.org/tournams/welsh-open/welsh-open-form.html
 - https://britgo.org/views/news
 - https://britgo.org/bchamp/qualifiers
+- https://britgo.org/bchamp/qualifiers2020
+- https://britgo.org/bchamp/qualifiers2021
 - https://britgo.org/bchamp/qualifiers2022
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
@@ -33,7 +35,7 @@ url_replace:
 - from: "https://britgo.org/name/Jon Diamond"
   to:   https://britgo.org/positions#honorary
 - from: "https://britgo.org/name/Matthew MacFadyen"
-  to:   https://britgo.org/positions#honorary
+  to:   https://britgo.org/bchamp/matthew.html
 - from: "https://britgo.org/name/Tony Atkins"
   to:   https://britgo.org/positions#honorary
 - from: "https://britgo.org/name/T Mark Hall"

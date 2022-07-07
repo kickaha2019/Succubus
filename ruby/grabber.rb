@@ -50,6 +50,13 @@ class Grabber < Processor
     end
   end
 
+  def elide_unreachable
+    @pages, old_pages = {}, @pages
+    old_pages.each_pair do |url, info|
+      @pages[url] = info if @reachable[url]
+    end
+  end
+
   def get_candidates( limit, explicit)
     if explicit
       @candidates = [explicit]
@@ -206,6 +213,7 @@ g = Grabber.new( ARGV[0], ARGV[1])
 g.check_files_deleted
 g.initialise_reachable
 g.trace_from_reachable
+g.elide_unreachable
 g.get_candidates( ARGV[2].to_i, ARGV[3])
 g.grab_candidates
 g.clean_cache

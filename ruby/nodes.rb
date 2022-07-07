@@ -22,11 +22,17 @@ class Nodes
     Nodes.new( results)
   end
 
-  def parent
-    results = []
-    @set.each do |node|
-      parent = node[0].parent
-      #p parent.name
+  def self.parse( page)
+    Nodes.new( [[Nokogiri::HTML( page).root.at_xpath( '//body')]])
+  end
+
+  def parent( up = 1)
+    results = @set
+    (1..up).each do
+      results, results1 = [], results
+      results1.each do |node|
+        parent = node[0].parent
+        #p parent.name
         if block_given?
           got = yield parent, * node[1..-1]
           if got
@@ -35,8 +41,17 @@ class Nodes
         else
           results << [parent, * node[1..-1]]
         end
+      end
     end
-    #p ['parent', results.size]
+
     Nodes.new( results)
+  end
+
+  def text
+    strings = []
+    @set.each do |node|
+      strings << node.text
+    end
+    strings.join('')
   end
 end

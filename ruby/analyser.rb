@@ -99,7 +99,8 @@ DUMP2
     @files = [
         File.open( dir + '/index.html', 'w'),
         File.open( dir + '/index1.html', 'w'),
-        File.open( dir + '/index2.html', 'w')
+        File.open( dir + '/index2.html', 'w'),
+        File.open( dir + '/index3.html', 'w')
     ]
     @is_asset = false
   end
@@ -115,10 +116,11 @@ DUMP2
     end
 
     open_files( dir)
-    n_all, n_error, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0
+    n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0
 
-    addresses = @pages.keys.sort
-    @is_error = true
+    addresses     = @pages.keys.sort
+    @is_error     = true
+    @has_articles = true
     report_header
 
     addresses.each_index do |i|
@@ -134,6 +136,23 @@ DUMP2
 
       n_all     += 1
       n_grabbed += 1
+
+      old_articles, date, tags = n_articles, '', ''
+      if parsed
+        parsed.tree do |child|
+          if child.is_a?( Elements::Article)
+            n_articles += 1
+            if child.date
+              date = child.date.strftime( '%Y-%m-%d')
+            end
+            if child.tags
+              tags = child.tags.collect {|tag| tag[1]}.join( ' ')
+            end
+          end
+        end
+      end
+
+      @has_articles = (n_articles > old_articles)
 
       # parsed = nil
       # if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
@@ -177,22 +196,7 @@ DUMP2
         write_files "<th bgcolor=\"red\">&cross;</th>"
       end
 
-      n_articles, date, tags = 0, '', ''
-      if parsed
-        parsed.tree do |child|
-          if child.is_a?( Elements::Article)
-            n_articles += 1
-            if child.date
-              date = child.date.strftime( '%Y-%m-%d')
-            end
-            if child.tags
-              tags = child.tags.collect {|tag| tag[1]}.join( ' ')
-            end
-          end
-        end
-      end
-
-      write_files "<td>#{n_articles}</td>"
+      write_files "<td>#{@has_articles ? (n_articles - old_articles) : ''}</td>"
       write_files "<td>#{date}</td>"
       write_files "<td>#{tags}</td>"
       write_files "<td>#{@pages[addr]['comment']}</td>"
@@ -208,17 +212,19 @@ DUMP2
       end
     end
 
-    @is_asset = false
-    @is_error = true
-    report_footer( n_all, n_error, n_redirect, n_asset, n_grabbed)
+    @is_asset     = false
+    @is_error     = true
+    @has_articles = true
+    report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed)
     close_files
   end
 
-  def report_footer( n_all, n_error, n_redirect, n_asset, n_grabbed)
+  def report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed)
     write_files <<FOOTER1
 </table></div>
 <div class="menu"><table><tr>
 <td>Records: #{n_all}</td>
+<td>Articles: #{n_articles}</td>
 <td>Assets: #{n_asset}</td>
 <td>Redirects: #{n_redirect}</td>
 <td>Errors: #{n_error}</td>
@@ -228,10 +234,13 @@ DUMP2
 FOOTER1
 
     @files[0].print "<td><a href=\"index1.html\">Hide assets</a><td>"
-    @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
     @files[0].print "<td><a href=\"index2.html\">Just errors</a><td>"
+    @files[0].print "<td><a href=\"index3.html\">Just articles</a><td>"
+    @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
     @files[1].print "<td><a href=\"index2.html\">Just errors</a><td>"
+    @files[1].print "<td><a href=\"index3.html\">Just articles</a><td>"
     @files[2].print "<td><a href=\"index.html\">Show all</a><td>"
+    @files[3].print "<td><a href=\"index.html\">Show all</a><td>"
 
     write_files <<FOOTER2
 </tr></table><div></body></html>
@@ -280,6 +289,7 @@ HEADER2
     @files[0].print text
     @files[1].print text unless @is_asset
     @files[2].print text if @is_error
+    @files[3].print text if @has_articles
   end
 end
 

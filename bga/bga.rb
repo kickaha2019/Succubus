@@ -27,7 +27,9 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'block-system-main-block' do |place|
-      Elements::Article.new( place).set_title( place.title).set_date( get_latest_date( place))
+      Elements::Article.new( place).set_title( place.title).set_date( place.date)
+      #     place.date ? place.date : get_latest_date( place)
+      # )
     end
 
     on_element 'div', :class => 'block-page-title-block' do |place|
@@ -172,10 +174,69 @@ class BGA < Site
       true
     end
 
+    on_page %r{^(taxonomy/|news$|results/12months$)} do |page|
+      on_element 'div', :class => 'block-system-main-block' do |place|
+        Elements::Ignore.new( place)
+      end
+    end
+
+    on_page %r{^\w*/\w*\d\d\d\d(|$)} do |page|
+      unless /^(bgj|node)$/ =~ page.relative_path[0]
+        page.date= Time.new( page.relative_path[1][-4..-1].to_i)
+        page.mode= :post
+      end
+      false
+    end
+
     on_page /.*/ do |page|
       page.title= page.css( '.page-title').text.strip
       page.mode=  :article
+      if m = /Newsletter.*\s(\w*) (\d\d\d\d)$/.match( page.title)
+        if d = to_date( m[2], m[1], 1)
+          page.date= d
+          page.mode= :post
+        end
+      end
+
+      if date = @post_dates[page.url]
+        page.date= date
+        page.mode= :post
+      end
+
       false
+    end
+
+    on_page %r{^(junior|news|results)/} do |page|
+      if m = %r{^\w+, (\d\d)/(\d\d)/(\d\d\d\d)( |$)}.match( page.css( 'span.submitted').text.strip)
+        page.date = to_date( m[3], m[2], m[1])
+        page.mode= :post
+      end
+
+      if m = %r{^\w+, (\d\d) (\w\w\w) (\d\d\d\d)( |$)}.match( page.css( 'span.submitted').text.strip)
+        page.date = to_date( m[3], m[2], m[1])
+        page.mode= :post
+      end
+
+      # if /results\/2017\/mso13/ =~ page.url
+      #   p [ 'DEBUG1', page.css( 'div.field__item').text.strip]
+      # end
+
+      page.css( 'div.field__item').each do |element|
+        # if /results\/2017\/mso13/ =~ page.url
+        #   p [ 'DEBUG2', element.text.strip]
+        # end
+        if m = %r{, (\d{1,2}) (\w\w\w) (\d\d\d\d)$}.match( element.text)
+          page.date = to_date( m[3], m[2], m[1])
+          page.mode= :post
+        end
+      end
+
+      false
+      # if m = %r{, (\d\d) (\w\w\w) (\d\d\d\d)$}.match( page.css( 'div.field__item').text.strip)
+      #   page.date = to_date( m[3], m[2], m[1])
+      #   page.mode= :post
+      # end
+      #
     end
 
     on_page %r{^(\w*)(/|$)} do |page|
@@ -214,26 +275,6 @@ class BGA < Site
       false
     end
 
-    on_page 'bchamp/index.html' do |page|
-      page.date= Time.now
-      page.mode= :post
-      false
-    end
-
-    on_page %r{^\w*/\w*\d\d\d\d$} do |page|
-      page.date= Time.at( page.relative_path[-1][-4..-1].to_i)
-      page.mode= :post
-      false
-    end
-
-    on_page /.*/ do |page|
-      if date = @post_dates[page.url]
-        page.date= date
-        page.mode= :post
-      end
-      false
-    end
-
     super
   end
 
@@ -241,11 +282,16 @@ class BGA < Site
     date, text = nil, place.text
 
     text.scan( %r{\W(\d\d)/(\d\d)/(\d\d)\W}) do |found|
-      date = latest_date( date, to_date( '20' + found[2], found[1], found[0]))
+      date = latest_date( date, to_date( found[2], found[1], found[0]))
     end
 
-    text.scan( %r{\W(\d+)(?:th|nd|st|rd) (\w+) (\d\d\d\d)\W}) do |found|
+    text.scan( %r{\W(\d+)(?:th|nd|st|rd|) (\w+) (\d\d\d\d)\W}) do |found|
+      begin
        date = latest_date( date, to_date( found[2], found[1], found[0]))
+      rescue
+        p [place.url, found]
+        raise
+      end
     end
 
     date
@@ -309,9 +355,19 @@ class BGA < Site
   def to_date( year, month, day)
     #p ['to_date1', year, month, day]
     year = year.to_i
+    if year < 100
+      if year < 40
+        year += 2000
+      else
+        year += 1900
+      end
+    end
     day  = day.to_i
+    return nil if (day < 1) || (day > 31)
+
     if /^\d+$/ =~ month
       month = month.to_i
+      return nil if (month < 1) || (month > 12)
     else
       months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
       return nil unless months.include?( month[0..2])
