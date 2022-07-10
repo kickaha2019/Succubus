@@ -8,6 +8,11 @@ module Generators
       @generated     = {}
       @article_error = false
       @article_url   = nil
+
+      # Control the markdown generation
+      @indent        = ['']
+      @list_marker   = '#'
+      @table_state   = nil
     end
 
     def asset_copy( cached, url)
@@ -55,6 +60,24 @@ module Generators
       @front_matter['title'] = title
     end
 
+    def break_begin
+    end
+
+    def break_end
+      newline
+      @markdown << "\n"
+    end
+
+    def cell_begin
+      unless /\|$/ =~ @markdown[-1]
+        @markdown << '|'
+      end
+    end
+
+    def cell_end
+      @markdown << '|'
+    end
+
     def clean_old_files
       clean_old_files1( @output_dir + '/content')
       clean_old_files1( @output_dir + '/static')
@@ -69,16 +92,17 @@ module Generators
 
         if File.directory?( path)
           if clean_old_files1( path)
-            puts "... Would delete #{path}"
-#            File.delete( path)
+            begin
+              File.delete( path)
+            rescue
+            end
           else
             empty = false
           end
         elsif @generated[path]
           empty = false
         else
-          puts "... Would delete #{path}"
-#          File.delete( path)
+          File.delete( path)
         end
       end
 
@@ -99,6 +123,18 @@ module Generators
       end
     end
 
+    def heading_begin( level)
+      @markdown << "\n#{"######"[0...level]} "
+    end
+
+    def heading_end( level)
+    end
+
+    def hr
+      newline
+      @markdown << "---\n"
+    end
+
     def image( src)
       newline
       @markdown << "![](#{src})\n"
@@ -112,12 +148,34 @@ module Generators
       @markdown << "](#{href}"
     end
 
+    def list_begin( type)
+      @list_marker = (type == :ordered) ? 1 : '#'
+    end
+
+    def list_item_begin
+      if @list_marker.is_a?( Integer)
+        indent = "#{@list_marker}. "
+        @list_marker += 1
+      else
+        indent = '- '
+      end
+      newline
+      @markdown << indent
+      @indent << @indent[-1] + "          "[0...(indent.size)]
+    end
+
+    def list_item_end
+    end
+
+    def list_end( type)
+    end
+
     def method_missing( verb, *args)
       error( verb.to_s + ": ???")
     end
 
     def newline
-      @markdown << "\n" unless @markdown[-1] && @markdown[-1][-1] == "\n"
+      @markdown << ("\n" + @indent[-1]) unless @markdown[-1] && @markdown[-1][-1] == "\n"
     end
 
     def paragraph_begin
@@ -126,6 +184,27 @@ module Generators
 
     def paragraph_end
       paragraph_begin
+    end
+
+    def preformatted( text)
+      text = text.gsub( /\n /, "\\\n\ ")
+      text = text.gsub( /\n/, "\\\n")
+      text = text.gsub( /\\\\\n/, "\\\n")
+      @markdown << text
+    end
+
+    def row_begin
+      @cell_count = 0
+      newline
+    end
+
+    def row_end
+      if @table_state == :header
+        newline
+        @markdown << '|'
+        (0...@cell_count).each {@markdown << '-|'}
+        @table_state = :data
+      end
     end
 
     def site_begin
@@ -142,13 +221,50 @@ module Generators
     end
 
     def style_begin( styles)
-      return if styles.empty?
-      error( "style_begin: #{styles.collect {|s| s.to_s}.join( ' ')}")
+      styles.each do |style|
+        if style == :bold
+          @markdown << '**'
+        elsif style == :centre
+        elsif style == :emphasized
+          @markdown << '*'
+        elsif style == :italic
+          @markdown << '*'
+        elsif style == :small
+        elsif style == :superscript
+        elsif style == :teletype
+        elsif style == :variable
+          @markdown << '*'
+        else
+          error( "style_begin: #{styles.collect {|s| s.to_s}.join( ' ')}")
+        end
+      end
     end
 
     def style_end( styles)
-      return if styles.empty?
-      error( "style_end: #{styles.collect {|s| s.to_s}.join( ' ')}")
+      styles.each do |style|
+        if style == :bold
+          @markdown << '**'
+        elsif style == :centre
+        elsif style == :emphasized
+          @markdown << '*'
+        elsif style == :italic
+          @markdown << '*'
+        elsif style == :small
+        elsif style == :superscript
+        elsif style == :teletype
+        elsif style == :variable
+          @markdown << '*'
+        else
+          error( "style_begin: #{styles.collect {|s| s.to_s}.join( ' ')}")
+        end
+      end
+    end
+
+    def table_begin
+      @table_state = :header
+    end
+
+    def table_end
     end
 
     def text( str)

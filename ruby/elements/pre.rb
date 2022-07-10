@@ -1,15 +1,13 @@
 require_relative 'unknown'
 
 module Elements
-  class Break < Unknown
+  class Pre < Unknown
     def initialize( place)
       super
     end
 
     def generate( generator, before, after)
-      generator.break_begin
-      super
-      generator.break_end
+      generator.preformatted( text)
     end
 
     def grokked?

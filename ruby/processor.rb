@@ -26,7 +26,7 @@ class Processor
 
     if @config['exclude_urls']
       @config['exclude_urls'].each do |url|
-        if /^\^/ =~ url
+        if /[\\^$]/ =~ url
           @exclude_url_regexes << Regexp.new( url)
         else
           @exclude_url_strings << url

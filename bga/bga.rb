@@ -22,6 +22,10 @@ class BGA < Site
       Elements::Styling.new( place, [])
     end
 
+    on_element 'div', :class => 'attachment' do |place|
+      Elements::Styling.new( place, [])
+    end
+
     on_element 'div', :class => 'block-system-branding-block' do |place|
       Elements::Ignore.new( place)
     end
@@ -41,6 +45,10 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'clearfix' do |place|
+      Elements::Styling.new( place, [])
+    end
+
+    on_element 'div', :class => 'even' do |place|
       Elements::Styling.new( place, [])
     end
 
@@ -99,6 +107,14 @@ class BGA < Site
       Elements::Styling.new( place, [])
     end
 
+    on_element 'div', :class => 'odd' do |place|
+      Elements::Styling.new( place, [])
+    end
+
+    on_element 'div', :class => 'links' do |place|
+      Elements::Styling.new( place, [])
+    end
+
     on_element 'div', :class => 'sidebar', :grokked => false do |place|
       Elements::Ignore.new( place)
     end
@@ -112,6 +128,10 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'view-footer' do |place|
+      Elements::Styling.new( place, [])
+    end
+
+    on_element 'div', :class => 'views-col' do |place|
       Elements::Styling.new( place, [])
     end
 
@@ -131,10 +151,17 @@ class BGA < Site
       Elements::Styling.new( place, [:row])
     end
 
-    # on 'span', :class => 'submitted' do
-    #   p children[1].text
-    #   nil
-    # end
+    on_element 'iframe' do |place|
+      Elements::Ignore.new( place)
+    end
+
+    on_element 'section' do  |place|
+      Elements::Styling.new( place, [])
+    end
+
+    on_element 'select', :grokked => false do |place|
+      Elements::Ignore.new( place)
+    end
 
     on_element 'text' do |place|
       if place.text == "\n — "

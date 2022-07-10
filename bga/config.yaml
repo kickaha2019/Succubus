@@ -21,6 +21,11 @@ exclude_urls:
 - https://britgo.org/bchamp/qualifiers2020
 - https://britgo.org/bchamp/qualifiers2021
 - https://britgo.org/bchamp/qualifiers2022
+- https://britgo.org/image/tid/82
+- https://britgo.org/join/pay
+- https://britgo.org/junior/youthgonews
+- "\\?order="
+- "/taxonomy/term/\\d*/feed$"
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

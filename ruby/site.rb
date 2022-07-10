@@ -7,6 +7,7 @@ require_relative 'page'
 require_relative 'elements/anchor'
 require_relative 'elements/article'
 require_relative 'elements/break'
+require_relative 'elements/caption'
 require_relative 'elements/cell'
 require_relative 'elements/font'
 require_relative 'elements/heading'
@@ -16,6 +17,7 @@ require_relative 'elements/image'
 require_relative 'elements/list'
 require_relative 'elements/list_item'
 require_relative 'elements/paragraph'
+require_relative 'elements/pre'
 require_relative 'elements/row'
 require_relative 'elements/span'
 require_relative 'elements/styling'
@@ -162,6 +164,10 @@ class Site
       Elements::Break.new( place)
     end
 
+    on_element 'caption' do  |place|
+      Elements::Caption.new( place)
+    end
+
     on_element 'center' do  |place|
       Elements::Styling.new( place, [:centre])
     end
@@ -259,7 +265,11 @@ class Site
     end
 
     on_element 'pre' do  |place|
-      Elements::Styling.new( place, [:pre])
+      Elements::Pre.new( place)
+    end
+
+    on_element 'script', :grokked => false do  |place|
+      Elements::Ignore.new( place)
     end
 
     on_element 'section' do  |place|
@@ -280,6 +290,10 @@ class Site
 
     on_element 'style', :grokked => false do  |place|
       Elements::Ignore.new( place)
+    end
+
+    on_element 'sup' do  |place|
+      Elements::Styling.new( place, [:superscript])
     end
 
     on_element 'table' do  |place|
@@ -310,8 +324,16 @@ class Site
       Elements::Row.new( place)
     end
 
+    on_element 'tt' do  |place|
+      Elements::Styling.new( place, [:teletype])
+    end
+
     on_element 'ul' do  |place|
       Elements::List.new( place, :unordered)
+    end
+
+    on_element 'var' do  |place|
+      Elements::Styling.new( place, [:variable])
     end
   end
 
