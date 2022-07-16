@@ -2,9 +2,12 @@ require_relative 'unknown'
 
 module Elements
   class Image < Unknown
-    def initialize( place, path)
+    attr_reader :title
+
+    def initialize( place, path, title)
       super( place)
-      @path = path
+      @path  = path
+      @title = title
     end
 
     def content?
@@ -16,7 +19,7 @@ module Elements
     end
 
     def generate( generator, before, after)
-      generator.image( @path)
+      generator.image( @path, @title)
     end
 
     def grokked?

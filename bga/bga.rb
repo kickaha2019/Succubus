@@ -5,6 +5,10 @@ class BGA < Site
     @post_dates = {}
   end
 
+  def absolutise( page_url, url)
+    super( page_url, page_param_only( url))
+  end
+
   def define_rules
     on_element 'a', :class => 'visually-hidden' do |place|
       Elements::Ignore.new( place)
@@ -12,7 +16,7 @@ class BGA < Site
 
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
-        Elements::Anchor.new( place, place.absolutise( m[1]))
+        Elements::Anchor.new( place, place.absolutise( m[1]), nil)
       else
         nil
       end
@@ -182,18 +186,15 @@ class BGA < Site
     on_page '' do |page|
       page.title= 'The British Go Association'
       page.mode=  :article
+
+      on_element 'div', :style => /float:\s*right/ do |place|
+        Elements::Ignore.new( place)
+      end
+
       true
     end
 
     on_page /^(allnews|results_xxxx)($|\?)/ do |page|
-      on_element 'a' do  |place|
-        if place['href']
-          Elements::Anchor.new( place, place.absolutise( page_param_only(place['href'])))
-        else
-          Elements::Text.new( place, '')
-        end
-      end
-
       on_element 'body', :grokked => false do |place|
         Elements::Ignore.new( place)
       end
@@ -277,6 +278,7 @@ class BGA < Site
           'council'     => 'Council',
           'education'   => 'Teaching',
           'events'      => 'Events',
+          'eygc2014'    => 'European Youth Go Congress 2014',
           'general'     => 'General',
           'gopcres'     => 'Playing online',
           'history'     => 'History',
@@ -286,9 +288,13 @@ class BGA < Site
           'news'        => 'News',
           'newsletter'  => 'Newsletters',
           'obits'       => 'Obituaries',
+          'organisers'  => 'Organisers',
+          'people'      => 'People',
+          'positions'   => 'Positions',
           'reps'        => 'Reports',
           'resources'   => 'Resources',
           'results'     => 'Results',
+          'review'      => 'Reviews',
           'teaching'    => 'Teaching',
           'tournaments' => 'Events',
           'youth'       => 'Youth'

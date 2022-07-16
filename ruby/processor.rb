@@ -55,15 +55,17 @@ class Processor
       return asset?(url),
              (info['comment']  && (! info['redirect'])),
              info['redirect'],
+             info['secured']
              nil
     end
 
     if asset?( url) || info['redirect']
-      return asset?( url), false, info['redirect'], nil
+      return asset?( url), false, info['redirect'], info['secured'], nil
     end
 
     unless File.exist?( @cache + "/#{ts}.html")
-      return false, false, false, nil
+      # p ['examine1', url]
+      return false, true, false, info['secured'], nil
     end
 
     begin
@@ -72,7 +74,7 @@ class Processor
       error = parsed.content?
       parsed.tree {|child| error = true if child.error?}
 
-      return false, error, false, parsed
+      return false, error, false, info['secured'], parsed
     rescue
       puts "*** File: #{info['timestamp']}.html"
       raise

@@ -127,15 +127,16 @@ DUMP2
       addr = addresses[i]
       next if exclude_url?( addr)
 
-      @is_asset, @is_error, redirect, parsed = examine( addr)
-      # @is_asset = asset?(addr)
-      # @is_error = false
+      @is_asset, @is_error, redirect, secure, parsed = examine( addr)
+      # if secure
+      #   p ['report1', @is_asset, @is_error, redirect, secure]
+      # end
       ts   = @pages[addr]['timestamp']
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
-      #next if ts == 0
 
       n_all     += 1
       n_grabbed += 1
+      n_error   += 1 if @is_error
 
       old_articles, date, tags = n_articles, '', ''
       if parsed
@@ -154,24 +155,6 @@ DUMP2
 
       @has_articles = (n_articles > old_articles)
 
-      # parsed = nil
-      # if File.exist?( @cache + "/#{ts}.html") && (ext == 'html')
-      #   begin
-      #     parsed = parse( addr, @pages[addr]['timestamp'])
-      #   rescue
-      #     puts "*** File: #{@pages[addr]['timestamp']}.html"
-      #     raise
-      #   end
-      # end
-      #
-      # if parsed
-      #   @is_error = parsed.content?
-      #   parsed.tree {|child| @is_error = true if child.error?}
-      # else
-      #   @is_error = (@pages[addr]['comment']  && (! @pages[addr]['redirect']))
-      # end
-      n_error += 1 if @is_error
-
       if ts == 0
         write_files "<tr><td>#{addr}</td>"
       else
@@ -181,7 +164,7 @@ DUMP2
       if parsed
         write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">"
         write_files "<a target=\"_blank\" href=\"#{i}.html\">"
-        write_files( @is_error ? '&cross;' : (@pages[addr]['secure'] ? '&timesb;' : '&check;'))
+        write_files( @is_error ? '&cross;' : (secure ? '&timesb;' : '&check;'))
         write_files "</a></th>"
       elsif redirect
         n_redirect += 1
@@ -193,7 +176,7 @@ DUMP2
         n_asset += 1
         write_files "<th bgcolor=\"lime\">&check;</th>"
       else
-        write_files "<th bgcolor=\"red\">&cross;</th>"
+        write_files "<th bgcolor=\"red\">#{secure ? '&timesb;' : '&cross;'}</th>"
       end
 
       write_files "<td>#{@has_articles ? (n_articles - old_articles) : ''}</td>"

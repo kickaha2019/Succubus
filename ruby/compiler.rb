@@ -33,7 +33,7 @@ class Compiler < Processor
 
   def compile_pages
     @pages.each_pair do |url, info|
-      _, error, _, parsed = examine( url)
+      _, error, _, _, parsed = examine( url)
       next unless parsed && (! error)
 
       parsed.tree do |child|
@@ -54,7 +54,7 @@ class Compiler < Processor
 
   def copy_assets
     @pages.each_pair do |url, info|
-      asset, error, redirect, _ = examine( url)
+      asset, error, redirect, _, _ = examine( url)
       next unless asset && (! error) && (! redirect)
       next unless info['timestamp'] > 0
       @generator.asset_copy( "#{@cache}/#{info['timestamp']}.#{url.split('.')[-1]}", url)

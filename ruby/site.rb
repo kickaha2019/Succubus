@@ -6,9 +6,13 @@ require_relative 'place'
 require_relative 'page'
 require_relative 'elements/anchor'
 require_relative 'elements/article'
+require_relative 'elements/blockquote'
 require_relative 'elements/break'
 require_relative 'elements/caption'
 require_relative 'elements/cell'
+require_relative 'elements/description'
+require_relative 'elements/description_list'
+require_relative 'elements/description_term'
 require_relative 'elements/font'
 require_relative 'elements/heading'
 require_relative 'elements/horizontal_rule'
@@ -38,17 +42,25 @@ class Site
         end
       end
 
+      applies = true
+
       if @args[:class]
         if @args[:class] == ''
           # p [element['class'].nil?, element['class'], element.classes]
           # raise 'Dev'
-          element['class'].nil?
+          applies = element['class'].nil?
         else
-          element.classes.include?( @args[:class])
+          applies = element.classes.include?( @args[:class])
         end
-      else
-        true
       end
+
+      if applies
+        if @args[:style]
+          applies = (@args[:style] =~ element['style'])
+        end
+      end
+
+      applies
     end
 
     def apply( place)
@@ -138,7 +150,7 @@ class Site
   def define_rules
     on_element 'a' do  |place|
       if place['href']
-        Elements::Anchor.new( place, place.absolutise( place['href']))
+        Elements::Anchor.new( place, place.absolutise( place['href']), place['title'])
       else
         Elements::Text.new( place, '')
       end
@@ -157,7 +169,7 @@ class Site
     end
 
     on_element 'blockquote' do  |place|
-      Elements::Styling.new( place, [:quote])
+      Elements::Blockquote.new( place)
     end
 
     on_element 'br' do  |place|
@@ -180,8 +192,20 @@ class Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'dd' do  |place|
+      Elements::Description.new( place)
+    end
+
     on_element 'div' do  |place|
       place.content? ? nil : Elements::Ignore.new( place)
+    end
+
+    on_element 'dl' do  |place|
+      Elements::DescriptionList.new( place)
+    end
+
+    on_element 'dt' do  |place|
+      Elements::DescriptionTerm.new( place)
     end
 
     on_element 'em' do  |place|
@@ -194,6 +218,10 @@ class Site
 
     on_element 'form' do  |place|
       Elements::Ignore.new( place)
+    end
+
+    on_element 'header' do  |place|
+      Elements::Styling.new( place, [])
     end
 
     on_element 'hr' do  |place|
@@ -225,11 +253,11 @@ class Site
     end
 
     on_element 'img' do  |place|
-      Elements::Image.new( place, place.absolutise( place['src']))
+      Elements::Image.new( place, place.absolutise( place['src']), place['title'])
     end
 
     on_element 'image' do  |place|
-      Elements::Image.new( place, place.absolutise( place['src']))
+      Elements::Image.new( place, place.absolutise( place['src']), place['title'])
     end
 
     on_element 'input' do  |place|

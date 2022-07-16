@@ -60,6 +60,14 @@ module Generators
       @front_matter['title'] = title
     end
 
+    def blockquote_begin
+      @indent << @indent[-1] + '< >'
+    end
+
+    def blockquote_end
+      @indent.pop
+    end
+
     def break_begin
     end
 
@@ -135,17 +143,18 @@ module Generators
       @markdown << "---\n"
     end
 
-    def image( src)
+    def image( src, title)
       newline
-      @markdown << "![](#{src})\n"
+      @markdown << "![#{title}](#{src})\n"
     end
 
-    def link_begin( href)
-      @markdown << "["
+    def link_text( href, text)
+      return unless text && text.strip != ''
+      @markdown << "[#{text.strip}](#{href})"
     end
 
-    def link_end( href)
-      @markdown << "](#{href}"
+    def link_text_only?
+      true
     end
 
     def list_begin( type)
@@ -165,6 +174,7 @@ module Generators
     end
 
     def list_item_end
+      @indent.pop
     end
 
     def list_end( type)
@@ -224,11 +234,16 @@ module Generators
       styles.each do |style|
         if style == :bold
           @markdown << '**'
+        elsif style == :big
         elsif style == :centre
         elsif style == :emphasized
           @markdown << '*'
+        elsif style == :indent
         elsif style == :italic
           @markdown << '*'
+        elsif style == :keyboard
+        elsif style == :row
+          newline
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
@@ -244,11 +259,16 @@ module Generators
       styles.each do |style|
         if style == :bold
           @markdown << '**'
+        elsif style == :big
         elsif style == :centre
         elsif style == :emphasized
           @markdown << '*'
+        elsif style == :indent
         elsif style == :italic
           @markdown << '*'
+        elsif style == :keyboard
+        elsif style == :row
+          newline
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
