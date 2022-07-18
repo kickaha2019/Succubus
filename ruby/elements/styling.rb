@@ -1,7 +1,7 @@
-require_relative 'unknown'
+require_relative 'text_group'
 
 module Elements
-  class Styling < Unknown
+  class Styling < TextGroup
     def initialize( place, types)
       super( place)
       @types = types
@@ -15,11 +15,13 @@ module Elements
       end
     end
 
-    def generate( generator, before, after)
-      super( generator, (before + @types).uniq, (after + @types).uniq)
+    def generate( generator)
+      generator.style_begin( @types)
+      super
+      generator.style_end( @types)
     end
 
-    def grokked?
+    def text?
       true
     end
   end

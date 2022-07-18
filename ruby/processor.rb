@@ -72,7 +72,10 @@ class Processor
       parsed = parse( url, ts)
 
       error = parsed.content?
-      parsed.tree {|child| error = true if child.error?}
+      parsed.tree do |child|
+        child_error, _ = child.error?
+        error = true if child_error
+      end
 
       return false, error, false, info['secured'], parsed
     rescue

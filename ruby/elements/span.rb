@@ -1,14 +1,7 @@
-require_relative 'unknown'
+require_relative 'text_group'
 
 module Elements
-  class Span < Unknown
-    def initialize( place)
-      super
-    end
-
-    def grokked?
-      true
-    end
+  class Span < TextGroup
   end
 end
 

@@ -184,6 +184,10 @@ class Site
       Elements::Styling.new( place, [:centre])
     end
 
+    on_element 'cite' do  |place|
+      Elements::Styling.new( place, [:cite])
+    end
+
     on_element 'code' do  |place|
       Elements::Styling.new( place, [:code])
     end
@@ -354,6 +358,10 @@ class Site
 
     on_element 'tt' do  |place|
       Elements::Styling.new( place, [:teletype])
+    end
+
+    on_element 'u' do  |place|
+      Elements::Styling.new( place, [:underline])
     end
 
     on_element 'ul' do  |place|

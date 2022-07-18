@@ -61,28 +61,18 @@ module Generators
     end
 
     def blockquote_begin
-      @indent << @indent[-1] + '< >'
+      @indent << @indent[-1] + ' < '
     end
 
     def blockquote_end
       @indent.pop
     end
 
-    def break_begin
-    end
-
-    def break_end
-      newline
-      @markdown << "\n"
-    end
-
-    def cell_begin
+    def cell( text)
       unless /\|$/ =~ @markdown[-1]
         @markdown << '|'
       end
-    end
-
-    def cell_end
+      @markdown << text.gsub( '|', '\\|')
       @markdown << '|'
     end
 
@@ -132,14 +122,15 @@ module Generators
     end
 
     def heading_begin( level)
-      @markdown << "\n#{"######"[0...level]} "
+      newline
+      @markdown << "######"[0...level]
     end
 
     def heading_end( level)
+      newline
     end
 
     def hr
-      newline
       @markdown << "---\n"
     end
 
@@ -148,7 +139,7 @@ module Generators
       @markdown << "![#{title}](#{src})\n"
     end
 
-    def link_text( href, text)
+    def link( text, href)
       return unless text && text.strip != ''
       @markdown << "[#{text.strip}](#{href})"
     end
@@ -184,23 +175,30 @@ module Generators
       error( verb.to_s + ": ???")
     end
 
-    def newline
-      @markdown << ("\n" + @indent[-1]) unless @markdown[-1] && @markdown[-1][-1] == "\n"
+    def newline( force = false)
+      force = true unless @markdown[-1] && @markdown[-1][-1] == "\n"
+      if force
+        @markdown << ("\n" + @indent[-1])
+      end
     end
 
     def paragraph_begin
-      @markdown << "\n\n" unless @markdown[-1] == "\n\n"
+      newline
+      newline( true)
     end
 
     def paragraph_end
-      paragraph_begin
+      newline
+      newline( true)
     end
 
-    def preformatted( text)
-      text = text.gsub( /\n /, "\\\n\ ")
-      text = text.gsub( /\n/, "\\\n")
-      text = text.gsub( /\\\\\n/, "\\\n")
-      @markdown << text
+    def pre_begin
+      newline
+      @markdown << @indent[-1] + "~~~\n"
+    end
+
+    def pre_end
+      pre_begin
     end
 
     def row_begin
@@ -236,6 +234,8 @@ module Generators
           @markdown << '**'
         elsif style == :big
         elsif style == :centre
+        elsif style == :cite
+          @markdown << '**'
         elsif style == :emphasized
           @markdown << '*'
         elsif style == :indent
@@ -247,6 +247,8 @@ module Generators
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
+        elsif style == :underline
+          @markdown << '*'
         elsif style == :variable
           @markdown << '*'
         else
@@ -261,6 +263,8 @@ module Generators
           @markdown << '**'
         elsif style == :big
         elsif style == :centre
+        elsif style == :cite
+          @markdown << '**'
         elsif style == :emphasized
           @markdown << '*'
         elsif style == :indent
@@ -272,6 +276,8 @@ module Generators
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
+        elsif style == :underline
+          @markdown << '*'
         elsif style == :variable
           @markdown << '*'
         else
@@ -288,7 +294,7 @@ module Generators
     end
 
     def text( str)
-      @markdown << str
+      @markdown << str.gsub( /\s*\n/, ' ')
     end
 
     def write_file( path, data)

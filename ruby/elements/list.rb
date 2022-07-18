@@ -1,7 +1,7 @@
-require_relative 'unknown'
+require_relative 'group'
 
 module Elements
-  class List < Unknown
+  class List < Group
     def initialize( place, type)
       super( place)
       @type = type
@@ -15,14 +15,10 @@ module Elements
       super + ': ' + @type.to_s
     end
 
-    def generate( generator, before, after)
+    def generate( generator)
       generator.list_begin( @type)
       super
       generator.list_end( @type)
-    end
-
-    def grokked?
-      true
     end
   end
 end

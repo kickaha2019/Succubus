@@ -18,7 +18,7 @@ module Elements
       super + ': ' + @path
     end
 
-    def generate( generator, before, after)
+    def generate( generator)
       generator.image( @path, @title)
     end
 

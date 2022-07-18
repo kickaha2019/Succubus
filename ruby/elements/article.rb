@@ -21,13 +21,13 @@ module Elements
     end
 
     def error?
-      return true unless @mode
-      return true unless @title
+      return true, 'No mode' unless @mode
+      return true, 'No title' unless @title
       if @mode == :post
-        return true unless @date
-        return true unless @tags
+        return true, 'No date' unless @date
+        return true, 'No tags' unless @tags
       end
-      false
+      return false, nil
     end
 
     def grokked?

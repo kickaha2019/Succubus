@@ -1,24 +1,22 @@
-require_relative 'unknown'
+require_relative 'text_group'
 
 module Elements
-  class Cell < Unknown
+  class Cell < TextGroup
     def initialize( place)
       super
-      @styling = (place.name == 'TH') ? [:bold, :centre] : [:left]
+      @header = (place.name == 'TH')
     end
 
     def content?
       true
     end
 
-    def generate( generator, before, after)
-      generator.cell_begin
-      super
-      generator.cell_end
+    def generate( generator)
+      generator.cell( text)
     end
 
-    def grokked?
-      true
+    def header?
+      @header
     end
   end
 end

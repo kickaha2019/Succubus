@@ -19,10 +19,8 @@ module Elements
       false
     end
 
-    def generate( generator, before, after)
-      generator.style_begin( before)
-      generator.text( @text)
-      generator.style_end( after)
+    def generate( generator)
+      generator.text( text)
     end
 
     def grokked?
@@ -31,6 +29,10 @@ module Elements
 
     def text
       @text
+    end
+
+    def text?
+      true
     end
   end
 end

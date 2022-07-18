@@ -87,6 +87,13 @@ class Grabber < Processor
       ts = Time.now.to_i
       info = @pages[url] = {'timestamp' => ts}
 
+      begin
+        URI.parse( url)
+      rescue URI::InvalidURIError => bang
+        info['comment'] = "#{bang.message}"
+        return
+      end
+
       response = http_get( url)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'

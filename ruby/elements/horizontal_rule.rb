@@ -2,13 +2,14 @@ require_relative 'unknown'
 
 module Elements
   class HorizontalRule < Unknown
-    def initialize( place)
-      super
+    def error?
+      content?
     end
 
-    def generate( generator, before, after)
+    def generate( generator)
+      newline
       generator.hr
-      super
+      newline
     end
 
     def grokked?

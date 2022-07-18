@@ -1,23 +1,15 @@
-require_relative 'unknown'
+require_relative 'group'
 
 module Elements
-  class ListItem < Unknown
-    def initialize( place)
-      super
-    end
-
+  class ListItem < Group
     def content?
       true
     end
 
-    def generate( generator, before, after)
+    def generate( generator)
       generator.list_item_begin
       super
       generator.list_item_end
-    end
-
-    def grokked?
-      true
     end
   end
 end

@@ -1,17 +1,15 @@
-require_relative 'unknown'
+require_relative 'text_group'
 
 module Elements
-  class Pre < Unknown
-    def initialize( place)
-      super
-    end
-
-    def generate( generator, before, after)
-      generator.preformatted( text)
-    end
-
-    def grokked?
+  class Pre < TextGroup
+    def content?
       true
+    end
+
+    def generate( generator)
+      generator.pre_begin
+      super( generator)
+      generator.pre_end
     end
   end
 end

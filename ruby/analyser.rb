@@ -64,7 +64,8 @@ DUMP2
     io.print "</div>"
 
     scheme = ''
-    if struct.error?
+    struct_error, tooltip = struct.error?
+    if struct_error
       scheme = 'error'
     elsif struct.article?
       scheme = 'section'
@@ -76,7 +77,8 @@ DUMP2
       end
     else
       if struct.content?
-        scheme = 'error'
+        scheme  = 'error'
+        tooltip = 'Ungrokked content'
       end
     end
 
@@ -84,7 +86,8 @@ DUMP2
     #   p [struct.doc.name, scheme, struct.class.name, struct.grokked?, struct.content?]
     # end
 
-    io.print "<span class=\"label #{scheme}\" title=\"#{struct.tooltip}\">"
+    tooltip = struct.tooltip unless struct_error
+    io.print "<span class=\"label #{scheme}\" title=\"#{tooltip}\">"
     io.print( struct.describe)
     io.puts "</span><br>"
 

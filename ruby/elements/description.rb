@@ -1,16 +1,8 @@
-require_relative 'unknown'
+require_relative 'blockquote'
 
 module Elements
-  class Description < Unknown
-    def initialize( place)
-      super( place)
-    end
-
+  class Description < Blockquote
     def content?
-      true
-    end
-
-    def grokked?
       true
     end
   end

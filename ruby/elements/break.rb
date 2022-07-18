@@ -2,14 +2,14 @@ require_relative 'unknown'
 
 module Elements
   class Break < Unknown
-    def initialize( place)
-      super
+    def error?
+      return true, 'Has content' if content?
+      false
     end
 
-    def generate( generator, before, after)
-      generator.break_begin
-      super
-      generator.break_end
+    def generate( generator)
+      generator.newline
+      generator.newline( true)
     end
 
     def grokked?

@@ -1,7 +1,7 @@
-require_relative 'unknown'
+require_relative 'text_group'
 
 module Elements
-  class Heading < Unknown
+  class Heading < TextGroup
     def initialize( place, level)
       super( place)
       @level = level
@@ -15,14 +15,10 @@ module Elements
       super + ': ' + @level.to_s
     end
 
-    def generate( generator, before, after)
+    def generate( generator)
       generator.heading_begin( @level)
-      super( generator, [], [])
+      super( generator)
       generator.heading_end( @level)
-    end
-
-    def grokked?
-      true
     end
   end
 end

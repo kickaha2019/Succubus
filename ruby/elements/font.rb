@@ -1,7 +1,7 @@
-require_relative 'unknown'
+require_relative 'text_group'
 
 module Elements
-  class Font < Unknown
+  class Font < TextGroup
     def initialize( place)
       super
       @colour = place['color']
@@ -26,10 +26,6 @@ module Elements
       end
 
       super + ': ' + text.join( ' ')
-    end
-
-    def grokked?
-      true
     end
   end
 end

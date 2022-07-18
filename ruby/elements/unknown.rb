@@ -17,6 +17,13 @@ module Elements
       false
     end
 
+    def children_text?
+      @contents.each do |child|
+        return false unless child.text?
+      end
+      true
+    end
+
     def contains_article?
       @contents.inject( article?) {|flag, child| flag | child.contains_article?}
     end
@@ -37,13 +44,9 @@ module Elements
       @contents.select {|child| child.is_a?( clazz)}
     end
 
-    def generate( generator, before, after)
-      if @contents.size == 1
-        @contents[0].generate( generator, before, after)
-      elsif @contents.size > 1
-        @contents[0].generate( generator, before, [])
-        @contents[1..-2].each {|child| child.generate( generator, [], [])}
-        @contents[-1].generate( generator, [], after)
+    def generate( generator)
+      @contents.each do |child|
+        child.generate( generator)
       end
     end
 
@@ -63,6 +66,14 @@ module Elements
 
     def text
       @contents.inject( '') {|text, child| text + ' ' + child.text}
+    end
+
+    def text?
+      false
+    end
+
+    def title
+      nil
     end
 
     def tooltip

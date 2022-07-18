@@ -22,6 +22,7 @@ exclude_urls:
 - https://britgo.org/bchamp/qualifiers2021
 - https://britgo.org/bchamp/qualifiers2022
 - https://britgo.org/image/tid/53
+- https://britgo.org/image/tid/80
 - https://britgo.org/image/tid/82
 - https://britgo.org/join/pay
 - https://britgo.org/junior/youthgonews
@@ -29,10 +30,20 @@ exclude_urls:
 - "/taxonomy/term/\\d*/feed$"
 - https://britgo.org/image
 - https://britgo.org/filmography/ http://www.imdb.com/title/tt0367279
+- https://britgo.org/gopcres/ http://www.gentgo.be/tetsuki
 - https://britgo.org/form/transfer-your-membership
 - https://britgo.org/news/views
 - https://britgo.org/history/accounts
 - https://britgo.org/pubs/stock
+- https://britgo.org/council/
+- https://britgo.org/tournams/sheffield-uni/sheffield-uni-form.html
+- https://britgo.org/tournams/trigantius/trigantius-form.html
+- https://britgo.org/tournams/british-open/british-open-form.html
+- https://britgo.org/tournams/sheffield-uni/tour-entries.html
+- https://britgo.org/web/book
+- https://britgo.org/web/management
+- https://britgo.org/tournams/british-open/tour-entries.html
+- https://britgo.org/tournams/trigantius/tour-entries.html
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

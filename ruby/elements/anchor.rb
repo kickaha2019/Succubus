@@ -1,7 +1,7 @@
-require_relative 'unknown'
+require_relative 'text_group'
 
 module Elements
-  class Anchor < Unknown
+  class Anchor < TextGroup
     attr_reader :href
 
     def initialize( place, href, title)
@@ -18,32 +18,26 @@ module Elements
       super + ': ' + @href
     end
 
-    def generate( generator, before, after)
-      if generator.link_text_only?
-        t = text
-        t = @title if t.strip == ''
-        if t.nil? && @contents[0].is_a?( Elements::Image)
-          t = @contents[0].title
-        end
-        generator.style_begin( before)
-        generator.link_text( @href, t)
-        generator.style_end( after)
-      else
-        generator.style_begin( before)
-        generator.link_begin( @href)
-        super( generator, [], [])
-        generator.link_end( @href)
-        generator.style_end( after)
+    def generate( generator)
+      t = text
+      t = @title if t.strip == ''
+      @contents.each do |child|
+        t = child.title if t.nil?
       end
-    end
-
-    def grokked?
-      true
+      generator.link( t, @href)
     end
 
     def links
       super {|link| yield link}
       yield @href
+    end
+
+    def text?
+      true
+    end
+
+    def title
+      @title
     end
   end
 end

@@ -1,19 +1,9 @@
-require_relative 'unknown'
+require_relative 'heading'
 
 module Elements
-  class DescriptionTerm < Unknown
+  class DescriptionTerm < Heading
     def initialize( place)
-      super( place)
-    end
-
-    def content?
-      true
-    end
-
-    def grokked?
-      true
+      super( place, 3)
     end
   end
 end
-
-

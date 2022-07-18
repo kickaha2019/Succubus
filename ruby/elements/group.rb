@@ -1,10 +1,7 @@
 require_relative 'unknown'
 
 module Elements
-  class Caption < Unknown
-    def generate( generator)
-    end
-
+  class Group < Unknown
     def grokked?
       true
     end

@@ -2,15 +2,11 @@ require_relative 'unknown'
 
 module Elements
   class Ignore < Unknown
-    def initialize( place)
-      super
-    end
-
     def content?
       false
     end
 
-    def generate( generator, before, after)
+    def generate( generator)
     end
 
     def grokked?
