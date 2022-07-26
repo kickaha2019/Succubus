@@ -190,7 +190,7 @@ class BGA < Site
 
     on_page '' do |page|
       page.title= 'The British Go Association'
-      page.mode=  :article
+      page.mode=  :home
 
       on_element 'div', :style => /float:\s*right/ do |place|
         Elements::Ignore.new( place)

@@ -1,5 +1,5 @@
 class Page
-  attr_reader :url, :document, :tags
+  attr_reader :url, :document, :tags, :root_url
   attr_accessor :date, :mode, :title
 
   def initialize( site, root_url, taxonomy, url, document)
@@ -30,5 +30,9 @@ class Page
 
   def relative_path
     @url[@root_url.size..-1].split('/')
+  end
+
+  def root?
+    @url == @root_url
   end
 end

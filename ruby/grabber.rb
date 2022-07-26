@@ -65,7 +65,7 @@ class Grabber < Processor
     @candidates = []
 
     @pages.each_pair do |url, info|
-      if asset? info['url']
+      if asset? url
         if info['timestamp'] == 0
           @candidates << url
         end
@@ -74,10 +74,6 @@ class Grabber < Processor
       end
     end
 
-    # list = @candidates.sort_by {|url| @pages[url]['timestamp']}
-    # list[0..3].each do |url|
-    #   p [url, @pages[url]]
-    # end
     @candidates = @candidates.sort_by {|url| @pages[url]['timestamp']}[0...limit]
   end
 
@@ -91,7 +87,7 @@ class Grabber < Processor
         URI.parse( url)
       rescue URI::InvalidURIError => bang
         info['comment'] = "#{bang.message}"
-        return
+        next
       end
 
       response = http_get( url)

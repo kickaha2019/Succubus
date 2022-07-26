@@ -2,14 +2,17 @@ require_relative 'unknown'
 
 module Elements
   class Article < Unknown
-    attr_reader :date, :title, :tags, :mode
+    attr_reader :date, :title, :tags, :mode, :root
 
     def initialize( place)
       super
-      @title = place.page.title
-      @date  = place.page.date
-      @mode  = place.page.mode
-      @tags  = place.page.tags
+      @title    = place.page.title
+      @date     = place.page.date
+      @mode     = place.page.mode
+      @tags     = place.page.tags
+      @root     = place.page.root?
+      @root_url = place.page.root_url
+      @url      = place.url
     end
 
     def article?
@@ -32,6 +35,10 @@ module Elements
 
     def grokked?
       false
+    end
+
+    def relative_url
+      @url[@root_url.size..-1]
     end
 
     def set_date( time)

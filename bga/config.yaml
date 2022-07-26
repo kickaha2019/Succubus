@@ -44,14 +44,24 @@ exclude_urls:
 - https://britgo.org/web/management
 - https://britgo.org/tournams/british-open/tour-entries.html
 - https://britgo.org/tournams/trigantius/tour-entries.html
+- https://britgo.org/files/2017/UK Youth Summer Go Camp 2017 entry  form v3.pdf
+- https://britgo.org/results/2008/coventry
+- https://britgo.org/council/minutes20130616
+- https://britgo.org/council/minutes20130708
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
-generator:  Hugo
+generator:  Bridgetown
 hugo:
   baseURL:      https://alofmethbin.com/experiment
   title:        Experiment
   languageCode: en-gb
   theme:        ananke
+bridgetown:
+  baseURL:      https://alofmethbin.com/experiment
+  title:        Experiment
+  front_matter:
+    home:
+      layout: home
 url_replace:
 - from: "https://britgo.org/pairgo/photos2019 "
   to:   https://britgo.org/pairgo/photos2019

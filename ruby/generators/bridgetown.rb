@@ -1,5 +1,5 @@
 module Generators
-  class Hugo
+  class Bridgetown
     def initialize( config, output_dir)
       @config        = config
       @output_dir    = output_dir
@@ -9,21 +9,17 @@ module Generators
       @article_error = false
       @any_errors    = false
       @article_url   = nil
-      @url2articles  = Hash.new {|h,k| h[k] = []}
+      @path2article  = {}
       @enc2names     = {}
 
       # Control the markdown generation
       @indent        = ['']
       @list_marker   = '#'
       @table_state   = nil
-
-      # Section control
-      @sec2articles  = Hash.new {|h,k| h[k] = []}
-      @no_taxa_error = false
     end
 
     def asset_copy( cached, url)
-      path = @output_dir + '/static/' + url[(@config['root_url'].size)..-1]
+      path = @output_dir + '/images/' + url[(@config['root_url'].size)..-1]
       @generated[path] = true
       unless File.exist?( path)
         create_dir( File.dirname( path))
@@ -37,8 +33,12 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {}
+      @front_matter  = {'layout' => 'default'}
       @markdown      = []
+
+      if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
+        fm.each_pair {|k,v| @front_matter[k] = v}
+      end
 
       if @written[@path]
         error( "Duplicate output path for #{url} and #{@written[@path]}")
@@ -75,15 +75,15 @@ module Generators
     end
 
     def clean_old_files
-      clean_old_files1( @output_dir + '/content')
-      clean_old_files1( @output_dir + '/static')
+      clean_old_files1( @output_dir + '/src/_posts')
+      clean_old_files1( @output_dir + '/src')
     end
 
     def clean_old_files1( dir)
       empty = true
 
       Dir.entries( dir).each do |f|
-        next if /^\./ =~ f
+        next if /^[\._]/ =~ f
         path = dir +'/' + f
 
         if File.directory?( path)
@@ -112,6 +112,18 @@ module Generators
       end
     end
 
+    def disambiguate_path( stem, article)
+      index = 1
+      stem  = stem.split('?')[0]
+      path  = stem
+      while @path2article[path] && (@path2article[path] != article)
+        index += 1
+        path   = stem + "-#{index}"
+      end
+      @path2article[path] = article
+      path
+    end
+
     def e( name)
       encoded = name.gsub( /\W/, '_')
       @enc2names[encoded] = name
@@ -132,7 +144,7 @@ module Generators
 
     def heading_begin( level)
       newline
-      @markdown << "######"[0...level]
+      @markdown << ('######'[0...level] + ' ')
     end
 
     def heading_end( level)
@@ -193,45 +205,18 @@ module Generators
 
     def output_path( url, article)
       if article.root
-        return @output_dir + '/content/index.md'
+        return @output_dir + '/src/index.md'
       end
 
-      if @taxonomies.empty?
-        error( 'No taxonomies defined') unless @no_taxa_error
-        @no_taxa_error = true
-        section_taxa = 'Section'
-      else
-        section_taxa = @taxonomies.keys[0]
+      if article.mode == :post
+        stem = @output_dir +
+               '/src/_posts/' +
+               "#{article.date.strftime( '%Y-%m-%d')}-#{e(article.title)}"
+        return disambiguate_path( stem, article) + '.md'
       end
 
-      section_tag = article.tags.select {|tag| tag[0] == section_taxa}.collect {|tag| tag[1]}
-      section = section_tag.empty? ? 'Pages' : section_tag[0]
-
-      section_dir = @output_dir + '/content/' + e(section)
-      if @sec2articles[section].empty?
-        write_file( section_dir + '/_index.md', <<"BRANCH")
----
-title: #{section}
-description: #{section}
----
-BRANCH
-
-        write_file( section_dir + '/pages/index.md', <<"LEAF")
----
-title: #{section}
-description: #{section}
----
-LEAF
-      end
-
-      if index = @sec2articles[section].index( article)
-        index += 1
-      else
-        @sec2articles[section] << article
-        index = @sec2articles[section].size
-      end
-
-      section_dir + "/pages/#{index}.md"
+      stem = @output_dir + '/src/' + article.relative_url.sub( /\.[a-z]*$/i, '')
+      disambiguate_path( stem, article) + '.md'
     end
 
     def paragraph_begin
@@ -254,7 +239,6 @@ LEAF
     end
 
     def register_article( url, article)
-      @url2articles[url] << article
     end
 
     def row_begin
@@ -363,6 +347,7 @@ LEAF
       @generated[path] = true
       create_dir( File.dirname( path))
       unless File.exist?( path) && (IO.read( path).strip == data.strip)
+        puts "... Writing #{path}"
         File.open( path, 'w') {|io| io.print data}
       end
     end

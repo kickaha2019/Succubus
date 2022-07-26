@@ -4,6 +4,7 @@ class Compiler < Processor
   def initialize( config, cache, output_dir)
     super( config, cache)
     require_relative( 'generators/' + @config['generator'])
+    @errors    = false
     @generator = Kernel.const_get( 'Generators::' + @config['generator']).new( @config, output_dir)
   end
 
@@ -14,20 +15,22 @@ class Compiler < Processor
   def compile
     preparse_all
     compile_site
-    copy_assets
-    compile_pages
+    if @generator.error?
+      puts "*** Compilation errors"
+      exit 1
+    end
     clean_old_files
   end
 
   def compile_article( url, article)
-    @generator.article_begin( url)
+    @generator.article_begin( url, article)
     if article.date
       @generator.article_date( article.date)
     end
     if article.title
       @generator.article_title( article.title)
     end
-    article.generate( @generator, [], [])
+    article.generate( @generator)
     @generator.article_end
   end
 
@@ -49,6 +52,9 @@ class Compiler < Processor
     @site.taxonomies do |singular, plural|
       @generator.site_taxonomy( singular, plural)
     end
+    copy_assets
+    precompile_pages
+    compile_pages
     @generator.site_end
   end
 
@@ -58,6 +64,19 @@ class Compiler < Processor
       next unless asset && (! error) && (! redirect)
       next unless info['timestamp'] > 0
       @generator.asset_copy( "#{@cache}/#{info['timestamp']}.#{url.split('.')[-1]}", url)
+    end
+  end
+
+  def precompile_pages
+    @pages.each_pair do |url, info|
+      _, error, _, _, parsed = examine( url)
+      next unless parsed && (! error)
+
+      parsed.tree do |child|
+        if child.is_a?( Elements::Article)
+          @generator.register_article( url, child)
+        end
+      end
     end
   end
 end

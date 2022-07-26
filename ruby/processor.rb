@@ -1,4 +1,6 @@
 require 'yaml'
+require 'pry'
+
 require_relative 'site'
 
 class Processor
@@ -53,14 +55,18 @@ class Processor
 
     if ts == 0
       return asset?(url),
-             (info['comment']  && (! info['redirect'])),
+             (info['comment'] && (! info['redirect'])),
              info['redirect'],
              info['secured']
              nil
     end
 
-    if asset?( url) || info['redirect']
-      return asset?( url), false, info['redirect'], info['secured'], nil
+    if info['redirect']
+      return asset?( url), false, true, info['secured'], nil
+    end
+
+    if asset?( url)
+      return asset?( url), info['comment'], false, info['secured'], nil
     end
 
     unless File.exist?( @cache + "/#{ts}.html")
