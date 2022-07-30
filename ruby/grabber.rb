@@ -81,7 +81,9 @@ class Grabber < Processor
     @candidates.each do |url|
       puts "... Grabbing #{url}"
       ts = Time.now.to_i
-      info = @pages[url] = {'timestamp' => ts}
+      referer = @pages[url]['referral']
+      info    = @pages[url] = {'timestamp' => ts,
+                            'referral'     => referer}
 
       begin
         URI.parse( url)
@@ -90,7 +92,7 @@ class Grabber < Processor
         next
       end
 
-      response = http_get( url)
+      response = http_get( url, 30, 'Referer' => referer)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
         if asset?( url)

@@ -177,7 +177,11 @@ DUMP2
         n_grabbed -= 1
       elsif @is_asset
         n_asset += 1
-        write_files "<th bgcolor=\"lime\">&check;</th>"
+        if @is_error
+          write_files "<th bgcolor=\"red\">&cross;</th>"
+        else
+          write_files "<th bgcolor=\"lime\">&check;</th>"
+        end
       else
         write_files "<th bgcolor=\"red\">#{secure ? '&timesb;' : '&cross;'}</th>"
       end
@@ -240,7 +244,7 @@ FOOTER2
 <style>
 body {display: flex; align-items: center; flex-direction: column-reverse; justify-content: flex-end}
 table {border-collapse: collapse}
-.pages td, .pages th {border: 1px solid black; font-size: 20px}
+.pages td, .pages th {border: 1px solid black; font-size: 20px; padding: 5px}
 .menu {padding-bottom: 20px}
 .menu td {font-size: 30px; padding-left: 10px; padding-right: 10px}
 </style>

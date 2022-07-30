@@ -48,6 +48,15 @@ exclude_urls:
 - https://britgo.org/results/2008/coventry
 - https://britgo.org/council/minutes20130616
 - https://britgo.org/council/minutes20130708
+- https://britgo.org/files/2019/3peaks2019a.jpg
+- https://britgo.org/files/2019/3peaks2019b.jpg
+- https://britgo.org/files/2019/3peaks2019c.jpg
+- https://britgo.org/files/2019/3peaks2019d.jpg
+- https://britgo.org/files/2019/3peaks2019e.jpg
+- https://britgo.org/files/2019/3peaks2019f.jpg
+- https://britgo.org/files/StockExpGo.jpg
+- https://britgo.org/general/
+- https://britgo.org/views/results/12months
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Bridgetown
@@ -57,11 +66,17 @@ hugo:
   languageCode: en-gb
   theme:        ananke
 bridgetown:
-  baseURL:      https://alofmethbin.com/experiment
-  title:        Experiment
+  config:
+    baseURL:      https://alofmethbin.com/experiment
+    title:        Experiment
+    pagination:
+      enabled: true
   front_matter:
     home:
       layout: home
+      paginate:
+        collection: posts
+        per_page: 3
 url_replace:
 - from: "https://britgo.org/pairgo/photos2019 "
   to:   https://britgo.org/pairgo/photos2019

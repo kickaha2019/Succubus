@@ -5,7 +5,7 @@ class Compiler < Processor
     super( config, cache)
     require_relative( 'generators/' + @config['generator'])
     @errors    = false
-    @generator = Kernel.const_get( 'Generators::' + @config['generator']).new( @config, output_dir)
+    @generator = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, output_dir)
   end
 
   def clean_old_files
@@ -29,6 +29,9 @@ class Compiler < Processor
     end
     if article.title
       @generator.article_title( article.title)
+    end
+    if article.tags
+      @generator.article_tags( article.tags)
     end
     article.generate( @generator)
     @generator.article_end

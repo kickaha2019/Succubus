@@ -1,0 +1,24 @@
+body {background: #DDDDDD; margin: 0px}
+
+nav {font-size: 30px;
+     background-image: linear-gradient(#d0d361,#fac703);
+     min-height: 60px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+}
+nav span {color: red; font-style: italic}
+
+main {display: flex;
+      flex-wrap: wrap;
+}
+
+main>div {margin: 20px;
+          padding: 20px;
+          border-radius: 10px;
+          background: white;
+}
+
+.big_width {max-width: 800px; min-width: 400px}
+
+.medium_width {width: 400px}

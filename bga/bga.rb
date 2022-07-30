@@ -14,6 +14,10 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'article' do  |place|
+      place.content? ? nil : Elements::Article.new( place).set_title( place.title).set_date( place.date)
+    end
+
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
         Elements::Anchor.new( place, place.absolutise( m[1]), nil)

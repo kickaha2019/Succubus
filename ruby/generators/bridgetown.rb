@@ -1,6 +1,7 @@
 module Generators
   class Bridgetown
-    def initialize( config, output_dir)
+    def initialize( config_dir, config, output_dir)
+      @config_dir    = config_dir
       @config        = config
       @output_dir    = output_dir
       @taxonomies    = {}
@@ -33,7 +34,7 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {'layout' => 'default'}
+      @front_matter  = {'layout'     => 'default'}
       @markdown      = []
 
       if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
@@ -52,6 +53,10 @@ module Generators
 
     def article_end
       write_file( @path, "#{@front_matter.to_yaml}\n---\n#{@markdown.join('')}")
+    end
+
+    def article_tags( tags)
+      @front_matter['categories'] = tags
     end
 
     def article_title( title)
@@ -103,6 +108,11 @@ module Generators
       end
 
       empty
+    end
+
+    def copy_template( template_path, dest_path)
+      data = IO.read( @config_dir + '/templates/' + template_path)
+      write_file( @output_dir + '/' + dest_path, data)
     end
 
     def create_dir( dir)
@@ -256,15 +266,15 @@ module Generators
     end
 
     def site_begin
+      copy_template( 'bridgetown/footer.liquid', 'src/_components/footer.liquid')
+      copy_template( 'bridgetown/head.liquid',   'src/_components/head.liquid')
+      copy_template( 'bridgetown/home.liquid',   'src/_layouts/home.liquid')
+      copy_template( 'bridgetown/navbar.liquid', 'src/_components/navbar.liquid')
+      copy_template( 'bridgetown/site.css',      'src/site.css')
     end
 
     def site_end
-      site_config = @config['hugo']
-      if @taxonomies.size < 2
-        site_config['disableKinds'] = ['taxonomy', 'term']
-      else
-        site_config['taxonomies'] = @taxonomies[1..-1]
-      end
+      site_config = @config['bridgetown']['config']
       write_file( @output_dir + '/config.yaml', site_config.to_yaml)
     end
 
