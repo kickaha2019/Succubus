@@ -23,6 +23,10 @@ module Elements
       false
     end
 
+    def description
+      @contents.inject( '') {|text, child| text + ' ' + child.text}
+    end
+
     def error?
       return true, 'No mode' unless @mode
       return true, 'No title' unless @title
@@ -59,9 +63,9 @@ module Elements
       "Title: #{@title} Date: #{@date} Mode: #{@mode} Tags: #{@tags.collect {|tag| tag[1]}.join( ' ')}"
     end
 
-    def tree
-      yield self
-    end
+    # def tree
+    #   yield self
+    # end
   end
 end
 

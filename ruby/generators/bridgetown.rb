@@ -34,21 +34,31 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {'layout'     => 'default'}
+      parents        = []
+      @front_matter  = {'layout' => 'default', 'parent' => parents}
       @markdown      = []
 
       if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
         fm.each_pair {|k,v| @front_matter[k] = v}
       end
 
+      unless article.mode == :home
+        parents << {'url' => '/index.html', 'title' => 'Home'}
+      end
+
       if @written[@path]
         error( "Duplicate output path for #{url} and #{@written[@path]}")
       end
+
       @written[@path] = url
     end
 
     def article_date( date)
       @front_matter['date'] = date.strftime( '%Y-%m-%d')
+    end
+
+    def article_description( text)
+      @front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
     end
 
     def article_end
@@ -152,6 +162,17 @@ module Generators
       @any_errors
     end
 
+    def generate_posts_page( collection, relpath)
+      @article_url   = @config['root_url'] + '/index-posts.html'
+      @article_error = false
+      @path          = @output_dir + '/' + relpath
+      parents        = [{'url' => '/index.html', 'title' => 'Home'}]
+      @front_matter  = {'layout' => 'posts',
+                        'parents' => parents,
+                        'paginate' => {'collection' => collection, 'per_page' => 25}}
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
+    end
+
     def heading_begin( level)
       newline
       @markdown << ('######'[0...level] + ' ')
@@ -248,6 +269,10 @@ module Generators
       pre_begin
     end
 
+    def raw( html)
+      @markdown << html
+    end
+
     def register_article( url, article)
     end
 
@@ -270,7 +295,10 @@ module Generators
       copy_template( 'bridgetown/head.liquid',   'src/_components/head.liquid')
       copy_template( 'bridgetown/home.liquid',   'src/_layouts/home.liquid')
       copy_template( 'bridgetown/navbar.liquid', 'src/_components/navbar.liquid')
+      copy_template( 'bridgetown/posts.liquid',  'src/_layouts/posts.liquid')
       copy_template( 'bridgetown/site.css',      'src/site.css')
+
+      generate_posts_page( 'posts', 'src/index-posts.md')
     end
 
     def site_end
@@ -297,8 +325,6 @@ module Generators
         elsif style == :italic
           @markdown << '*'
         elsif style == :keyboard
-        elsif style == :row
-          newline
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
@@ -327,8 +353,6 @@ module Generators
         elsif style == :italic
           @markdown << '*'
         elsif style == :keyboard
-        elsif style == :row
-          newline
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
@@ -354,6 +378,7 @@ module Generators
     end
 
     def write_file( path, data)
+      error( path + ': already written') if @generated[path]
       @generated[path] = true
       create_dir( File.dirname( path))
       unless File.exist?( path) && (IO.read( path).strip == data.strip)

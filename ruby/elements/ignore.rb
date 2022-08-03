@@ -6,6 +6,9 @@ module Elements
       false
     end
 
+    def children
+    end
+
     def generate( generator)
     end
 
@@ -17,8 +20,8 @@ module Elements
       ''
     end
 
-    def tree
-      yield self
+    def text?
+      true
     end
   end
 end

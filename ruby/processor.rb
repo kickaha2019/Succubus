@@ -49,7 +49,7 @@ class Processor
     false
   end
 
-  def examine( url)
+  def examine( url, debug = false)
     info = @pages[url]
     ts   = info['timestamp']
 
@@ -79,6 +79,7 @@ class Processor
 
       error = parsed.content?
       parsed.tree do |child|
+        p ['examine1', child.class.to_s, child.error?] if debug
         child_error, _ = child.error?
         error = true if child_error
       end

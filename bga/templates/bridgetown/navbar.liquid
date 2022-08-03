@@ -1,3 +1,12 @@
 <nav>
 <div>British <span>Go</span> Association<div>
 </nav>
+
+<div class="breadcrumbs">"
+{% if resource.parents %}
+  {% for parent in resource.parents %}
+    <a href="{{ parent.url }}">{{ parent.name }}</a> &raquo;
+  {% endfor %}
+{% endif %}
+{{ resource.title }}
+</div>

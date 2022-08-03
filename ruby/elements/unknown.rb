@@ -17,19 +17,30 @@ module Elements
       false
     end
 
+    def children
+      @contents.each {|child| yield child}
+    end
+
     def children_text?
-      @contents.each do |child|
+      children do |child|
         return false unless child.text?
       end
       true
     end
 
     def contains_article?
-      @contents.inject( article?) {|flag, child| flag | child.contains_article?}
+      return true if article?
+      children do |child|
+        return true if child.article?
+      end
+      false
     end
 
     def content?
-      @contents.inject( false) {|flag, child| flag | child.content?}
+      children do |child|
+        return true if child.content?
+      end
+      false
     end
 
     def describe
@@ -65,7 +76,11 @@ module Elements
     end
 
     def text
-      @contents.inject( '') {|text, child| text + ' ' + child.text}
+      t = ''
+      children do |child|
+        t = t + ' ' + child.text
+      end
+      t.strip
     end
 
     def text?
@@ -81,7 +96,7 @@ module Elements
     end
 
     def tree
-      @contents.each do |child|
+      children do |child|
         child.tree {|el| yield el}
       end
       yield self

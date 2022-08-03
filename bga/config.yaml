@@ -57,6 +57,11 @@ exclude_urls:
 - https://britgo.org/files/StockExpGo.jpg
 - https://britgo.org/general/
 - https://britgo.org/views/results/12months
+- https://britgo.org/council
+- https://britgo.org/covers/covers
+- https://britgo.org/junior/internetgo
+- https://britgo.org/reports
+- https://britgo.org/files/teaching/Reference form Teachers of YPs.pdf
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Bridgetown
@@ -77,6 +82,11 @@ bridgetown:
       paginate:
         collection: posts
         per_page: 3
+    posts:
+      layout: posts
+      paginate:
+        collection: posts
+        per_page: 10
 url_replace:
 - from: "https://britgo.org/pairgo/photos2019 "
   to:   https://britgo.org/pairgo/photos2019

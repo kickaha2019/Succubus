@@ -33,6 +33,7 @@ class Compiler < Processor
     if article.tags
       @generator.article_tags( article.tags)
     end
+    @generator.article_description( article.description)
     article.generate( @generator)
     @generator.article_end
   end

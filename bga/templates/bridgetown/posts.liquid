@@ -7,12 +7,8 @@
     {% render "navbar", metadata: site.metadata, resource: resource %}
 
     <main>
-        <div class="big_width">
-        {{ content }}
-        </div>
-
         <div class="medium_width">
-          <h2>Recent posts</h2>
+          <h2>All posts</h2>
           
           {% for post in paginator.resources %}
             <article>
@@ -22,8 +18,21 @@
             </article>
           {% endfor %}
           
-          <a href="index-posts">All posts</a>
-        </div>
+          {% if paginator.total_pages > 1 %}
+  <ul class="pagination">
+    {% if paginator.previous_page %}
+    <li>
+      <a href="{{ paginator.previous_page_path }}">Previous Page</a>
+    </li>
+    {% endif %}
+    {% if paginator.next_page %}
+    <li>
+      <a href="{{ paginator.next_page_path }}">Next Page</a>
+    </li>
+    {% endif %}
+  </ul>
+    {% endif %}
+   </div>
     </main>
 
     {% render "footer" %}

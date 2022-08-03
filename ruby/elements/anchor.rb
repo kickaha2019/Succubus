@@ -10,6 +10,15 @@ module Elements
       @title = title
     end
 
+    def anchor_text
+      t = text
+      t = @title if t.strip == ''
+      @contents.each do |child|
+        t = child.title if t.nil?
+      end
+      t ? t.strip : ''
+    end
+
     def content?
       true
     end
@@ -18,13 +27,15 @@ module Elements
       super + ': ' + @href
     end
 
-    def generate( generator)
-      t = text
-      t = @title if t.strip == ''
-      @contents.each do |child|
-        t = child.title if t.nil?
+    def error?
+      unless anchor_text != ''
+        return true, 'Non text children'
       end
-      generator.link( t, @href)
+      false
+    end
+
+    def generate( generator)
+      generator.link( anchor_text, @href)
     end
 
     def links

@@ -37,14 +37,28 @@ function reduce( index) {
 </head>
 <body><div>
 DUMP1
-      dump_structure( struct, 0, io)
+      dump_structure( struct, 0, dump_errors( struct), io)
       io.puts <<"DUMP2"
 <div><body></html>
 DUMP2
     end
   end
 
-  def dump_structure( struct, indent, io)
+  def dump_errors( struct)
+    errors = []
+    struct.tree do |element|
+      if element.error?
+        errors[element.index] = true
+      else
+        element.children do |child|
+          errors[element.index] = true if errors[child.index]
+        end
+      end
+    end
+    errors
+  end
+
+  def dump_structure( struct, indent, errors, io)
     if indent > 0
       (0...indent).each do
         io.print "<div class=\"indent\"></div>"
@@ -63,8 +77,12 @@ DUMP2
     end
     io.print "</div>"
 
-    scheme = ''
-    struct_error, tooltip = struct.error?
+    scheme, struct_error, tooltip = '', false, ''
+    if errors[struct.index]
+      struct_error = true
+      _, tooltip = struct.error?
+    end
+
     if struct_error
       scheme = 'error'
     elsif struct.article?
@@ -93,7 +111,7 @@ DUMP2
 
     io.puts before
     struct.contents.each do |child|
-      dump_structure(  child, indent+1, io)
+      dump_structure(  child, indent+1, errors, io)
     end
     io.puts after
   end
@@ -131,9 +149,6 @@ DUMP2
       next if exclude_url?( addr)
 
       @is_asset, @is_error, redirect, secure, parsed = examine( addr)
-      # if secure
-      #   p ['report1', @is_asset, @is_error, redirect, secure]
-      # end
       ts   = @pages[addr]['timestamp']
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
 

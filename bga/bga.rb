@@ -14,8 +14,8 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
-    on_element 'article' do  |place|
-      place.content? ? nil : Elements::Article.new( place).set_title( place.title).set_date( place.date)
+    on_element 'article', :class => 'section-2' do  |place|
+      Elements::Article.new( place).set_title( place.title).set_date( place.date)
     end
 
     on_element 'button' do |place|
@@ -160,8 +160,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'views-row' do |place|
-      Elements::Group.new( place)
-      Elements::Styling.new( place, [:row])
+      Elements::Line.new( place)
     end
 
     on_element 'iframe' do |place|
@@ -174,6 +173,11 @@ class BGA < Site
 
     on_element 'select', :grokked => false do |place|
       Elements::Ignore.new( place)
+    end
+
+    on_element 'table' do |place|
+      table = Elements::Table.new( place)
+      table.error? ? Elements::Raw.new( place) : table
     end
 
     on_element 'text' do |place|
