@@ -8,5 +8,9 @@ module Elements
       end
       false
     end
+
+    def text?
+      true
+    end
   end
 end

@@ -16,7 +16,7 @@ module Elements
       @contents.each do |child|
         t = child.title if t.nil?
       end
-      t ? t.strip : ''
+      t ? t.strip : @href
     end
 
     def content?

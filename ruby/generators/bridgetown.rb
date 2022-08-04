@@ -315,7 +315,6 @@ module Generators
         if style == :bold
           @markdown << '**'
         elsif style == :big
-        elsif style == :centre
         elsif style == :cite
           @markdown << '**'
         elsif style == :code
@@ -343,7 +342,6 @@ module Generators
         if style == :bold
           @markdown << '**'
         elsif style == :big
-        elsif style == :centre
         elsif style == :cite
           @markdown << '**'
         elsif style == :code

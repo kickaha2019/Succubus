@@ -15,6 +15,10 @@ module Elements
     def grokked?
       true
     end
+
+    def text?
+      true
+    end
   end
 end
 

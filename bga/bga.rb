@@ -163,7 +163,16 @@ class BGA < Site
       Elements::Line.new( place)
     end
 
+    on_element 'h3' do |place|
+      h3 = Elements::Heading.new( place, 3)
+      h3.error? ? Elements::Group.new( place) : h3
+    end
+
     on_element 'iframe' do |place|
+      Elements::Ignore.new( place)
+    end
+
+    on_element 'img', :class => 'floatright' do |place|
       Elements::Ignore.new( place)
     end
 
@@ -207,6 +216,34 @@ class BGA < Site
       true
     end
 
+    on_page 'bgj/bgj108' do |page|
+      on_element 'td' do |place|
+        Elements::Paragraph.new( place)
+      end
+      false
+    end
+
+    on_page 'gopcres/play.html' do |page|
+      on_element 'div', :class => 'indent' do |place|
+        Elements::Group.new( place)
+      end
+      false
+    end
+
+    on_page 'policy/young.html' do |page|
+      on_element 'div', :class => 'indent' do |place|
+        Elements::Group.new( place)
+      end
+      false
+    end
+
+    on_page 'junior/champs' do |page|
+      on_element 'font' do |place|
+        Elements::Group.new( place)
+      end
+      false
+    end
+
     on_page /^(allnews|results_xxxx)($|\?)/ do |page|
       on_element 'body', :grokked => false do |place|
         Elements::Ignore.new( place)
@@ -219,6 +256,7 @@ class BGA < Site
       on_element 'div', :class => 'block-system-main-block' do |place|
         Elements::Ignore.new( place)
       end
+      false
     end
 
     on_page %r{^\w*/\w*\d\d\d\d(|$)} do |page|

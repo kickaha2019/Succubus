@@ -1,4 +1,4 @@
-require_relative 'group'
+require_relative 'text_group'
 
 module Elements
   class Paragraph < Group
@@ -6,6 +6,13 @@ module Elements
       generator.paragraph_begin
       super
       generator.paragraph_end
+    end
+
+    def text?
+      children do |child|
+        return false unless child.text?
+      end
+      true
     end
   end
 end

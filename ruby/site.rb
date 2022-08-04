@@ -183,7 +183,7 @@ class Site
     end
 
     on_element 'center' do  |place|
-      Elements::Styling.new( place, [:centre])
+      Elements::Group.new( place)
     end
 
     on_element 'cite' do  |place|
