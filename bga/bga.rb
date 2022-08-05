@@ -93,7 +93,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'indent' do |place|
-      Elements::Styling.new( place, [:indent])
+      Elements::Group.new( place)
     end
 
     on_element 'div', :class => 'last-updated' do |place|
@@ -189,6 +189,14 @@ class BGA < Site
       table.error? ? Elements::Raw.new( place) : table
     end
 
+    on_element 'td', :parent => 'tr', :grandparent => 'table' do  |place|
+      Elements::Cell.new( place)
+    end
+
+    on_element 'td' do  |place|
+      Elements::Group.new( place)
+    end
+
     on_element 'text' do |place|
       if place.text == "\n — "
         Elements::Text.new( place, '&mdash;')
@@ -199,6 +207,22 @@ class BGA < Site
       if /^Coronavirus: Most Go clubs stopped meeting in person/ =~ place.text
         Elements::Ignore.new( place)
       end
+    end
+
+    on_element 'th', :parent => 'tr', :grandparent => 'table' do  |place|
+      Elements::Cell.new( place)
+    end
+
+    on_element 'th' do  |place|
+      Elements::Group.new( place)
+    end
+
+    on_element 'tr', :parent => 'table' do  |place|
+      Elements::Row.new( place)
+    end
+
+    on_element 'tr' do  |place|
+      Elements::Group.new( place)
     end
 
     on_element 'rss', :grokked => false do |place|
@@ -219,20 +243,6 @@ class BGA < Site
     on_page 'bgj/bgj108' do |page|
       on_element 'td' do |place|
         Elements::Paragraph.new( place)
-      end
-      false
-    end
-
-    on_page 'gopcres/play.html' do |page|
-      on_element 'div', :class => 'indent' do |place|
-        Elements::Group.new( place)
-      end
-      false
-    end
-
-    on_page 'policy/young.html' do |page|
-      on_element 'div', :class => 'indent' do |place|
-        Elements::Group.new( place)
       end
       false
     end

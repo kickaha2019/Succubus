@@ -320,7 +320,6 @@ module Generators
         elsif style == :code
         elsif style == :emphasized
           @markdown << '*'
-        elsif style == :indent
         elsif style == :italic
           @markdown << '*'
         elsif style == :keyboard
@@ -347,7 +346,6 @@ module Generators
         elsif style == :code
         elsif style == :emphasized
           @markdown << '*'
-        elsif style == :indent
         elsif style == :italic
           @markdown << '*'
         elsif style == :keyboard

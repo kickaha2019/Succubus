@@ -62,6 +62,18 @@ class Site
         end
       end
 
+      if applies
+        if @args[:parent]
+          applies = element.parent && (element.parent.name == @args[:parent])
+        end
+      end
+
+      if applies
+        if @args[:grandparent]
+          applies = element.parent && element.parent.parent && (element.parent.parent.name == @args[:grandparent])
+        end
+      end
+
       applies
     end
 
@@ -290,6 +302,10 @@ class Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'nobr' do  |place|
+      Elements::Line.new( place)
+    end
+
     on_element 'ol' do  |place|
       Elements::List.new( place, :ordered)
     end
@@ -338,7 +354,7 @@ class Site
       Elements::Styling.new( place, [])
     end
 
-    on_element 'td' do  |place|
+    on_element 'td', :parent => 'tr' do  |place|
       Elements::Cell.new( place)
     end
 
@@ -346,7 +362,7 @@ class Site
       Elements::Text.new( place, place.text)
     end
 
-    on_element 'th' do  |place|
+    on_element 'th', :parent => 'tr' do  |place|
       Elements::Cell.new( place)
     end
 
@@ -354,7 +370,7 @@ class Site
       Elements::Styling.new( place, [])
     end
 
-    on_element 'tr' do  |place|
+    on_element 'tr', :parent => 'table' do  |place|
       Elements::Row.new( place)
     end
 
