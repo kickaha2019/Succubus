@@ -296,7 +296,7 @@ module Generators
       copy_template( 'bridgetown/home.liquid',   'src/_layouts/home.liquid')
       copy_template( 'bridgetown/navbar.liquid', 'src/_components/navbar.liquid')
       copy_template( 'bridgetown/posts.liquid',  'src/_layouts/posts.liquid')
-      copy_template( 'bridgetown/site.css',      'src/site.css')
+      copy_template( 'bridgetown/site.css',      'frontend/styles/index.css')
 
       generate_posts_page( 'posts', 'src/index-posts.md')
     end
