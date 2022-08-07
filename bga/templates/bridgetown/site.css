@@ -22,3 +22,5 @@ main>div {margin: 20px;
 .big_width {max-width: 800px; min-width: 400px}
 
 .medium_width {width: 400px}
+
+.medium_width a {font-size: 30px}

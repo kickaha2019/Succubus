@@ -21,6 +21,7 @@ class Analyser < Processor
 .grokked_and_content {background: yellow}
 .error {background: red}
 .section {background: cyan}
+.raw {background: grey}
 </style>
 <script>
 function expand( index) {
@@ -37,28 +38,32 @@ function reduce( index) {
 </head>
 <body><div>
 DUMP1
-      dump_structure( struct, 0, dump_errors( struct), io)
+      dump_structure( struct, 0, dump_expand( struct), io)
       io.puts <<"DUMP2"
 <div><body></html>
 DUMP2
     end
   end
 
-  def dump_errors( struct)
-    errors = []
+  def dump_expand( struct)
+    expand, focus = {}, {}
     struct.tree do |element|
       if element.error?
-        errors[element.index] = true
-      else
-        element.children do |child|
-          errors[element.index] = true if errors[child.index]
-        end
+        focus[element.index] = true
+      elsif element.is_a?( Elements::Article)
+        focus[element.index] = true
+      elsif element.is_a?( Elements::Raw)
+        focus[element.index] = true
+      end
+
+      element.contents.each do |child|
+        expand[element.index] = true if expand[child.index] || focus[child.index]
       end
     end
-    errors
+    expand
   end
 
-  def dump_structure( struct, indent, errors, io)
+  def dump_structure( struct, indent, expand, io)
     if indent > 0
       (0...indent).each do
         io.print "<div class=\"indent\"></div>"
@@ -67,26 +72,25 @@ DUMP2
 
     io.print "<div class=\"indent\">"
     before, after = '', ''
-    expand = (struct.contains_article? && (! struct.article?)) || (! struct.grokked?)
+    exp = expand[struct.index]
 
     if struct.contents.size > 0
-      io.print "<span id=\"r#{struct.index}\"#{expand ? ' style="display: none"' : ''} onclick=\"expand(#{struct.index})\">&rtri;</span>"
-      io.print "<span id=\"e#{struct.index}\"#{expand ? '' : ' style="display: none"'} onclick=\"reduce(#{struct.index})\">&dtri;</span>"
-      before = "<div id=\"d#{struct.index}\"#{expand ? '' : ' style="display: none"'}>"
+      io.print "<span id=\"r#{struct.index}\"#{exp ? ' style="display: none"' : ''} onclick=\"expand(#{struct.index})\">&rtri;</span>"
+      io.print "<span id=\"e#{struct.index}\"#{exp ? '' : ' style="display: none"'} onclick=\"reduce(#{struct.index})\">&dtri;</span>"
+      before = "<div id=\"d#{struct.index}\"#{exp ? '' : ' style="display: none"'}>"
       after  = '</div>'
     end
     io.print "</div>"
 
-    scheme, struct_error, tooltip = '', false, ''
-    if errors[struct.index]
-      struct_error = true
-      _, tooltip = struct.error?
-    end
+    scheme, tooltip = '', false, ''
+    struct_error, tooltip = struct.error?
 
     if struct_error
       scheme = 'error'
     elsif struct.article?
       scheme = 'section'
+    elsif struct.is_a?( Elements::Raw)
+      scheme = 'raw'
     elsif struct.grokked?
       if struct.content?
         scheme = 'grokked_and_content'
@@ -111,7 +115,7 @@ DUMP2
 
     io.puts before
     struct.contents.each do |child|
-      dump_structure(  child, indent+1, errors, io)
+      dump_structure(  child, indent+1, expand, io)
     end
     io.puts after
   end
@@ -137,7 +141,7 @@ DUMP2
     end
 
     open_files( dir)
-    n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0
+    n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed, n_raw = 0, 0, 0, 0, 0, 0, 0
 
     addresses     = @pages.keys.sort
     @is_error     = true
@@ -156,7 +160,7 @@ DUMP2
       n_grabbed += 1
       n_error   += 1 if @is_error
 
-      old_articles, date, tags = n_articles, '', ''
+      old_articles, date, tags, old_raw = n_articles, '', '', n_raw
       if parsed
         parsed.tree do |child|
           if child.is_a?( Elements::Article)
@@ -167,6 +171,8 @@ DUMP2
             if child.tags
               tags = child.tags.collect {|tag| tag[1]}.join( ' ')
             end
+          elsif child.is_a?( Elements::Raw)
+            n_raw += 1
           end
         end
       end
@@ -207,24 +213,25 @@ DUMP2
       write_files "<td>#{@pages[addr]['comment']}</td>"
 
       if ts == 0
-        write_files "<td></td></tr>"
+        write_files "<td></td>"
       else
-        write_files "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td></tr>"
+        write_files "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td>"
       end
 
       if parsed
         dump( parsed, dir + "/#{i}.html")
       end
+      write_files "<td>#{(n_raw > old_raw) ? (n_raw - old_raw) : ''}</td></tr>"
     end
 
     @is_asset     = false
     @is_error     = true
     @has_articles = true
-    report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed)
+    report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed, n_raw)
     close_files
   end
 
-  def report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed)
+  def report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed, n_raw)
     write_files <<FOOTER1
 </table></div>
 <div class="menu"><table><tr>
@@ -234,6 +241,7 @@ DUMP2
 <td>Redirects: #{n_redirect}</td>
 <td>Errors: #{n_error}</td>
 <td>Grabbed: #{n_grabbed}</td>
+<td>Raw: #{n_raw}</td>
 </tr></table></div>
 <div class="menu"><table><tr>
 FOOTER1
@@ -286,6 +294,7 @@ HEADER1
 <th>Tags</th>
 <th>Comment</th>
 <th>Timestamp</th>
+<th>Raw</th>
 </tr>
 HEADER2
   end

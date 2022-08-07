@@ -2,11 +2,11 @@
 <div>British <span>Go</span> Association<div>
 </nav>
 
-<div class="breadcrumbs">"
 {% if resource.parents %}
-  {% for parent in resource.parents %}
-    <a href="{{ parent.url }}">{{ parent.name }}</a> &raquo;
-  {% endfor %}
+  <div class="breadcrumbs">
+    {% for parent in resource.parents %}
+      <a href="{{ parent.url }}">{{ parent.name }}</a> &raquo;
+    {% endfor %}
+    {{ resource.name }}
+  </div>
 {% endif %}
-{{ resource.title }}
-</div>

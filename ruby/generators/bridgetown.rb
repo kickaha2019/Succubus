@@ -20,7 +20,7 @@ module Generators
     end
 
     def asset_copy( cached, url)
-      path = @output_dir + '/images/' + url[(@config['root_url'].size)..-1]
+      path = @output_dir + '/src/' + url[(@config['root_url'].size)..-1]
       @generated[path] = true
       unless File.exist?( path)
         create_dir( File.dirname( path))
@@ -34,8 +34,7 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      parents        = []
-      @front_matter  = {'layout' => 'default', 'parent' => parents}
+      @front_matter  = {'layout' => 'default'}
       @markdown      = []
 
       if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
@@ -43,7 +42,7 @@ module Generators
       end
 
       unless article.mode == :home
-        parents << {'url' => '/index.html', 'title' => 'Home'}
+        @front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
       end
 
       if @written[@path]

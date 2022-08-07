@@ -16,7 +16,7 @@
           
           {% for post in paginator.resources %}
             <article>
-              <a href="{{ post.relative_url }}"><h2>{{ post.data.title }}</h2></a>
+              <a href="{{ post.relative_url }}">{{ post.data.title }}</a>
 
               <p>{{ post.data.description }}</p>
             </article>
