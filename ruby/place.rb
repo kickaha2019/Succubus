@@ -23,6 +23,10 @@ class Place
     @page.date
   end
 
+  def description
+    @page.description
+  end
+
   def find_children( clazz)
     @children.select {|child| child.is_a?( clazz)}
   end

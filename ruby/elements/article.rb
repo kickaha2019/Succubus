@@ -6,13 +6,14 @@ module Elements
 
     def initialize( place)
       super
-      @title    = place.page.title
-      @date     = place.page.date
-      @mode     = place.page.mode
-      @tags     = place.page.tags
-      @root     = place.page.root?
-      @root_url = place.page.root_url
-      @url      = place.url
+      @title       = place.page.title
+      @date        = place.page.date
+      @description = place.page.description
+      @mode        = place.page.mode
+      @tags        = place.page.tags
+      @root        = place.page.root?
+      @root_url    = place.page.root_url
+      @url         = place.url
     end
 
     def article?
@@ -24,11 +25,12 @@ module Elements
     end
 
     def description
-      if @mode == :home
-        children do |child|
-          p [child.describe, child.text]
-        end
-      end
+      return @description if @description
+      # if @mode == :home
+      #   children do |child|
+      #     p [child.describe, child.text]
+      #   end
+      # end
       text = []
       children do |child|
         text << child.text.strip
@@ -43,6 +45,11 @@ module Elements
         return true, 'No date' unless @date
         return true, 'No tags' unless @tags
       end
+
+      tree do |child|
+        return true, 'Article inside article' if child.article? && child != self
+      end
+
       return false, nil
     end
 

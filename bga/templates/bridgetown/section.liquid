@@ -7,16 +7,16 @@
     {% render "navbar", metadata: site.metadata, resource: resource %}
 
     <main>
-        <div class="small_width">
-          {% for section in resource.sections %}
-            <a href="section-{{ section.key }}.html">{{ section.name }}</a><br>
+        <div class="medium_width">
+          {% for article in collections[resource.section].resources %}
+            <article>
+              <a href="{{ post.relative_url }}">{{ post.data.title }}</a>
+
+              <p>{{ post.data.description }}</p>
+            </article>
           {% endfor %}
         </div>
-
-        <div class="big_width">
-        {{ content }}
-        </div>
-
+        
         <div class="medium_width">
           <h2>Recent posts</h2>
           
@@ -28,7 +28,7 @@
             </article>
           {% endfor %}
           
-          <a href="index-posts">All posts</a>
+          <a href="section-{{ section }}-posts">All posts</a>
         </div>
     </main>
 

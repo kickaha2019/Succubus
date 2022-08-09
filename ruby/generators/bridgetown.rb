@@ -13,21 +13,16 @@ module Generators
       @path2article  = {}
       @enc2names     = {}
 
+      # Stack to allow for recursive generation
+      @saved = []
+
+      # Tag internal names
+      @tag2internal  = Hash.new {|h,k| h[k] = "t#{@tag2internal.size}"}
+
       # Control the markdown generation
       @indent        = ['']
       @list_marker   = '#'
       @table_state   = nil
-    end
-
-    def asset_copy( cached, url)
-      path = @output_dir + '/src/' + url[(@config['root_url'].size)..-1]
-      @generated[path] = true
-      unless File.exist?( path)
-        create_dir( File.dirname( path))
-        unless system( "cp #{cached} #{path}")
-          raise "Error copying  #{cached} to #{path}"
-        end
-      end
     end
 
     def article_begin( url, article)
@@ -41,7 +36,27 @@ module Generators
         fm.each_pair {|k,v| @front_matter[k] = v}
       end
 
-      unless article.mode == :home
+      if article.mode == :home
+        unless @taxonomies.empty?
+          sections = []
+          taxa0 = @taxonomies.keys[0]
+          @tag2internal.keys.sort.each do |taxa_tag|
+            if taxa_tag[0..taxa0.size] == taxa0 + ':'
+              name = taxa_tag[(taxa0.size+1)..-1]
+              sections << {'name' => name, 'key' => @tag2internal[taxa_tag]}
+            end
+          end
+
+          sections.sort_by! {|section| section['name']}
+          @front_matter['sections'] =
+            sections.select {|section| section['name'] == 'General'} +
+            sections.select {|section| section['name'] != 'General'}
+
+          sections.each do |section|
+            generate_section_page( section['key'], section['name'])
+          end
+        end
+      else
         @front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
       end
 
@@ -57,7 +72,9 @@ module Generators
     end
 
     def article_description( text)
-      @front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
+      if text != ''
+        @front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
+      end
     end
 
     def article_end
@@ -65,11 +82,30 @@ module Generators
     end
 
     def article_tags( tags)
-      @front_matter['categories'] = tags
+      @front_matter['categories'] = []
+      taxas = {}
+      tags.each_pair do |taxa, name|
+        taxas[taxa] = true
+        @front_matter['categories'] << @tag2internal[taxa+':'+name]
+      end
+      @taxonomies.each_key do |taxa|
+        @front_matter['categories'] << @tag2internal[taxa+':General'] unless taxas[taxa]
+      end
     end
 
     def article_title( title)
       @front_matter['title'] = title
+    end
+
+    def asset_copy( cached, url)
+      path = @output_dir + '/src/' + url[(@config['root_url'].size)..-1]
+      @generated[path] = true
+      unless File.exist?( path)
+        create_dir( File.dirname( path))
+        unless system( "cp #{cached} #{path}")
+          raise "Error copying  #{cached} to #{path}"
+        end
+      end
     end
 
     def blockquote_begin
@@ -162,14 +198,32 @@ module Generators
     end
 
     def generate_posts_page( collection, relpath)
-      @article_url   = @config['root_url'] + '/index-posts.html'
-      @article_error = false
+      save_generation
+      #@article_url   = @config['root_url'] + '/index-posts.html'
+      #@article_error = false
       @path          = @output_dir + '/' + relpath
       parents        = [{'url' => '/index.html', 'title' => 'Home'}]
       @front_matter  = {'layout' => 'posts',
                         'parents' => parents,
                         'paginate' => {'collection' => collection, 'per_page' => 25}}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
+      restore_generation
+    end
+
+    def generate_section_page( collection, title)
+      save_generation
+      #@article_url   = @config['root_url'] + "/section-#{collection}.html"
+      #@article_error = false
+      @path          = @output_dir + '/src/section-' + collection + '.md'
+      parents        = [{'url' => '/index.html', 'title' => 'Home'}]
+      @front_matter  = {'layout'  => 'section',
+                        'name'    => title,
+                        'parents' => parents,
+                        'section' => collection,
+                        'paginate' => {'collection' => collection + '.posts', 'per_page' => 5}}
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
+      restore_generation
+      generate_posts_page( collection + '.posts', 'src/section-' + collection + '-posts.md')
     end
 
     def heading_begin( level)
@@ -273,6 +327,9 @@ module Generators
     end
 
     def register_article( url, article)
+      article.tags.each_pair do |section, tag|
+        @tag2internal[section + ':' + tag]
+      end
     end
 
     def row_begin
@@ -289,12 +346,21 @@ module Generators
       end
     end
 
+    def restore_generation
+      @article_url, @article_error, @path, @front_matter, @markdown = * @saved.pop
+    end
+
+    def save_generation
+      @saved << [@article_url, @article_error, @path, @front_matter, @markdown]
+    end
+
     def site_begin
       copy_template( 'bridgetown/footer.liquid', 'src/_components/footer.liquid')
       copy_template( 'bridgetown/head.liquid',   'src/_components/head.liquid')
       copy_template( 'bridgetown/home.liquid',   'src/_layouts/home.liquid')
       copy_template( 'bridgetown/navbar.liquid', 'src/_components/navbar.liquid')
       copy_template( 'bridgetown/posts.liquid',  'src/_layouts/posts.liquid')
+      copy_template( 'bridgetown/section.liquid','src/_layouts/section.liquid')
       copy_template( 'bridgetown/site.css',      'frontend/styles/index.css')
 
       generate_posts_page( 'posts', 'src/index-posts.md')

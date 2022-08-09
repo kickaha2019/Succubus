@@ -307,7 +307,7 @@ class Site
     end
 
     on_element 'ol' do  |place|
-      Elements::List.new( place, :ordered)
+      ol = Elements::List.new( place, :ordered)
     end
 
     on_element 'p' do  |place|
@@ -315,7 +315,7 @@ class Site
     end
 
     on_element 'pre' do  |place|
-      Elements::Pre.new( place)
+      Elements::Raw.new( place)
     end
 
     on_element 'script', :grokked => false do  |place|
@@ -439,7 +439,7 @@ class Site
   end
 
   def parse1( page, doc)
-    children = doc.children.collect {|child| parse1( page, child)}
+    children = doc.children.collect {|child| parse1( page, child)}.flatten
     place    = Place.new( page, doc, children)
 
     @page_element_rules[doc.name.upcase].each do |rule|

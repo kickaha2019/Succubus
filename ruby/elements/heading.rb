@@ -16,9 +16,13 @@ module Elements
     end
 
     def generate( generator)
-      generator.heading_begin( @level)
-      super( generator)
-      generator.heading_end( @level)
+      if text != ''
+        generator.heading_begin( @level)
+        super( generator)
+        generator.heading_end( @level)
+      else
+        generator.newline
+      end
     end
   end
 end

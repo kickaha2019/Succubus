@@ -27,11 +27,11 @@ class BGA < Site
     end
 
     on_element 'div', :class => '' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'attachment' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'block-system-branding-block' do |place|
@@ -53,35 +53,35 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'clearfix' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'even' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'feed-icons' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'field' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'field-content' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'field__item' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'field__items' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'field__label' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'form-item' do |place|
@@ -89,11 +89,11 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'item-list' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'indent' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'last-updated' do |place|
@@ -104,27 +104,27 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'links' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'node' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'node__links' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'odd' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'links' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'page' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'sidebar', :grokked => false do |place|
@@ -132,7 +132,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'view' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'view-content' do |place|
@@ -140,23 +140,23 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'view-footer' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'views-col' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'views-element-container' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'view-header' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'views-field' do |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'div', :class => 'views-row' do |place|
@@ -176,8 +176,13 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'ol' do |place|
+      ol = Elements::List.new( place, :ordered)
+      ol.error? ? Elements::Raw.new( place) : ol
+    end
+
     on_element 'section' do  |place|
-      Elements::Group.new( place)
+      place.children
     end
 
     on_element 'select', :grokked => false do |place|
