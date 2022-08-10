@@ -57,6 +57,14 @@ module Elements
       false
     end
 
+    def raw_count
+      count = 0
+      tree do |child|
+        count += 1 if child.is_a?( Elements::Raw)
+      end
+      count
+    end
+
     def relative_url
       @url[@root_url.size..-1]
     end

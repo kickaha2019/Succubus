@@ -26,6 +26,10 @@ class BGA < Site
       end
     end
 
+    on_element 'bold' do  |place|
+      Elements::Styling.new( place, [:bold])
+    end
+
     on_element 'div', :class => '' do |place|
       place.children
     end

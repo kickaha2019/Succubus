@@ -25,6 +25,10 @@ module Elements
     def grokked?
       true
     end
+
+    def tree
+      yield self
+    end
   end
 end
 

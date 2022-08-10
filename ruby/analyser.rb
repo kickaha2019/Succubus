@@ -164,6 +164,7 @@ DUMP2
       if parsed
         parsed.tree do |child|
           if child.is_a?( Elements::Article)
+            n_raw += child.raw_count
             n_articles += 1
             if child.date
               date = child.date.strftime( '%Y-%m-%d')
@@ -171,8 +172,6 @@ DUMP2
             if child.tags
               tags = child.tags.collect {|tag| tag[1]}.join( ' ')
             end
-          elsif child.is_a?( Elements::Raw)
-            n_raw += 1
           end
         end
       end
