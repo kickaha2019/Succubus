@@ -8,9 +8,11 @@
 
     <main>
         <div class="small_width">
+          <table>
           {% for section in resource.sections %}
-            <a href="section-{{ section.key }}.html">{{ section.name }}</a><br>
+            <tr><td><a href="section-{{ section.key }}.html">{{ section.name }}</a></td></tr>
           {% endfor %}
+          </table>
         </div>
 
         <div class="big_width">

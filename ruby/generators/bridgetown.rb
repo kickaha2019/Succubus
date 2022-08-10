@@ -216,11 +216,12 @@ module Generators
       #@article_error = false
       @path          = @output_dir + '/src/section-' + collection + '.md'
       parents        = [{'url' => '/index.html', 'title' => 'Home'}]
-      @front_matter  = {'layout'  => 'section',
-                        'name'    => title,
-                        'parents' => parents,
-                        'section' => collection,
-                        'paginate' => {'collection' => collection + '.posts', 'per_page' => 5}}
+      @front_matter  = {'layout'    => 'section',
+                        'name'      => title,
+                        'parents'   => parents,
+                        'section'   => collection,
+                        'paginate' => {'collection' => collection + '.posts', 'per_page' => 5},
+                        'permalink' => "/section-#{collection}.html"}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
       generate_posts_page( collection + '.posts', 'src/section-' + collection + '-posts.md')
