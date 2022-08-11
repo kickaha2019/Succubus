@@ -62,6 +62,7 @@ exclude_urls:
 - https://britgo.org/junior/internetgo
 - https://britgo.org/reports
 - https://britgo.org/files/teaching/Reference form Teachers of YPs.pdf
+- https://britgo.org/user/password
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Bridgetown

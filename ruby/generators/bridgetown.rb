@@ -356,13 +356,15 @@ module Generators
     end
 
     def site_begin
-      copy_template( 'bridgetown/footer.liquid', 'src/_components/footer.liquid')
-      copy_template( 'bridgetown/head.liquid',   'src/_components/head.liquid')
-      copy_template( 'bridgetown/home.liquid',   'src/_layouts/home.liquid')
-      copy_template( 'bridgetown/navbar.liquid', 'src/_components/navbar.liquid')
-      copy_template( 'bridgetown/posts.liquid',  'src/_layouts/posts.liquid')
-      copy_template( 'bridgetown/section.liquid','src/_layouts/section.liquid')
-      copy_template( 'bridgetown/site.css',      'frontend/styles/index.css')
+      copy_template( 'bridgetown/default.liquid', 'src/_layouts/default.liquid')
+      copy_template( 'bridgetown/footer.liquid',  'src/_components/footer.liquid')
+      copy_template( 'bridgetown/head.liquid',    'src/_components/head.liquid')
+      copy_template( 'bridgetown/home.liquid',    'src/_layouts/home.liquid')
+      copy_template( 'bridgetown/navbar.liquid',  'src/_components/navbar.liquid')
+      copy_template( 'bridgetown/posts.liquid',   'src/_layouts/posts.liquid')
+      copy_template( 'bridgetown/section.liquid', 'src/_layouts/section.liquid')
+      copy_template( 'bridgetown/site.css',       'src/index.css')
+      copy_template( 'bridgetown/my_filters.rb',  'plugins/builders/my_filters.rb')
 
       generate_posts_page( 'posts', 'src/index-posts.md')
     end
