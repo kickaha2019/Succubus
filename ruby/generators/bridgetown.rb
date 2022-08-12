@@ -324,7 +324,13 @@ module Generators
     end
 
     def raw( html)
-      @markdown << html
+      relpath = @article_url[@config['root_url'].size..-1].split('/')
+      if relpath.size < 2
+        to_root = ''
+      else
+        to_root = relpath[1..-1].collect {'../'}.join( '')
+      end
+      @markdown << html.gsub( /src="\//, "src=\"#{to_root}")
     end
 
     def register_article( url, article)
