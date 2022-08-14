@@ -11,6 +11,8 @@ nav span {color: red; font-style: italic}
 
 main {display: flex;
       flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
 }
 
 main>div {margin: 20px;
@@ -30,3 +32,7 @@ main>div {margin: 20px;
 .small_width a {font-size: 20px}
 
 .small_width td {padding-bottom: 3px}
+
+.black {color: black}
+
+.breadcrumbs {padding: 5px; font-size: 18px}

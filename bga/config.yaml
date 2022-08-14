@@ -65,18 +65,32 @@ exclude_urls:
 - https://britgo.org/user/password
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
-generator:  Bridgetown
+generator:  Hugo
 hugo:
   baseURL:      https://alofmethbin.com/experiment
   title:        Experiment
   languageCode: en-gb
-  theme:        ananke
 bridgetown:
   config:
     baseURL:      https://alofmethbin.com/experiment
     title:        Experiment
     pagination:
       enabled: true
+    collections:
+      sections:
+        output: true
+        relations:
+          belongs_to:
+            - articles
+            - news
+      articles:
+        output: true
+        relations:
+          has_many: sections
+      news:
+        output: true
+        relations:
+          has_many: sections
   front_matter:
     home:
       layout: home

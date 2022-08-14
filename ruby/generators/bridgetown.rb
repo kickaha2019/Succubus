@@ -48,7 +48,7 @@ module Generators
           end
 
           sections.sort_by! {|section| section['name']}
-          @front_matter['sections'] =
+          @front_matter['section_index'] =
             sections.select {|section| section['name'] == 'General'} +
             sections.select {|section| section['name'] != 'General'}
 
@@ -72,7 +72,7 @@ module Generators
     end
 
     def article_description( text)
-      if text != ''
+      if text && (text != '')
         @front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
       end
     end
@@ -82,14 +82,15 @@ module Generators
     end
 
     def article_tags( tags)
-      @front_matter['categories'] = []
+      return if @front_matter['section_index']
+      @front_matter['sections'] = []
       taxas = {}
       tags.each_pair do |taxa, name|
         taxas[taxa] = true
-        @front_matter['categories'] << @tag2internal[taxa+':'+name]
+        @front_matter['sections'] << @tag2internal[taxa+':'+name]
       end
       @taxonomies.each_key do |taxa|
-        @front_matter['categories'] << @tag2internal[taxa+':General'] unless taxas[taxa]
+        @front_matter['sections'] << @tag2internal[taxa+':General'] unless taxas[taxa]
       end
     end
 
@@ -202,7 +203,7 @@ module Generators
       #@article_url   = @config['root_url'] + '/index-posts.html'
       #@article_error = false
       @path          = @output_dir + '/' + relpath
-      parents        = [{'url' => '/index.html', 'title' => 'Home'}]
+      parents        = [{'url' => '../../index.html', 'title' => 'Home'}]
       @front_matter  = {'layout' => 'posts',
                         'parents' => parents,
                         'paginate' => {'collection' => collection, 'per_page' => 25}}
@@ -214,14 +215,13 @@ module Generators
       save_generation
       #@article_url   = @config['root_url'] + "/section-#{collection}.html"
       #@article_error = false
-      @path          = @output_dir + '/src/section-' + collection + '.md'
-      parents        = [{'url' => '/index.html', 'title' => 'Home'}]
+      @path          = @output_dir + '/src/_sections/' + collection + '.md'
+      parents        = [{'url' => '../../index.html', 'title' => 'Home'}]
       @front_matter  = {'layout'    => 'section',
-                        'name'      => title,
+                        'title'     => title,
                         'parents'   => parents,
                         'section'   => collection,
-                        'paginate' => {'collection' => collection + '.posts', 'per_page' => 5},
-                        'permalink' => "/section-#{collection}.html"}
+                        'paginate' => {'collection' => collection + '.posts', 'per_page' => 5}}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
       generate_posts_page( collection + '.posts', 'src/section-' + collection + '-posts.md')
@@ -300,7 +300,7 @@ module Generators
         return disambiguate_path( stem, article) + '.md'
       end
 
-      stem = @output_dir + '/src/' + article.relative_url.sub( /\.[a-z]*$/i, '')
+      stem = @output_dir + '/src/_articles/' + article.relative_url.sub( /\.[a-z]*$/i, '')
       disambiguate_path( stem, article) + '.md'
     end
 
@@ -377,7 +377,7 @@ module Generators
 
     def site_end
       site_config = @config['bridgetown']['config']
-      write_file( @output_dir + '/config.yaml', site_config.to_yaml)
+      write_file( @output_dir + '/bridgetown.config.yaml', site_config.to_yaml)
     end
 
     def site_taxonomy( singular, plural)

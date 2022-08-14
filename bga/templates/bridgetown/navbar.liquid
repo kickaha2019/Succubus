@@ -5,8 +5,8 @@
 {% if resource.parents %}
   <div class="breadcrumbs">
     {% for parent in resource.parents %}
-      <a href="{{ parent.url }}">{{ parent.name }}</a> &raquo;
+      <a href="{{ parent.url }}">{{ parent.title }}</a> &raquo;
     {% endfor %}
-    {{ resource.name }}
+    {{ resource.title }}
   </div>
 {% endif %}

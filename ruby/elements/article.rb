@@ -25,17 +25,7 @@ module Elements
     end
 
     def description
-      return @description if @description
-      # if @mode == :home
-      #   children do |child|
-      #     p [child.describe, child.text]
-      #   end
-      # end
-      text = []
-      children do |child|
-        text << child.text.strip
-      end
-      text.join( ' ')
+      @description
     end
 
     def error?

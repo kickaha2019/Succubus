@@ -1,6 +1,7 @@
 module Generators
   class Hugo
-    def initialize( config, output_dir)
+    def initialize( config_dir, config, output_dir)
+      @config_dir    = config_dir
       @config        = config
       @output_dir    = output_dir
       @taxonomies    = {}
@@ -9,40 +10,60 @@ module Generators
       @article_error = false
       @any_errors    = false
       @article_url   = nil
-      @url2articles  = Hash.new {|h,k| h[k] = []}
+      @path2article  = {}
       @enc2names     = {}
+
+      # Stack to allow for recursive generation
+      @saved = []
+
+      # Tag internal names
+      @tag2internal  = Hash.new {|h,k| h[k] = "t#{@tag2internal.size}"}
 
       # Control the markdown generation
       @indent        = ['']
       @list_marker   = '#'
       @table_state   = nil
-
-      # Section control
-      @sec2articles  = Hash.new {|h,k| h[k] = []}
-      @no_taxa_error = false
-    end
-
-    def asset_copy( cached, url)
-      path = @output_dir + '/static/' + url[(@config['root_url'].size)..-1]
-      @generated[path] = true
-      unless File.exist?( path)
-        create_dir( File.dirname( path))
-        unless system( "cp #{cached} #{path}")
-          raise "Error copying  #{cached} to #{path}"
-        end
-      end
     end
 
     def article_begin( url, article)
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {}
+      @front_matter  = {'layout' => 'default'}
       @markdown      = []
+
+      # if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
+      #   fm.each_pair {|k,v| @front_matter[k] = v}
+      # end
+
+      if article.mode == :home
+        unless @taxonomies.empty?
+          sections = []
+          taxa0 = @taxonomies.keys[0]
+          @tag2internal.keys.sort.each do |taxa_tag|
+            if taxa_tag[0..taxa0.size] == taxa0 + ':'
+              name = taxa_tag[(taxa0.size+1)..-1]
+              sections << {'name' => name, 'key' => @tag2internal[taxa_tag]}
+            end
+          end
+
+          sections.sort_by! {|section| section['name']}
+          @front_matter['section_index'] =
+              sections.select {|section| section['name'] == 'General'} +
+                  sections.select {|section| section['name'] != 'General'}
+
+          sections.each do |section|
+            generate_section_page( section['key'], section['name'])
+          end
+        end
+      else
+        @front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
+      end
 
       if @written[@path]
         error( "Duplicate output path for #{url} and #{@written[@path]}")
       end
+
       @written[@path] = url
     end
 
@@ -50,12 +71,42 @@ module Generators
       @front_matter['date'] = date.strftime( '%Y-%m-%d')
     end
 
+    def article_description( text)
+      if text && (text != '')
+        @front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
+      end
+    end
+
     def article_end
       write_file( @path, "#{@front_matter.to_yaml}\n---\n#{@markdown.join('')}")
     end
 
+    def article_tags( tags)
+      return if @front_matter['section_index']
+      @front_matter['sections'] = []
+      taxas = {}
+      tags.each_pair do |taxa, name|
+        taxas[taxa] = true
+        @front_matter['sections'] << @tag2internal[taxa+':'+name]
+      end
+      @taxonomies.each_key do |taxa|
+        @front_matter['sections'] << @tag2internal[taxa+':General'] unless taxas[taxa]
+      end
+    end
+
     def article_title( title)
       @front_matter['title'] = title
+    end
+
+    def asset_copy( cached, url)
+      path = @output_dir + '/content/' + url[(@config['root_url'].size)..-1]
+      @generated[path] = true
+      unless File.exist?( path)
+        create_dir( File.dirname( path))
+        unless system( "cp #{cached} #{path}")
+          raise "Error copying  #{cached} to #{path}"
+        end
+      end
     end
 
     def blockquote_begin
@@ -75,15 +126,15 @@ module Generators
     end
 
     def clean_old_files
+      clean_old_files1( @output_dir + '/layouts')
       clean_old_files1( @output_dir + '/content')
-      clean_old_files1( @output_dir + '/static')
     end
 
     def clean_old_files1( dir)
       empty = true
 
       Dir.entries( dir).each do |f|
-        next if /^\./ =~ f
+        next if /^[\._]/ =~ f
         path = dir +'/' + f
 
         if File.directory?( path)
@@ -105,11 +156,28 @@ module Generators
       empty
     end
 
+    def copy_template( template_path, dest_path)
+      data = IO.read( @config_dir + '/templates/' + template_path)
+      write_file( @output_dir + '/' + dest_path, data)
+    end
+
     def create_dir( dir)
       unless File.exist?( dir)
         create_dir( File.dirname( dir))
         Dir.mkdir( dir)
       end
+    end
+
+    def disambiguate_path( stem, article)
+      index = 1
+      stem  = stem.split('?')[0]
+      path  = stem
+      while @path2article[path] && (@path2article[path] != article)
+        index += 1
+        path   = stem + "-#{index}"
+      end
+      @path2article[path] = article
+      path
     end
 
     def e( name)
@@ -130,9 +198,38 @@ module Generators
       @any_errors
     end
 
+    def generate_posts_page( collection, relpath)
+      save_generation
+      #@article_url   = @config['root_url'] + '/index-posts.html'
+      #@article_error = false
+      @path          = @output_dir + '/' + relpath
+      parents        = [{'url' => '../../index.html', 'title' => 'Home'}]
+      @front_matter  = {'layout' => 'posts',
+                        'parents' => parents,
+                        'paginate' => {'collection' => collection, 'per_page' => 25}}
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
+      restore_generation
+    end
+
+    def generate_section_page( collection, title)
+      save_generation
+      #@article_url   = @config['root_url'] + "/section-#{collection}.html"
+      #@article_error = false
+      @path          = @output_dir + '/src/_sections/' + collection + '.md'
+      parents        = [{'url' => '../../index.html', 'title' => 'Home'}]
+      @front_matter  = {'layout'    => 'section',
+                        'title'     => title,
+                        'parents'   => parents,
+                        'section'   => collection,
+                        'paginate' => {'collection' => collection + '.posts', 'per_page' => 5}}
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
+      restore_generation
+      generate_posts_page( collection + '.posts', 'src/section-' + collection + '-posts.md')
+    end
+
     def heading_begin( level)
       newline
-      @markdown << "######"[0...level]
+      @markdown << ('######'[0...level] + ' ')
     end
 
     def heading_end( level)
@@ -196,42 +293,8 @@ module Generators
         return @output_dir + '/content/index.md'
       end
 
-      if @taxonomies.empty?
-        error( 'No taxonomies defined') unless @no_taxa_error
-        @no_taxa_error = true
-        section_taxa = 'Section'
-      else
-        section_taxa = @taxonomies.keys[0]
-      end
-
-      section_tag = article.tags.select {|tag| tag[0] == section_taxa}.collect {|tag| tag[1]}
-      section = section_tag.empty? ? 'Pages' : section_tag[0]
-
-      section_dir = @output_dir + '/content/' + e(section)
-      if @sec2articles[section].empty?
-        write_file( section_dir + '/_index.md', <<"BRANCH")
----
-title: #{section}
-description: #{section}
----
-BRANCH
-
-        write_file( section_dir + '/pages/index.md', <<"LEAF")
----
-title: #{section}
-description: #{section}
----
-LEAF
-      end
-
-      if index = @sec2articles[section].index( article)
-        index += 1
-      else
-        @sec2articles[section] << article
-        index = @sec2articles[section].size
-      end
-
-      section_dir + "/pages/#{index}.md"
+      stem = @output_dir + '/content/' + article.relative_url.sub( /\.[a-z]*$/i, '')
+      disambiguate_path( stem, article) + '.md'
     end
 
     def paragraph_begin
@@ -253,8 +316,20 @@ LEAF
       pre_begin
     end
 
+    def raw( html)
+      relpath = @article_url[@config['root_url'].size..-1].split('/')
+      if relpath.size < 2
+        to_root = ''
+      else
+        to_root = relpath[1..-1].collect {'../'}.join( '')
+      end
+      @markdown << html.gsub( /src="\//, "src=\"#{to_root}")
+    end
+
     def register_article( url, article)
-      @url2articles[url] << article
+      article.tags.each_pair do |section, tag|
+        @tag2internal[section + ':' + tag]
+      end
     end
 
     def row_begin
@@ -271,17 +346,21 @@ LEAF
       end
     end
 
+    def restore_generation
+      @article_url, @article_error, @path, @front_matter, @markdown = * @saved.pop
+    end
+
+    def save_generation
+      @saved << [@article_url, @article_error, @path, @front_matter, @markdown]
+    end
+
     def site_begin
+      copy_template( 'default.html', 'layouts/default.html')
     end
 
     def site_end
-      site_config = @config['hugo']
-      if @taxonomies.size < 2
-        site_config['disableKinds'] = ['taxonomy', 'term']
-      else
-        site_config['taxonomies'] = @taxonomies[1..-1]
-      end
-      write_file( @output_dir + '/config.yaml', site_config.to_yaml)
+      site_config = @config['bridgetown']['config']
+      write_file( @output_dir + '/bridgetown.config.yaml', site_config.to_yaml)
     end
 
     def site_taxonomy( singular, plural)
@@ -293,18 +372,14 @@ LEAF
         if style == :bold
           @markdown << '**'
         elsif style == :big
-        elsif style == :centre
         elsif style == :cite
           @markdown << '**'
         elsif style == :code
         elsif style == :emphasized
           @markdown << '*'
-        elsif style == :indent
         elsif style == :italic
           @markdown << '*'
         elsif style == :keyboard
-        elsif style == :row
-          newline
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
@@ -323,18 +398,14 @@ LEAF
         if style == :bold
           @markdown << '**'
         elsif style == :big
-        elsif style == :centre
         elsif style == :cite
           @markdown << '**'
         elsif style == :code
         elsif style == :emphasized
           @markdown << '*'
-        elsif style == :indent
         elsif style == :italic
           @markdown << '*'
         elsif style == :keyboard
-        elsif style == :row
-          newline
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
@@ -360,9 +431,11 @@ LEAF
     end
 
     def write_file( path, data)
+      error( path + ': already written') if @generated[path]
       @generated[path] = true
       create_dir( File.dirname( path))
       unless File.exist?( path) && (IO.read( path).strip == data.strip)
+        puts "... Writing #{path}"
         File.open( path, 'w') {|io| io.print data}
       end
     end

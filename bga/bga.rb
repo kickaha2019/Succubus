@@ -315,10 +315,6 @@ class BGA < Site
         page.mode= :post
       end
 
-      # if /results\/2017\/mso13/ =~ page.url
-      #   p [ 'DEBUG1', page.css( 'div.field__item').text.strip]
-      # end
-
       page.css( 'div.field__item').each do |element|
         # if /results\/2017\/mso13/ =~ page.url
         #   p [ 'DEBUG2', element.text.strip]

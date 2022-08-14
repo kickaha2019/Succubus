@@ -30,9 +30,7 @@ class Compiler < Processor
     if article.title
       @generator.article_title( article.title)
     end
-    if article.tags
-      @generator.article_tags( article.tags)
-    end
+    @generator.article_tags( article.tags ? article.tags : {})
     @generator.article_description( article.description)
     article.generate( @generator)
     @generator.article_end

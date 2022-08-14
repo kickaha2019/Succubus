@@ -9,8 +9,8 @@
     <main>
         <div class="small_width">
           <table>
-          {% for section in resource.sections %}
-            <tr><td><a href="section-{{ section.key }}.html">{{ section.name }}</a></td></tr>
+          {% for section in resource.section_index %}
+            <tr><td><a href="sections/{{ section.key }}/index.html">{{ section.name }}</a></td></tr>
           {% endfor %}
           </table>
         </div>
@@ -30,7 +30,7 @@
             </article>
           {% endfor %}
           
-          <a href="index-posts">All posts</a>
+          <a class="black" href="index-posts">All posts</a>
         </div>
     </main>
 

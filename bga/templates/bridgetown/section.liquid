@@ -8,11 +8,12 @@
 
     <main>
         <div class="medium_width">
-          {% for article in collections[resource.section].resources %}
+          {{ resource.relations.articles.name }}
+          {% for article in collections.articles.resources %}
             <article>
-              <a href="{{ post.relative_url }}">{{ post.data.title }}</a>
+              <a href="{{ article.relative_url }}">{{ article.data.title }}</a>
 
-              <p>{{ post.data.description }}</p>
+              <p>{{ article.data.description }}</p>
             </article>
           {% endfor %}
         </div>
@@ -28,7 +29,7 @@
             </article>
           {% endfor %}
           
-          <a href="section-{{ section }}-posts">All posts</a>
+          <a class="black" "href="section-{{ section }}-posts">All posts</a>
         </div>
     </main>
 
