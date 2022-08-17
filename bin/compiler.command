@@ -1,10 +1,10 @@
 #!/bin/csh
 cd $0:h
 cd ..
-ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus Hugo
+ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus ~/temp/Hugo
 if ($status != 0) exit 1
-cd Hugo
+cd ~/temp/Hugo
 find public -name '*.html' -exec rm {} \;
 hugo
 if ($status != 0) exit 1
-open Hugo/public/index.html
+open public/index.html

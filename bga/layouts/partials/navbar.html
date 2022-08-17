@@ -1,0 +1,12 @@
+<nav>
+<div>British <span>Go</span> Association<div>
+</nav>
+
+{{ if .Params.Parents }}
+  <div class="breadcrumbs">
+    {{ range $parent := .Params.Parents }}
+      <a href="{{ $parent.url }}">{{ $parent.Title }}</a> &raquo;
+    {{ end }}
+    {{ .title }}
+  </div>
+{{ end }}

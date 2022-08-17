@@ -6,7 +6,7 @@ module Elements
 
     def initialize( place, href, title)
       super( place)
-      @href  = href
+      @href  = href.strip
       @title = title
     end
 

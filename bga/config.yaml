@@ -21,6 +21,9 @@ exclude_urls:
 - https://britgo.org/bchamp/qualifiers2020
 - https://britgo.org/bchamp/qualifiers2021
 - https://britgo.org/bchamp/qualifiers2022
+- https://britgo.org/image/tid/6
+- https://britgo.org/image/tid/20
+- https://britgo.org/image/tid/32
 - https://britgo.org/image/tid/53
 - https://britgo.org/image/tid/80
 - https://britgo.org/image/tid/82
@@ -63,6 +66,13 @@ exclude_urls:
 - https://britgo.org/reports
 - https://britgo.org/files/teaching/Reference form Teachers of YPs.pdf
 - https://britgo.org/user/password
+- https://britgo.org/events/shodan
+- https://britgo.org/name/Alistair%20Wall
+- https://britgo.org/news/2016/www.sugaranddice.co.uk
+- https://britgo.org/results/2008/shrew
+- https://britgo.org/results/2009/shrew
+- https://britgo.org/taxonomy/term/www.sugaranddice.co.uk
+- https://britgo.org/news/enews2
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo
@@ -70,6 +80,9 @@ hugo:
   baseURL:      https://alofmethbin.com/experiment
   title:        Experiment
   languageCode: en-gb
+  disableKinds:
+  - taxonomy
+  - term
 bridgetown:
   config:
     baseURL:      https://alofmethbin.com/experiment

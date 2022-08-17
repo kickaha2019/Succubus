@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en_GB">
+  <head>
+    {{ partial "head" . }}
+  </head>
+  <body class="{{ .Layout }}">
+    {{ partial "navbar" . }}
+
+    <main>
+        <div class="small_width">
+          <table>
+          {{ range $section := .Params.SectionIndex }}
+            <tr><td><a href="sections/{{ $section.key }}/index.html">{{ $section.name }}</a></td></tr>
+          {{ end }}
+          </table>
+        </div>
+
+        <div class="big_width">
+        {{ .Content }}
+        </div>
+
+        <div class="medium_width">
+          <h2>Recent posts</h2>
+          
+           for post in paginator.resources
+            <article>
+              <a href=" post.relative_url "> post.data.title </a>
+
+              <p> post.data.description </p>
+            </article>
+           endfor
+          
+          <a class="black" href="index-posts">All posts</a>
+        </div>
+    </main>
+
+    {{ partial "footer" . }}
+  </body>
+</html>

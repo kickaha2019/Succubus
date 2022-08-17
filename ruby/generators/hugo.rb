@@ -29,7 +29,7 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {'layout' => 'default'}
+      @front_matter  = {'layout' => 'default', 'toRoot' => to_root( article)}
       @markdown      = []
 
       # if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
@@ -37,6 +37,8 @@ module Generators
       # end
 
       if article.mode == :home
+        @front_matter['layout'] = 'home'
+
         unless @taxonomies.empty?
           sections = []
           taxa0 = @taxonomies.keys[0]
@@ -48,7 +50,7 @@ module Generators
           end
 
           sections.sort_by! {|section| section['name']}
-          @front_matter['section_index'] =
+          @front_matter['sectionIndex'] =
               sections.select {|section| section['name'] == 'General'} +
                   sections.select {|section| section['name'] != 'General'}
 
@@ -126,7 +128,6 @@ module Generators
     end
 
     def clean_old_files
-      clean_old_files1( @output_dir + '/layouts')
       clean_old_files1( @output_dir + '/content')
     end
 
@@ -157,7 +158,7 @@ module Generators
     end
 
     def copy_template( template_path, dest_path)
-      data = IO.read( @config_dir + '/templates/' + template_path)
+      data = IO.read( @config_dir + '/' + template_path)
       write_file( @output_dir + '/' + dest_path, data)
     end
 
@@ -355,12 +356,17 @@ module Generators
     end
 
     def site_begin
-      copy_template( 'default.html', 'layouts/default.html')
+      unless system( "rsync -r --delete #{@config_dir}/layouts/ #{@output_dir}/layouts/")
+        raise "Error copying layouts"
+      end
+      copy_template( 'index.css', 'content/index.css')
     end
 
     def site_end
-      site_config = @config['bridgetown']['config']
-      write_file( @output_dir + '/bridgetown.config.yaml', site_config.to_yaml)
+      site_config = @config['hugo']['config']
+      write_file( @output_dir + '/config.yaml', site_config.to_yaml)
+      toml = @output_dir + '/config.toml'
+      File.delete( toml) if File.exist?( toml)
     end
 
     def site_taxonomy( singular, plural)
@@ -428,6 +434,12 @@ module Generators
 
     def text( str)
       @markdown << str.gsub( /\s*\n/, ' ')
+    end
+
+    def to_root( article)
+      path = article.relative_url.split('/')
+      return '' if path.size < 2
+      path[1..-1].collect {'../'}.join( '')
     end
 
     def write_file( path, data)
