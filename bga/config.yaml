@@ -1,5 +1,6 @@
 ---
 root_url: https://britgo.org/
+debug_url: xxx
 include_urls:
 - https://britgo.org/membersarea
 exclude_urls:
@@ -73,6 +74,8 @@ exclude_urls:
 - https://britgo.org/results/2009/shrew
 - https://britgo.org/taxonomy/term/www.sugaranddice.co.uk
 - https://britgo.org/news/enews2
+- https://britgo.org/aga-ejournal/
+- https://britgo.org/results/2003/msopairs
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

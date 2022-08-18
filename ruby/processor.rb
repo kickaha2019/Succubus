@@ -70,7 +70,7 @@ class Processor
     end
 
     unless File.exist?( @cache + "/#{ts}.html")
-      # p ['examine1', url]
+      puts "examine1: #{url}" if debug
       return false, true, false, info['secured'], nil
     end
 
@@ -79,9 +79,11 @@ class Processor
 
       error = parsed.content?
       parsed.tree do |child|
-        p ['examine1', child.class.to_s, child.error?] if debug
-        child_error, _ = child.error?
-        error = true if child_error
+        child_error, child_msg = child.error?
+        if child_error
+          p ['examine3', child.index, child.class.to_s, child_msg] if debug
+          error = true
+        end
       end
 
       return false, error, false, info['secured'], parsed

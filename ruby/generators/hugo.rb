@@ -29,7 +29,7 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {'layout' => 'default', 'toRoot' => to_root( article)}
+      @front_matter  = {'layout' => 'default', 'toRoot' => to_root( article), 'mode' => article.mode.to_s}
       @markdown      = []
 
       # if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
@@ -187,6 +187,22 @@ module Generators
       encoded
     end
 
+    def ensure_index_md( dir)
+      return if File.exist?( dir + '/_index.md')
+      if File.exist?( dir + '/index.md')
+        mds = 0
+        Dir.entries( dir).each {|f| mds += 1 if /\.md$/ =~ f}
+
+        if mds > 1
+          write_file( dir + '/_index.md', IO.read( dir + '/index.md'))
+          File.delete( dir + '/index.md')
+        end
+
+        return
+      end
+      write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
+    end
+
     def error( msg)
       unless @article_error
         @article_error = true
@@ -291,7 +307,7 @@ module Generators
 
     def output_path( url, article)
       if article.root
-        return @output_dir + '/content/index.md'
+        return @output_dir + '/content/_index.md'
       end
 
       stem = @output_dir + '/content/' + article.relative_url.sub( /\.[a-z]*$/i, '')
@@ -365,6 +381,9 @@ module Generators
     def site_end
       site_config = @config['hugo']['config']
       write_file( @output_dir + '/config.yaml', site_config.to_yaml)
+      @generated.keys.each do |path|
+        ensure_index_md( File.dirname( path))
+      end
       toml = @output_dir + '/config.toml'
       File.delete( toml) if File.exist?( toml)
     end

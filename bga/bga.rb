@@ -18,6 +18,10 @@ class BGA < Site
       Elements::Article.new( place).set_title( place.title).set_date( place.date)
     end
 
+    on_element 'article', :class => 'section-3' do  |place|
+      Elements::Article.new( place).set_title( place.title).set_date( place.date)
+    end
+
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
         Elements::Anchor.new( place, place.absolutise( m[1]), nil)

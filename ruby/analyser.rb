@@ -9,7 +9,7 @@ class Analyser < Processor
     @files.each {|io| io.close}
   end
 
-  def dump( struct, filename)
+  def dump( struct, filename, debug=false)
     File.open( filename, 'w') do |io|
       io.puts <<"DUMP1"
 <html><head>
@@ -38,14 +38,14 @@ function reduce( index) {
 </head>
 <body><div>
 DUMP1
-      dump_structure( struct, 0, dump_expand( struct), io)
+      dump_structure( struct, 0, dump_expand( struct, debug), io)
       io.puts <<"DUMP2"
 <div><body></html>
 DUMP2
     end
   end
 
-  def dump_expand( struct)
+  def dump_expand( struct, debug=false)
     expand, focus = {}, {}
     struct.tree do |element|
       if element.error?
@@ -55,11 +55,17 @@ DUMP2
       elsif element.is_a?( Elements::Raw)
         focus[element.index] = true
       end
+      p ['dump_expand1', element.index, focus[element.index]] if debug && focus[element.index]
 
       element.contents.each do |child|
         expand[element.index] = true if expand[child.index] || focus[child.index]
       end
     end
+
+    if debug
+      p ['dump_expand2', expand, focus]
+    end
+
     expand
   end
 
@@ -108,7 +114,7 @@ DUMP2
     #   p [struct.doc.name, scheme, struct.class.name, struct.grokked?, struct.content?]
     # end
 
-    tooltip = struct.tooltip unless struct_error
+    tooltip = struct.tooltip unless struct_error || (tooltip && (tooltip != ''))
     io.print "<span class=\"label #{scheme}\" title=\"#{tooltip}\">"
     io.print( struct.describe)
     io.puts "</span><br>"
@@ -152,7 +158,9 @@ DUMP2
       addr = addresses[i]
       next if exclude_url?( addr)
 
-      @is_asset, @is_error, redirect, secure, parsed = examine( addr)
+      debug = (addr == @config['debug_url'])
+      @is_asset, @is_error, redirect, secure, parsed = examine( addr, debug)
+      p ['report1', addr, @config['debug_url'], debug] if @is_error
       ts   = @pages[addr]['timestamp']
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
 
@@ -218,7 +226,7 @@ DUMP2
       end
 
       if parsed
-        dump( parsed, dir + "/#{i}.html")
+        dump( parsed, dir + "/#{i}.html", debug)
       end
       write_files "<td>#{(n_raw > old_raw) ? (n_raw - old_raw) : ''}</td></tr>"
     end
