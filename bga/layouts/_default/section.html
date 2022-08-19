@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en_GB">
+  <head>
+    {{ partial "head" . }}
+  </head>
+  <body class="{{ .Layout }}">
+    {{ partial "navbar" . }}
+
+    <main>
+        <div class="medium_width">
+          <h2>Articles</h2>
+          {{ range where (where .Site.AllPages "Params.mode" "article") "Params.section0" .Params.section0 }}
+            <article>
+                <a href="{{ .Params.toRoot }}{{ .Permalink }}">{{ .Title }}</a>
+            </article>
+          {{ end }}
+        </div>
+
+        <div class="medium_width">
+          <h2>Recent posts for {{ .Title }}</h2>
+          {{ range first 10 (where (where .Site.AllPages "Params.mode" "post") "Params.section0" .Params.section0 ).ByDate.Reverse }}
+            <article>
+                <a href="{{ .Permalink }}">{{ .Title }}</a>
+                <p> {{ .Params.description }} </p>
+            </article>
+          {{ end }}
+
+          <a class="black" href="index-posts">All posts for {{ .Title }}</a>
+        </div>
+    </main>
+
+    {{ partial "footer" . }}
+  </body>
+</html>

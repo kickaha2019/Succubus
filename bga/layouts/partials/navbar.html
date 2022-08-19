@@ -2,11 +2,11 @@
 <div>British <span>Go</span> Association<div>
 </nav>
 
-{{ if .Params.Parents }}
+{{ if .Params.parents }}
   <div class="breadcrumbs">
-    {{ range $parent := .Params.Parents }}
-      <a href="{{ $parent.url }}">{{ $parent.Title }}</a> &raquo;
+    {{ range $parent := .Params.parents }}
+      <a href="{{ $parent.url }}">{{ $parent.title }}</a> &raquo;
     {{ end }}
-    {{ .title }}
+    {{ .Title }}
   </div>
 {{ end }}

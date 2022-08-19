@@ -10,7 +10,7 @@
         <div class="small_width">
           <table>
           {{ range $section := .Params.SectionIndex }}
-            <tr><td><a href="sections/{{ $section.key }}/index.html">{{ $section.name }}</a></td></tr>
+            <tr><td><a href="section-{{ $section.key }}/index.html">{{ $section.name }}</a></td></tr>
           {{ end }}
           </table>
         </div>

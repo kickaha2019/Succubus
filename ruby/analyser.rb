@@ -160,7 +160,6 @@ DUMP2
 
       debug = (addr == @config['debug_url'])
       @is_asset, @is_error, redirect, secure, parsed = examine( addr, debug)
-      p ['report1', addr, @config['debug_url'], debug] if @is_error
       ts   = @pages[addr]['timestamp']
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
 

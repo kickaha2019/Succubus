@@ -88,11 +88,12 @@ module Generators
       @front_matter['sections'] = []
       taxas = {}
       tags.each_pair do |taxa, name|
-        taxas[taxa] = true
-        @front_matter['sections'] << @tag2internal[taxa+':'+name]
+        taxas[taxa] = @tag2internal[taxa+':'+name]
       end
-      @taxonomies.each_key do |taxa|
-        @front_matter['sections'] << @tag2internal[taxa+':General'] unless taxas[taxa]
+
+      @taxonomies.keys.each_index do |i|
+        taxa = @taxonomies.keys[i]
+        @front_matter["section#{i}"] = taxas[taxa] ? taxas[taxa] : @tag2internal[taxa+':General']
       end
     end
 
@@ -188,7 +189,6 @@ module Generators
     end
 
     def ensure_index_md( dir)
-      return if File.exist?( dir + '/_index.md')
       if File.exist?( dir + '/index.md')
         mds = 0
         Dir.entries( dir).each {|f| mds += 1 if /\.md$/ =~ f}
@@ -200,6 +200,8 @@ module Generators
 
         return
       end
+
+      return if File.exist?( dir + '/_index.md')
       write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
     end
 
@@ -232,16 +234,16 @@ module Generators
       save_generation
       #@article_url   = @config['root_url'] + "/section-#{collection}.html"
       #@article_error = false
-      @path          = @output_dir + '/src/_sections/' + collection + '.md'
-      parents        = [{'url' => '../../index.html', 'title' => 'Home'}]
+      @path          = @output_dir + '/content/section-' + collection + '.md'
+      parents        = [{'url' => '../index.html', 'title' => 'Home'}]
       @front_matter  = {'layout'    => 'section',
+                        'toRoot'    => '../',
                         'title'     => title,
                         'parents'   => parents,
-                        'section'   => collection,
-                        'paginate' => {'collection' => collection + '.posts', 'per_page' => 5}}
+                        'section0'  => collection}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
-      generate_posts_page( collection + '.posts', 'src/section-' + collection + '-posts.md')
+      #generate_posts_page( collection + '.posts', 'section-' + collection + '-posts.md')
     end
 
     def heading_begin( level)
