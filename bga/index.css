@@ -36,3 +36,7 @@ main>div {margin: 20px;
 .black {color: black}
 
 .breadcrumbs {padding: 5px; font-size: 18px}
+
+.pagination {display: flex; justify-content: center; padding: 10px}
+
+.pagination a {text-decoration: none}

@@ -78,6 +78,7 @@ exclude_urls:
 - https://britgo.org/results/2003/msopairs
 - https://britgo.org/position/bookseller
 - https://britgo.org/rules/
+- https://britgo.org/files/images/gogod_shield.thumbnail.jpg
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

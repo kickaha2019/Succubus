@@ -1,0 +1,33 @@
+<!doctype html>
+{{ $paginator := .Paginate (where .Site.AllPages "Params.mode" "post").ByDate.Reverse }}
+<html lang="en_GB">
+  <head>
+    {{ if $paginator.Prev }}
+    {{ partial "head1" . }}
+    {{ else }}
+    {{ partial "head" . }}
+    {{ end }}
+  </head>
+  <body class="{{ .Layout }}">
+    {{ if $paginator.Prev }}
+    {{ partial "navbar1" . }}
+    {{ else }}
+    {{ partial "navbar" . }}
+    {{ end }}
+
+    <main>
+        <div class="medium_width">
+          {{ partial "pagination" $paginator }}
+          {{ range $paginator.Pages }}
+            <article>
+                <a href="{{ .Permalink }}">{{ .Title }}</a>
+                <p> {{ .Params.description }} </p>
+            </article>
+          {{ end }}
+          {{ partial "pagination" $paginator }}
+        </div>
+    </main>
+
+    {{ partial "footer" . }}
+  </body>
+</html>

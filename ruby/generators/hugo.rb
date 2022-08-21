@@ -38,6 +38,7 @@ module Generators
 
       if article.mode == :home
         @front_matter['layout'] = 'home'
+        generate_posts_page
 
         unless @taxonomies.empty?
           sections = []
@@ -189,18 +190,18 @@ module Generators
     end
 
     def ensure_index_md( dir)
-      if File.exist?( dir + '/index.md')
-        mds = 0
-        Dir.entries( dir).each {|f| mds += 1 if /\.md$/ =~ f}
-
-        if mds > 1
-          write_file( dir + '/_index.md', IO.read( dir + '/index.md'))
-          File.delete( dir + '/index.md')
-        end
-
-        return
-      end
-
+      # if File.exist?( dir + '/index.md')
+      #   mds = 0
+      #   Dir.entries( dir).each {|f| mds += 1 if /\.md$/ =~ f}
+      #
+      #   if mds > 1
+      #     write_file( dir + '/_index.md', IO.read( dir + '/index.md'))
+      #     File.delete( dir + '/index.md')
+      #   end
+      #
+      #   return
+      # end
+      #
       return if File.exist?( dir + '/_index.md')
       write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
     end
@@ -217,15 +218,14 @@ module Generators
       @any_errors
     end
 
-    def generate_posts_page( collection, relpath)
+    def generate_posts_page
       save_generation
-      #@article_url   = @config['root_url'] + '/index-posts.html'
-      #@article_error = false
-      @path          = @output_dir + '/' + relpath
-      parents        = [{'url' => '../../index.html', 'title' => 'Home'}]
-      @front_matter  = {'layout' => 'posts',
-                        'parents' => parents,
-                        'paginate' => {'collection' => collection, 'per_page' => 25}}
+      @path          = @output_dir + '/content/index-posts/_index.md'
+      parents        = [{'url'    => '../index.html', 'title' => 'Home'}]
+      @front_matter  = {'layout'  => 'home_posts',
+                        'toRoot'  => '../',
+                        'title'   => 'All posts',
+                        'parents' => parents}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
     end
@@ -243,7 +243,21 @@ module Generators
                         'section0'  => collection}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
-      #generate_posts_page( collection + '.posts', 'section-' + collection + '-posts.md')
+      generate_section_posts_page( collection, title)
+    end
+
+    def generate_section_posts_page( section, title)
+      save_generation
+      @path          = @output_dir + '/content/section-' + section + '-posts/_index.md'
+      parents        = [{'url'    => '../index.html', 'title' => 'Home'},
+                        {'url'    => '../section-' + section + '/index.html', 'title' => title}]
+      @front_matter  = {'layout'  => 'section_posts',
+                        'section' => section,
+                        'toRoot'  => '../',
+                        'title'   => 'All posts for ' + title,
+                        'parents' => parents}
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
+      restore_generation
     end
 
     def heading_begin( level)
@@ -312,7 +326,7 @@ module Generators
         return @output_dir + '/content/_index.md'
       end
 
-      stem = @output_dir + '/content/' + article.relative_url.sub( /\.[a-z]*$/i, '')
+      stem = @output_dir + '/content/' + article.relative_url.sub( /\.[a-z]*$/i, '').sub( '/index', '/_index')
       disambiguate_path( stem, article) + '.md'
     end
 

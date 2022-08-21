@@ -1,0 +1,19 @@
+<div class="pagination">
+<table><tr><td>
+{{ if .HasPrev }}
+    {{ if gt .PageNumber 1 }}
+    <a href="../{{ add .PageNumber -1 }}/index.html">&lt;&lt;</a>
+    {{ else }}
+    <a href="../../index.html">&lt;&lt;</a>
+    {{ end }}
+{{ end }}
+</td><td>Page {{ .PageNumber }} of {{ .TotalPages }}</td><td>
+{{ if .HasNext }}
+    {{ if gt .PageNumber 1 }}
+    <a href="../{{ add .PageNumber 1 }}/index.html">&gt;&gt;</a>
+    {{ else }}
+    <a href="page/{{ add .PageNumber 1 }}/index.html">&gt;&gt;</a>
+    {{ end }}
+{{ end }}
+</td></tr></table>
+</div>

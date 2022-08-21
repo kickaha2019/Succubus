@@ -5,7 +5,7 @@
 {{ if .Params.parents }}
   <div class="breadcrumbs">
     {{ range $parent := .Params.parents }}
-      <a href="{{ $parent.url }}">{{ $parent.title }}</a> &raquo;
+      <a href="../../{{ $parent.url }}">{{ $parent.title }}</a> &raquo;
     {{ end }}
     {{ .Title }}
   </div>
