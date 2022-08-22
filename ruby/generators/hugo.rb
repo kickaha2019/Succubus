@@ -251,11 +251,11 @@ module Generators
       @path          = @output_dir + '/content/section-' + section + '-posts/_index.md'
       parents        = [{'url'    => '../index.html', 'title' => 'Home'},
                         {'url'    => '../section-' + section + '/index.html', 'title' => title}]
-      @front_matter  = {'layout'  => 'section_posts',
-                        'section' => section,
-                        'toRoot'  => '../',
-                        'title'   => 'All posts for ' + title,
-                        'parents' => parents}
+      @front_matter  = {'layout'   => 'section_posts',
+                        'section0' => section,
+                        'toRoot'   => '../',
+                        'title'    => 'All posts for ' + title,
+                        'parents'  => parents}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
     end

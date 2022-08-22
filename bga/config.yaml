@@ -79,6 +79,7 @@ exclude_urls:
 - https://britgo.org/position/bookseller
 - https://britgo.org/rules/
 - https://britgo.org/files/images/gogod_shield.thumbnail.jpg
+- https://britgo.org/organisers/handbook/handbook.html
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo
