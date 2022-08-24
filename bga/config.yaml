@@ -80,6 +80,9 @@ exclude_urls:
 - https://britgo.org/rules/
 - https://britgo.org/files/images/gogod_shield.thumbnail.jpg
 - https://britgo.org/organisers/handbook/handbook.html
+- https://britgo.org/results/1998/shrew
+- https://britgo.org/taxonomy/term/29?page=6
+- "^https://britgo.org/news/enews1a98.*"
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

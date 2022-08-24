@@ -29,7 +29,10 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {'layout' => 'default', 'toRoot' => to_root( article), 'mode' => article.mode.to_s}
+      @front_matter  = {'layout'   => 'default',
+                        'toRoot'   => to_root( article),
+                        'fromRoot' => from_root( article),
+                        'mode'     => article.mode.to_s}
       @markdown      = []
 
       # if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
@@ -190,18 +193,6 @@ module Generators
     end
 
     def ensure_index_md( dir)
-      # if File.exist?( dir + '/index.md')
-      #   mds = 0
-      #   Dir.entries( dir).each {|f| mds += 1 if /\.md$/ =~ f}
-      #
-      #   if mds > 1
-      #     write_file( dir + '/_index.md', IO.read( dir + '/index.md'))
-      #     File.delete( dir + '/index.md')
-      #   end
-      #
-      #   return
-      # end
-      #
       return if File.exist?( dir + '/_index.md')
       write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
     end
@@ -216,6 +207,15 @@ module Generators
 
     def error?
       @any_errors
+    end
+
+    def from_root( article)
+      return 'index.html' if article.mode == :home
+      path = article.relative_url.sub( /\.[a-z]*$/, '')
+      unless /(^|\/)index$/ =~ path
+        path = path + '/index'
+      end
+      path + '.html'
     end
 
     def generate_posts_page
@@ -472,7 +472,7 @@ module Generators
     end
 
     def to_root( article)
-      path = article.relative_url.split('/')
+      path = from_root( article).split('/')
       return '' if path.size < 2
       path[1..-1].collect {'../'}.join( '')
     end

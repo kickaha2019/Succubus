@@ -9,7 +9,9 @@
     {{ end }}
   </head>
   <body class="{{ .Layout }}">
+    {{ $ascend := "../" }}
     {{ if $paginator.Prev }}
+    {{ $ascend := "../../../" }}
     {{ partial "navbar1" . }}
     {{ else }}
     {{ partial "navbar" . }}
@@ -20,7 +22,7 @@
           {{ partial "pagination" $paginator }}
           {{ range $paginator.Pages }}
             <article>
-                <a href="{{ .Permalink }}">{{ .Title }}</a>
+                <a href="{{ $ascend }}{{ .Params.fromRoot }}">{{ .Title }}</a>
                 <p> {{ .Params.description }} </p>
             </article>
           {{ end }}

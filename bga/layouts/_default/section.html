@@ -5,13 +5,14 @@
   </head>
   <body class="{{ .Layout }}">
     {{ partial "navbar" . }}
+    {{ $here := . }}
 
     <main>
         <div class="medium_width">
           <h2>Articles</h2>
           {{ range where (where .Site.AllPages "Params.mode" "article") "Params.section0" .Params.section0 }}
             <article>
-                <a href="{{ .Params.toRoot }}{{ .Permalink }}">{{ .Title }}</a>
+                <a href="{{ $here.Params.toRoot }}{{ .Params.fromRoot }}">{{ .Title }}</a>
             </article>
           {{ end }}
         </div>
@@ -22,7 +23,7 @@
           <h2>Recent posts for {{ .Title }}</h2>
           {{ range first 10 $p.ByDate.Reverse }}
             <article>
-                <a href="{{ .Permalink }}">{{ .Title }}</a>
+                <a href="{{ $here.Params.toRoot }}{{ .Params.fromRoot }}">{{ .Title }}</a>
                 <p> {{ .Params.description }} </p>
             </article>
           {{ end }}

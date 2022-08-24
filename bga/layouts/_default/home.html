@@ -23,7 +23,7 @@
           <h2>Recent posts</h2>
           {{ range first 10 (where .Site.AllPages "Params.mode" "post").ByDate.Reverse }}
             <article>
-                <a href="{{ .Permalink }}">{{ .Title }}</a>
+                <a href="{{ .Params.fromRoot }}">{{ .Title }}</a>
                 <p> {{ .Params.description }} </p>
             </article>
           {{ end }}
