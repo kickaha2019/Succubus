@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en_GB">
+  <head>
+    {{ partial "head" . }}
+  </head>
+  <body class="{{ .Layout }}">
+    {{ partial "navbar" . }}
+
+    <main>
+        <div class="page_width">
+        {{ .Content }}
+        </div>
+    </main>
+
+    {{ partial "footer" . }}
+  </body>
+</html>

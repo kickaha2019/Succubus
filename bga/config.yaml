@@ -83,6 +83,8 @@ exclude_urls:
 - https://britgo.org/results/1998/shrew
 - https://britgo.org/taxonomy/term/29?page=6
 - "^https://britgo.org/news/enews1a98.*"
+- https://britgo.org/news/../results/2002/cornlight
+- https://britgo.org/results/2002/bham
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

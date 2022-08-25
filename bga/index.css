@@ -21,6 +21,8 @@ main>div {margin: 20px;
           background: white;
 }
 
+.page_width {max-width: 90%; min-width: 600px}
+
 .big_width {max-width: 800px; min-width: 400px}
 
 .medium_width {width: 400px}

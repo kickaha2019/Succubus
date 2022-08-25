@@ -29,7 +29,7 @@ module Generators
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
-      @front_matter  = {'layout'   => 'default',
+      @front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
                         'toRoot'   => to_root( article),
                         'fromRoot' => from_root( article),
                         'mode'     => article.mode.to_s}
@@ -63,7 +63,7 @@ module Generators
           end
         end
       else
-        @front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
+        @front_matter['parents'] = [{'url' => 'index.html', 'title' => 'Home'}]
       end
 
       if @written[@path]
@@ -89,15 +89,26 @@ module Generators
 
     def article_tags( tags)
       return if @front_matter['section_index']
-      @front_matter['sections'] = []
-      taxas = {}
+      taxas, names = {}, {}
       tags.each_pair do |taxa, name|
         taxas[taxa] = @tag2internal[taxa+':'+name]
+        names[taxas[taxa]] = name
       end
 
       @taxonomies.keys.each_index do |i|
         taxa = @taxonomies.keys[i]
         @front_matter["section#{i}"] = taxas[taxa] ? taxas[taxa] : @tag2internal[taxa+':General']
+      end
+
+      section = @front_matter["section0"]
+      if (@front_matter['mode'] == 'article') || (@front_matter['mode'] == 'post')
+        @front_matter['parents'] << {'url'   => 'section-' + section + '/index.html',
+                                     'title' => (names[section] ? names[section] : 'General')}
+      end
+
+      if @front_matter['mode'] == 'post'
+        @front_matter['parents'] << {'url'   => 'section-' + section + '-posts/index.html',
+                                     'title' => 'Posts'}
       end
     end
 
@@ -221,7 +232,7 @@ module Generators
     def generate_posts_page
       save_generation
       @path          = @output_dir + '/content/index-posts/_index.md'
-      parents        = [{'url'    => '../index.html', 'title' => 'Home'}]
+      parents        = [{'url'    => 'index.html', 'title' => 'Home'}]
       @front_matter  = {'layout'  => 'home_posts',
                         'toRoot'  => '../',
                         'title'   => 'All posts',
@@ -235,7 +246,7 @@ module Generators
       #@article_url   = @config['root_url'] + "/section-#{collection}.html"
       #@article_error = false
       @path          = @output_dir + '/content/section-' + collection + '.md'
-      parents        = [{'url' => '../index.html', 'title' => 'Home'}]
+      parents        = [{'url' => 'index.html', 'title' => 'Home'}]
       @front_matter  = {'layout'    => 'section',
                         'toRoot'    => '../',
                         'title'     => title,
@@ -249,8 +260,8 @@ module Generators
     def generate_section_posts_page( section, title)
       save_generation
       @path          = @output_dir + '/content/section-' + section + '-posts/_index.md'
-      parents        = [{'url'    => '../index.html', 'title' => 'Home'},
-                        {'url'    => '../section-' + section + '/index.html', 'title' => title}]
+      parents        = [{'url'    => 'index.html', 'title' => 'Home'},
+                        {'url'    => 'section-' + section + '/index.html', 'title' => title}]
       @front_matter  = {'layout'   => 'section_posts',
                         'section0' => section,
                         'toRoot'   => '../',
