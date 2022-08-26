@@ -122,7 +122,7 @@ class Site
 
   def absolutise( page_url, url)
     root_url = @config['root_url']
-    dir_url = page_url.split('?')[0]
+    dir_url  = page_url.split('?')[0]
 
     if /^\?/ =~ url
       return dir_url + url
@@ -134,16 +134,22 @@ class Site
       dir_url = dir_url.split('/')[0..-2].join('/')
     end
 
-    while /^\.\.\// =~ url
-      url     = url[3..-1]
-      dir_url = dir_url.split('/')[0..-2].join('/')
-    end
+    # while /^\.\.\// =~ url
+    #   url     = url[3..-1]
+    #   dir_url = dir_url.split('/')[0..-2].join('/')
+    # end
 
     if /^\// =~ url
       url = root_url + url[1..-1]
     elsif /^\w*:/ =~ url
     else
       url = dir_url + '/' + url
+    end
+
+    old_url = ''
+    while old_url != url
+      old_url = url
+      url = url.sub( /\/[a-z0-9_\-]+\/\.\.\//i, '/')
     end
 
     if (url.size > root_url.size) && (/\/$/ =~ url)

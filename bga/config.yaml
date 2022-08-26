@@ -85,6 +85,7 @@ exclude_urls:
 - "^https://britgo.org/news/enews1a98.*"
 - https://britgo.org/news/../results/2002/cornlight
 - https://britgo.org/results/2002/bham
+- https://britgo.org/results/2001/msos
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo
