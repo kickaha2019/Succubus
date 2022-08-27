@@ -21,6 +21,7 @@ module Generators
 
       # Control the markdown generation
       @indent        = ['']
+      @line_start    = false
       @list_marker   = '#'
       @table_state   = nil
     end
@@ -34,6 +35,7 @@ module Generators
                         'fromRoot' => from_root( article),
                         'mode'     => article.mode.to_s}
       @markdown      = []
+      @line_start    = true
 
       # if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
       #   fm.each_pair {|k,v| @front_matter[k] = v}
@@ -311,6 +313,7 @@ module Generators
       end
       newline
       @markdown << indent
+      @line_start = true
       @indent << @indent[-1] + "          "[0...(indent.size)]
     end
 
@@ -329,6 +332,7 @@ module Generators
       force = true unless @markdown[-1] && @markdown[-1][-1] == "\n"
       if force
         @markdown << ("\n" + @indent[-1])
+        @line_start = true
       end
     end
 
@@ -354,6 +358,7 @@ module Generators
     def pre_begin
       newline
       @markdown << @indent[-1] + "~~~\n"
+      @line_start = true
     end
 
     def pre_end
@@ -479,6 +484,10 @@ module Generators
     end
 
     def text( str)
+      if @line_start
+        str = str.sub( /^\s*/, '')
+        @line_start = (str == '')
+      end
       @markdown << str.gsub( /\s*\n/, ' ')
     end
 

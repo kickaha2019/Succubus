@@ -184,6 +184,10 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'li', :class => 'comment-forbidden' do |place|
+      Elements::Ignore.new( place)
+    end
+
     on_element 'ol' do |place|
       ol = Elements::List.new( place, :ordered)
       ol.error? ? Elements::Raw.new( place) : ol
