@@ -61,7 +61,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'clearfix' do |place|
-      place.children
+      fabricate_description_lists( place)
     end
 
     on_element 'div', :class => 'even' do |place|
@@ -81,7 +81,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'field__item' do |place|
-      place.children
+      Elements::Description.new( place)
     end
 
     on_element 'div', :class => 'field__items' do |place|
@@ -89,7 +89,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'field__label' do |place|
-      place.children
+      Elements::DescriptionTerm.new( place)
     end
 
     on_element 'div', :class => 'form-item' do |place|
@@ -383,6 +383,38 @@ class BGA < Site
     end
 
     super
+  end
+
+  def fabricate_description_lists( place)
+    final, interim, do_dl = [], [], false
+
+    place.children.each do |child|
+      if child.is_a?( Elements::Description)
+        interim << child
+        do_dl = true
+      elsif child.is_a?( Elements::DescriptionTerm)
+        interim << child
+        do_dl = true
+      elsif child.content?
+        if do_dl
+          final << Elements::DescriptionList.new( Place.new( place.page, place.element, interim))
+        else
+          interim.each {|boring| final << boring}
+        end
+        final << child
+        interim, do_dl = [], false
+      else
+        interim << child
+      end
+    end
+
+    if do_dl
+      final << Elements::DescriptionList.new( Place.new( place.page, place.element, interim))
+    else
+      final = final + interim
+    end
+
+    final
   end
 
   def get_latest_date( place)

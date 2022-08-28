@@ -99,6 +99,8 @@ hugo:
     - term
     markup:
       goldmark:
+        extensions:
+          definitionList: true
         renderer:
           unsafe: true
 bridgetown:

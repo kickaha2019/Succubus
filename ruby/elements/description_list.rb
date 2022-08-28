@@ -16,6 +16,16 @@ module Elements
       end
       false
     end
+
+    def generate( generator)
+      @contents.each do |child|
+        if child.is_a?( DescriptionTerm)
+          generator.description_term( child)
+        elsif child.is_a?( Description)
+          generator.description( child)
+        end
+      end
+    end
   end
 end
 

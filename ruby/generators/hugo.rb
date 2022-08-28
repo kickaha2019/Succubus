@@ -187,6 +187,18 @@ module Generators
       end
     end
 
+    def description( element)
+      @markdown << ': '
+      element.generate( self)
+      newline
+    end
+
+    def description_term( element)
+      newline
+      element.generate( self)
+      newline
+    end
+
     def disambiguate_path( stem, article)
       index = 1
       stem  = stem.split('?')[0]

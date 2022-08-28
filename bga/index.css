@@ -42,3 +42,5 @@ main>div {margin: 20px;
 .pagination {display: flex; justify-content: center; padding: 10px}
 
 .pagination a {text-decoration: none}
+
+dt {font-weight: bold}
