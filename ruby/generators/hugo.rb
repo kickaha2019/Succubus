@@ -188,9 +188,17 @@ module Generators
     end
 
     def description( element)
-      @markdown << ': '
-      element.generate( self)
-      newline
+      if element.children_text?
+        @indent << (@indent[-1] + ': ')
+        @markdown << ': '
+        element.generate( self)
+        @indent.pop
+        newline
+      else
+        newline( true)
+        element.generate( self)
+        newline
+      end
     end
 
     def description_term( element)
@@ -300,12 +308,20 @@ module Generators
 
     def image( src, title)
       newline
-      @markdown << "![#{title}](#{src})\n"
+      local, src = localise?( src)
+      @markdown << "![#{title}](#{@front_matter['toRoot']}#{src})"
+      newline
     end
 
     def link( text, href)
       return unless text && text.strip != ''
-      @markdown << "[#{text.strip}](#{href})"
+      local, href = localise? href
+      if local
+        @markdown << "[#{text.strip}](#{@front_matter['toRoot']}#{href})"
+      else
+        @markdown << "[#{text.strip}](#{href})"
+      end
+      @line_start = false
     end
 
     def link_text_only?
@@ -334,6 +350,23 @@ module Generators
     end
 
     def list_end( type)
+    end
+
+    def localise?( url)
+      root_url = @config['root_url']
+      return false, url unless url[0...(root_url.size)] == root_url
+      url = url[(root_url.size)..-1]
+
+      if m = /\.([a-z]*)$/i.match( url)
+        return true, url unless m[1] == 'html'
+        unless /\/index.html$/ =~ url
+          url = url.sub( /\.html$/, '/index.html')
+        end
+      else
+        url += '/index.html'
+      end
+
+      return true, url
     end
 
     def method_missing( verb, *args)

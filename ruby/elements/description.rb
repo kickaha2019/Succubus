@@ -1,7 +1,7 @@
 require_relative 'blockquote'
 
 module Elements
-  class Description < Blockquote
+  class Description < Group
     def content?
       true
     end
