@@ -33,7 +33,8 @@ module Generators
       @front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
                         'toRoot'   => to_root( article),
                         'fromRoot' => from_root( article),
-                        'mode'     => article.mode.to_s}
+                        'mode'     => article.mode.to_s,
+                        'origin'   => url}
       @markdown      = []
       @line_start    = true
 
@@ -353,20 +354,46 @@ module Generators
     end
 
     def localise?( url)
+      if /pairs19a-s.jpg/ =~ url
+        p ['localise?1', url, @config['root_url']]
+      end
       root_url = @config['root_url']
+
+      if /^\// =~ url
+        url = root_url + url[1..-1]
+      elsif /^http(s|):/ =~ url
+      elsif m = /(^.*\/)[^\/]*\.html$/.match( @article_url)
+        url = m[1] + url
+      else
+        url = @article_url + '/' + url
+      end
+
+      if /pairs19a-s.jpg/ =~ url
+        p ['localise?2', url, @article_url]
+      end
+
       return false, url unless url[0...(root_url.size)] == root_url
       url = url[(root_url.size)..-1]
 
+      if /#/ =~ url
+        url = url.split( '#')[0]
+      end
+
       if m = /\.([a-z]*)$/i.match( url)
-        return true, url unless m[1] == 'html'
-        unless /\/index.html$/ =~ url
-          url = url.sub( /\.html$/, '/index.html')
+        if m[1] == 'html'
+          unless /\/index.html$/ =~ url
+            url = url.sub( /\.html$/, '/index.html')
+          end
         end
       else
         url += '/index.html'
       end
 
-      return true, url
+      if /pairs19a-s.jpg/ =~ url
+        p ['localise?3', url, @front_matter['toRoot']]
+      end
+
+      return true, @front_matter['toRoot'] + url
     end
 
     def method_missing( verb, *args)
@@ -411,13 +438,25 @@ module Generators
     end
 
     def raw( html)
-      relpath = @article_url[@config['root_url'].size..-1].split('/')
-      if relpath.size < 2
-        to_root = ''
-      else
-        to_root = relpath[1..-1].collect {'../'}.join( '')
+      html = html.gsub( /href\s*=\s*"[^"]*"/) do |ref|
+        local, ref1 = localise?( ref.split('"')[1])
+        if local
+          "href=\"#{ref1}\""
+        else
+          ref
+        end
       end
-      @markdown << html.gsub( /src="\//, "src=\"#{to_root}")
+
+      html = html.gsub( /src\s*=\s*"[^"]*"/) do |ref|
+        local, ref1 = localise?( ref.split('"')[1])
+        if local
+          "src=\"#{ref1}\""
+        else
+          ref
+        end
+      end
+
+      @markdown << html
     end
 
     def register_article( url, article)

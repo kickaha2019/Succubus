@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en_GB">
   <head>
-    {{ partial "head" . }}
+      <meta name="original_url" content="{{ .Params.origin }}"/>
+      {{ partial "head" . }}
   </head>
   <body class="{{ .Layout }}">
     {{ partial "navbar" . }}
