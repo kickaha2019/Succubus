@@ -81,6 +81,7 @@ exclude_urls:
 - https://britgo.org/files/images/gogod_shield.thumbnail.jpg
 - https://britgo.org/organisers/handbook/handbook.html
 - https://britgo.org/results/1998/shrew
+- https://britgo.org/results/1999/shrew
 - https://britgo.org/taxonomy/term/29?page=6
 - "^https://britgo.org/news/enews1a98.*"
 - https://britgo.org/news/../results/2002/cornlight
@@ -97,6 +98,7 @@ hugo:
     disableKinds:
     - taxonomy
     - term
+    publishDir:   /Users/peter/temp/Hugo_public
     markup:
       goldmark:
         extensions:

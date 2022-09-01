@@ -7,4 +7,4 @@ cd ~/temp/Hugo
 find public -name '*.html' -exec rm {} \;
 hugo
 if ($status != 0) exit 1
-open public/index.html
+open ~/temp/Hugo_public/index.html

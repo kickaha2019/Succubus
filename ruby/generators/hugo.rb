@@ -354,25 +354,26 @@ module Generators
     end
 
     def localise?( url)
-      if /pairs19a-s.jpg/ =~ url
-        p ['localise?1', url, @config['root_url']]
-      end
-      root_url = @config['root_url']
+      # if /pairs19a-s.jpg/ =~ url
+      #   p ['localise?1', url, @config['root_url']]
+      # end
+      url0, url = url, url.sub( /^http:/, 'https:')
+      root_url = @config['root_url'].sub( /^http:/, 'https:')
 
       if /^\// =~ url
         url = root_url + url[1..-1]
-      elsif /^http(s|):/ =~ url
+      elsif /^https:/ =~ url
       elsif m = /(^.*\/)[^\/]*\.html$/.match( @article_url)
-        url = m[1] + url
+        url = m[1].sub( /^http:/, 'https:') + url
       else
-        url = @article_url + '/' + url
+        url = @article_url.sub( /^http:/, 'https:') + '/' + url
       end
 
-      if /pairs19a-s.jpg/ =~ url
-        p ['localise?2', url, @article_url]
-      end
+      # if /pairs19a-s.jpg/ =~ url
+      #   p ['localise?2', url, @article_url]
+      # end
 
-      return false, url unless url[0...(root_url.size)] == root_url
+      return false, url0 unless url[0...(root_url.size)] == root_url
       url = url[(root_url.size)..-1]
 
       if /#/ =~ url
@@ -389,9 +390,9 @@ module Generators
         url += '/index.html'
       end
 
-      if /pairs19a-s.jpg/ =~ url
-        p ['localise?3', url, @front_matter['toRoot']]
-      end
+      # if /pairs19a-s.jpg/ =~ url
+      #   p ['localise?3', url, @front_matter['toRoot']]
+      # end
 
       return true, @front_matter['toRoot'] + url
     end
