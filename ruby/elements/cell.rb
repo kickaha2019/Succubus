@@ -1,7 +1,7 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
-  class Cell < TextGroup
+  class Cell < Group
     def initialize( place)
       super
       @header = (place.name == 'TH')
@@ -12,7 +12,7 @@ module Elements
     end
 
     def generate( generator)
-      generator.cell( text)
+      [raw]
     end
 
     def header?

@@ -6,27 +6,35 @@ module Elements
       true
     end
 
-    def error?
-      @contents.each do |child|
-        unless child.is_a?( Elements::Row)
-          return true, 'Child with content but not a row' if child.content?
-        end
-      end
-
+    def generate( generator)
+      rows, header = [], true
       @contents.each do |child|
         if child.is_a?( Elements::Row)
-          return true, 'No header row' unless child.header?
-          return false
+          row = generate_row( generator, child, header)
+          return [raw] if row.nil?
+          rows << row
+          header = false
+        elsif child.content?
+          return [raw]
         end
       end
 
-      true
+      generator.table( rows)
     end
 
-    def generate( generator)
-      generator.table_begin
-      super
-      generator.table_end
+    def generate_row( generator, row, header)
+      cells = []
+      row.contents.each do |child|
+        if child.is_a?( Elements::Cell)
+          return nil unless header == child.header?
+          md = child.generate_children( generator)
+          return nil unless generator.textual?( md)
+          cells << md.join(' ')
+        elsif child.content?
+          return nil
+        end
+      end
+      cells
     end
   end
 end

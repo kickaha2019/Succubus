@@ -1,7 +1,7 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
-  class Font < TextGroup
+  class Font < Group
     def initialize( place)
       super
       @colour = place['color']

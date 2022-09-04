@@ -1,7 +1,7 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
-  class Heading < TextGroup
+  class Heading < Group
     def initialize( place, level)
       super( place)
       @level = level
@@ -16,12 +16,11 @@ module Elements
     end
 
     def generate( generator)
-      if text != ''
-        generator.heading_begin( @level)
-        super( generator)
-        generator.heading_end( @level)
+      md = generate_children( generator)
+      if generator.textual?( md)
+        generator.heading( @level, md)
       else
-        generator.newline
+        [raw]
       end
     end
   end

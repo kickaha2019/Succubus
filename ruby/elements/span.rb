@@ -1,10 +1,7 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
-  class Span < TextGroup
-    def text?
-      children_text?
-    end
+  class Span < Group
   end
 end
 

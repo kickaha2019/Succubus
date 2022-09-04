@@ -6,15 +6,6 @@ module Elements
       true
     end
 
-    def error?
-      @contents.each do |child|
-        unless child.is_a?( Elements::Cell)
-          return true, 'Child with content but not a cell' if child.content?
-        end
-      end
-      false
-    end
-
     def header?
       @contents.each do |child|
         if child.is_a?( Elements::Cell)
@@ -25,9 +16,7 @@ module Elements
     end
 
     def generate( generator)
-      generator.row_begin
-      super
-      generator.row_end
+      [raw]
     end
   end
 end

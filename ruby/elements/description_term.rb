@@ -1,6 +1,9 @@
-require_relative 'heading'
+require_relative 'group'
 
 module Elements
-  class DescriptionTerm < TextGroup
+  class DescriptionTerm < Group
+    def generate( generator)
+      [raw]
+    end
   end
 end

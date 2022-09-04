@@ -7,10 +7,7 @@ module Elements
       @@next_index += 1
       @index       = @@next_index
       @contents    = place.children
-      @describe    = place.element.name
-      if place.element['class']
-        @describe += ': ' + place.element['class']
-      end
+      @element     = place.element
     end
 
     def article?
@@ -19,13 +16,6 @@ module Elements
 
     def children
       @contents.each {|child| yield child}
-    end
-
-    def children_text?
-      children do |child|
-        return false unless child.text?
-      end
-      true
     end
 
     def contains_article?
@@ -44,7 +34,11 @@ module Elements
     end
 
     def describe
-      @describe
+      if @element['class']
+        @element.name + ': ' + @element['class']
+      else
+        @element.name
+      end
     end
 
     def error?
@@ -56,9 +50,26 @@ module Elements
     end
 
     def generate( generator)
-      @contents.each do |child|
+      generate_children( generator)
+    end
+
+    def generate_children( generator)
+      lines = @contents.collect do |child|
         child.generate( generator)
+      end.flatten
+
+      merged = []
+      lines.each do |line|
+        if /\n$/ =~ merged[-1]
+          merged << line
+        elsif merged[-1]
+          merged[-1] = merged[-1] + ' ' + line
+        else
+          merged << line if line != ''
+        end
       end
+
+      merged
     end
 
     def grokked?
@@ -71,6 +82,10 @@ module Elements
       end
     end
 
+    def raw
+      [@element.to_html]
+    end
+
     def self.reset_next_index
       @@next_index = 0
     end
@@ -81,10 +96,6 @@ module Elements
         t = t + ' ' + child.text
       end
       t.strip
-    end
-
-    def text?
-      false
     end
 
     def title

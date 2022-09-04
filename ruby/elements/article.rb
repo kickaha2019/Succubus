@@ -20,6 +20,10 @@ module Elements
       true
     end
 
+    def compile( generator)
+      generator.article_markdown( generate( generator))
+    end
+
     def content?
       false
     end
@@ -45,14 +49,6 @@ module Elements
 
     def grokked?
       false
-    end
-
-    def raw_count
-      count = 0
-      tree do |child|
-        count += 1 if child.is_a?( Elements::Raw)
-      end
-      count
     end
 
     def relative_url

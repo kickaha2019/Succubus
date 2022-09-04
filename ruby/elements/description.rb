@@ -5,6 +5,10 @@ module Elements
     def content?
       true
     end
+
+    def generate( generator)
+      [raw]
+    end
   end
 end
 

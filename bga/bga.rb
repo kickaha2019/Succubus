@@ -188,11 +188,6 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
-    on_element 'ol' do |place|
-      ol = Elements::List.new( place, :ordered)
-      ol.error? ? Elements::Raw.new( place) : ol
-    end
-
     on_element 'section' do  |place|
       place.children
     end
@@ -201,18 +196,12 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
-    on_element 'table' do |place|
-      table = Elements::Table.new( place)
-      table.error? ? Elements::Raw.new( place) : table
-    end
-
-    on_element 'td', :parent => 'tr', :grandparent => 'table' do  |place|
-      Elements::Cell.new( place)
-    end
-
-    on_element 'td' do  |place|
-      Elements::Group.new( place)
-    end
+    # on_element 'td', :parent => 'tr', :grandparent => 'table' do  |place|
+    #   Elements::Cell.new( place)
+    # end
+    # on_element 'td' do  |place|
+    #   Elements::Group.new( place)
+    # end
 
     on_element 'text' do |place|
       if place.text == "\n — "
@@ -226,21 +215,21 @@ class BGA < Site
       end
     end
 
-    on_element 'th', :parent => 'tr', :grandparent => 'table' do  |place|
-      Elements::Cell.new( place)
-    end
+    # on_element 'th', :parent => 'tr', :grandparent => 'table' do  |place|
+    #   Elements::Cell.new( place)
+    # end
+    #
+    # on_element 'th' do  |place|
+    #   Elements::Group.new( place)
+    # end
 
-    on_element 'th' do  |place|
-      Elements::Group.new( place)
-    end
-
-    on_element 'tr', :parent => 'table' do  |place|
-      Elements::Row.new( place)
-    end
-
-    on_element 'tr' do  |place|
-      Elements::Group.new( place)
-    end
+    # on_element 'tr', :parent => 'table' do  |place|
+    #   Elements::Row.new( place)
+    # end
+    #
+    # on_element 'tr' do  |place|
+    #   Elements::Group.new( place)
+    # end
 
     on_element 'rss', :grokked => false do |place|
       Elements::Ignore.new( place)

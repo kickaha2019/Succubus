@@ -1,7 +1,7 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
-  class Styling < TextGroup
+  class Styling < Group
     def initialize( place, types)
       super( place)
       @types = types
@@ -16,13 +16,12 @@ module Elements
     end
 
     def generate( generator)
-      generator.style_begin( @types)
-      super
-      generator.style_end( @types)
-    end
-
-    def text?
-      true
+      md = generate_children( generator)
+      if generator.textual?( md)
+        generator.style( @types, md)
+      else
+        [raw]
+      end
     end
   end
 end

@@ -8,15 +8,10 @@ module Elements
     end
 
     def generate( generator)
-      generator.newline
-      generator.newline( true)
+      generator.newline( [])
     end
 
     def grokked?
-      true
-    end
-
-    def text?
       true
     end
   end

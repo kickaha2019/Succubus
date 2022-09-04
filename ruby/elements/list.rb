@@ -16,9 +16,17 @@ module Elements
     end
 
     def generate( generator)
-      generator.list_begin( @type)
-      super
-      generator.list_end( @type)
+      list = []
+      @contents.each do |child|
+        if child.is_a?( ListItem)
+          md = child.generate_children( generator)
+          return [raw] unless generator.nestable?( md)
+          list << md
+        elsif child.content?
+          return [raw]
+        end
+      end
+      generator.list( @type, list)
     end
   end
 end

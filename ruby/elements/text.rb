@@ -30,10 +30,6 @@ module Elements
     def text
       @text
     end
-
-    def text?
-      true
-    end
   end
 end
 

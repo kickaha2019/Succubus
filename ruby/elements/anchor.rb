@@ -1,7 +1,7 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
-  class Anchor < TextGroup
+  class Anchor < Group
     attr_reader :href
 
     def initialize( place, href, title)
@@ -10,13 +10,16 @@ module Elements
       @title = title
     end
 
-    def anchor_text
-      t = text
-      t = @title if t.strip == ''
+    def anchor_text( generator)
+      t = generate_children( generator)
+      return false, t unless generator.textual?( t)
+      return true, t unless t.empty?
+
+      t = @title
       @contents.each do |child|
         t = child.title if t.nil?
       end
-      t ? t.strip : @href
+      return true, [t ? t.strip : @href]
     end
 
     def content?
@@ -27,24 +30,19 @@ module Elements
       super + ': ' + @href
     end
 
-    def error?
-      unless anchor_text != ''
-        return true, 'Non text children'
-      end
-      false
-    end
-
     def generate( generator)
-      generator.link( anchor_text, @href)
+      return [] if /^#/ =~ @href
+      ok, text = anchor_text( generator)
+      if ok
+        generator.link( text, @href)
+      else
+        [raw]
+      end
     end
 
     def links
       super {|link| yield link}
       yield @href
-    end
-
-    def text?
-      true
     end
 
     def title

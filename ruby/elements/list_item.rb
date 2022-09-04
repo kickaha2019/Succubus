@@ -7,9 +7,7 @@ module Elements
     end
 
     def generate( generator)
-      generator.list_item_begin
-      super
-      generator.list_item_end
+      [raw]
     end
   end
 end

@@ -10,6 +10,7 @@ module Elements
     end
 
     def generate( generator)
+      []
     end
 
     def grokked?
@@ -18,10 +19,6 @@ module Elements
 
     def text
       ''
-    end
-
-    def text?
-      true
     end
   end
 end

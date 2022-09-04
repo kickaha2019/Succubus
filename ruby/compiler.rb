@@ -4,8 +4,17 @@ class Compiler < Processor
   def initialize( config, cache, output_dir)
     super( config, cache)
     require_relative( 'generators/' + @config['generator'])
-    @errors    = false
-    @generator = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, output_dir)
+    @errors     = false
+    @output_dir = output_dir
+    @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, output_dir)
+    @generated  = File.open( output_dir + '/content/generated.html', 'w')
+    @generated.puts <<"HEADER"
+<html>
+<head>
+</head>
+<body><center><table>
+<tr><th>Origin</th><th>Generated</th><th>Comment</th></tr>
+HEADER
   end
 
   def clean_old_files
@@ -15,6 +24,9 @@ class Compiler < Processor
   def compile
     preparse_all
     compile_site
+    @generated.puts '</table></center></body></html>'
+    @generated.close
+
     if @generator.error?
       puts "*** Compilation errors"
       exit 1
@@ -32,8 +44,15 @@ class Compiler < Processor
     end
     @generator.article_tags( article.tags ? article.tags : {})
     @generator.article_description( article.description)
-    article.generate( @generator)
-    @generator.article_end
+    md = article.generate( @generator)
+    generated, comment = @generator.article_end( md)
+    @generated.puts <<"LINE"
+<tr>
+<td><a href="#{url}">#{url}</a></td>
+<td><a href="#{generated}">#{generated}</a></td>
+<td>#{comment}</td>
+</tr>
+LINE
   end
 
   def compile_pages

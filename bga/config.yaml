@@ -26,6 +26,7 @@ exclude_urls:
 - https://britgo.org/image/tid/20
 - https://britgo.org/image/tid/32
 - https://britgo.org/image/tid/53
+- https://britgo.org/image/tid/77
 - https://britgo.org/image/tid/80
 - https://britgo.org/image/tid/82
 - https://britgo.org/join/pay
@@ -87,6 +88,10 @@ exclude_urls:
 - https://britgo.org/news/../results/2002/cornlight
 - https://britgo.org/results/2002/bham
 - https://britgo.org/results/2001/msos
+- https://britgo.org/files/2013_weiqievent.pdf
+- https://britgo.org/membership/memberap
+- https://britgo.org/clubs/ https://online-go.com
+- https://britgo.org/aga-ejournal
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

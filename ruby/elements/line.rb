@@ -1,4 +1,4 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
   class Line < Group
@@ -7,9 +7,7 @@ module Elements
     end
 
     def generate( generator)
-      generator.newline
-      super
-      generator.newline
+      generator.newline( generate_children( generator))
     end
   end
 end

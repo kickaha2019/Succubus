@@ -20,7 +20,6 @@ module Generators
       @tag2internal  = Hash.new {|h,k| h[k] = "t#{@tag2internal.size}"}
 
       # Control the markdown generation
-      @indent        = ['']
       @line_start    = false
       @list_marker   = '#'
       @table_state   = nil
@@ -35,7 +34,7 @@ module Generators
                         'fromRoot' => from_root( article),
                         'mode'     => article.mode.to_s,
                         'origin'   => url}
-      @markdown      = []
+      @comment       = []
       @line_start    = true
 
       # if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
@@ -86,8 +85,9 @@ module Generators
       end
     end
 
-    def article_end
-      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{@markdown.join('')}")
+    def article_end( markdown)
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{markdown.join('')}")
+      return @path[(@output_dir.size+1)..-1], raw?( markdown) ? 'Raw' : ''
     end
 
     def article_tags( tags)
@@ -130,20 +130,8 @@ module Generators
       end
     end
 
-    def blockquote_begin
-      @indent << @indent[-1] + ' < '
-    end
-
-    def blockquote_end
-      @indent.pop
-    end
-
-    def cell( text)
-      unless /\|$/ =~ @markdown[-1]
-        @markdown << '|'
-      end
-      @markdown << text.gsub( '|', '\\|')
-      @markdown << '|'
+    def blockquote( md)
+      md.collect {|line| '< ' + line}
     end
 
     def clean_old_files
@@ -188,24 +176,10 @@ module Generators
       end
     end
 
-    def description( element)
-      if element.children_text?
-        @indent << (@indent[-1] + ': ')
-        @markdown << ': '
-        element.generate( self)
-        @indent.pop
-        newline
-      else
-        newline( true)
-        element.generate( self)
-        newline
+    def description_list( list)
+      list.collect do |entry|
+        entry[0] + entry[1..-1].collect {|text| ': ' + text}
       end
-    end
-
-    def description_term( element)
-      newline
-      element.generate( self)
-      newline
     end
 
     def disambiguate_path( stem, article)
@@ -294,63 +268,55 @@ module Generators
       restore_generation
     end
 
-    def heading_begin( level)
-      newline
-      @markdown << ('######'[0...level] + ' ')
-    end
-
-    def heading_end( level)
-      newline
+    def heading( level, markdown)
+      markdown.collect {|line| '######'[0...level] + line}
     end
 
     def hr
-      @markdown << "---\n"
+      ["---\n"]
     end
 
     def image( src, title)
-      newline
       local, src = localise?( src)
-      @markdown << "![#{title}](#{@front_matter['toRoot']}#{src})"
-      newline
+      ["![#{title}](#{local ? @front_matter['toRoot'] : ''}#{src})"]
     end
 
     def link( text, href)
-      return unless text && text.strip != ''
+      return [] unless text && ! text.empty?
       local, href = localise? href
       if local
-        @markdown << "[#{text.strip}](#{@front_matter['toRoot']}#{href})"
+        ["[#{text.join(' ')}](#{@front_matter['toRoot']}#{href})"]
       else
-        @markdown << "[#{text.strip}](#{href})"
+        ["[#{text.join(' ')}](#{href})"]
       end
-      @line_start = false
     end
 
     def link_text_only?
       true
     end
 
-    def list_begin( type)
-      @list_marker = (type == :ordered) ? 1 : '#'
-    end
-
-    def list_item_begin
-      if @list_marker.is_a?( Integer)
-        indent = "#{@list_marker}. "
-        @list_marker += 1
-      else
-        indent = '- '
+    def list( type, items)
+      items = items.collect do |item|
+        item.select {|line| line && line.strip != ''}
       end
-      newline
-      @markdown << indent
-      @line_start = true
-      @indent << @indent[-1] + "          "[0...(indent.size)]
-    end
 
-    def list_item_end
-      @indent.pop
-    end
+      items = items.select {|item| ! item.empty?}
 
-    def list_end( type)
+      if type == :ordered
+        items.collect do |item|
+          ['- ' + item[0]] +
+          item[1..-1].collect {|line| '  ' + line}
+        end.flatten
+      else
+        out = []
+        items.each_index do |i|
+          item = items[i]
+          indent = "          "[0...((i+1).to_s.size+2)]
+          out << ["#{i+1}. " + item[0]] +
+                 item[1..-1].collect {|line| indent + line}
+        end
+        out.flatten
+      end
     end
 
     def localise?( url)
@@ -401,12 +367,15 @@ module Generators
       error( verb.to_s + ": ???")
     end
 
-    def newline( force = false)
-      force = true unless @markdown[-1] && @markdown[-1][-1] == "\n"
-      if force
-        @markdown << ("\n" + @indent[-1])
-        @line_start = true
+    def newline( markdown)
+      markdown + ["\n"]
+    end
+
+    def nestable?( markdown)
+      markdown.each do |line|
+        return false if /^<\w/ =~ line
       end
+      true
     end
 
     def output_path( url, article)
@@ -418,24 +387,12 @@ module Generators
       disambiguate_path( stem, article) + '.md'
     end
 
-    def paragraph_begin
-      newline
-      newline( true)
-    end
-
-    def paragraph_end
-      newline
-      newline( true)
-    end
-
-    def pre_begin
-      newline
-      @markdown << @indent[-1] + "~~~\n"
-      @line_start = true
-    end
-
-    def pre_end
-      pre_begin
+    def paragraph( md)
+      if md.empty? || (md[-1][-1] == "\n")
+        md + ["\n"]
+      else
+        md + ["\n", "\n"]
+      end
     end
 
     def raw( html)
@@ -457,7 +414,14 @@ module Generators
         end
       end
 
-      @markdown << html
+      [html]
+    end
+
+    def raw?( markdown)
+      markdown.each do |line|
+        return true if /^<\w/i =~ line
+      end
+      false
     end
 
     def register_article( url, article)
@@ -466,26 +430,12 @@ module Generators
       end
     end
 
-    def row_begin
-      @cell_count = 0
-      newline
-    end
-
-    def row_end
-      if @table_state == :header
-        newline
-        @markdown << '|'
-        (0...@cell_count).each {@markdown << '-|'}
-        @table_state = :data
-      end
-    end
-
     def restore_generation
-      @article_url, @article_error, @path, @front_matter, @markdown = * @saved.pop
+      @article_url, @article_error, @path, @front_matter = * @saved.pop
     end
 
     def save_generation
-      @saved << [@article_url, @article_error, @path, @front_matter, @markdown]
+      @saved << [@article_url, @article_error, @path, @front_matter]
     end
 
     def site_begin
@@ -509,71 +459,57 @@ module Generators
       @taxonomies[singular] = plural
     end
 
-    def style_begin( styles)
+    def style( styles, md)
+      styling = ''
       styles.each do |style|
         if style == :bold
-          @markdown << '**'
+          styling = '**'
         elsif style == :big
         elsif style == :cite
-          @markdown << '**'
+          styling = '**'
         elsif style == :code
         elsif style == :emphasized
-          @markdown << '*'
+          styling = '*'
         elsif style == :italic
-          @markdown << '*'
+          styling = '*'
         elsif style == :keyboard
         elsif style == :small
         elsif style == :superscript
         elsif style == :teletype
         elsif style == :underline
-          @markdown << '*'
+          styling = '*'
         elsif style == :variable
-          @markdown << '*'
+          styling = '*'
         else
           error( "style_begin: #{styles.collect {|s| s.to_s}.join( ' ')}")
         end
       end
+
+      [styling] + md + [styling]
     end
 
-    def style_end( styles)
-      styles.each do |style|
-        if style == :bold
-          @markdown << '**'
-        elsif style == :big
-        elsif style == :cite
-          @markdown << '**'
-        elsif style == :code
-        elsif style == :emphasized
-          @markdown << '*'
-        elsif style == :italic
-          @markdown << '*'
-        elsif style == :keyboard
-        elsif style == :small
-        elsif style == :superscript
-        elsif style == :teletype
-        elsif style == :underline
-          @markdown << '*'
-        elsif style == :variable
-          @markdown << '*'
-        else
-          error( "style_begin: #{styles.collect {|s| s.to_s}.join( ' ')}")
-        end
-      end
+    def table( rows)
+      [table_row( rows[0]), table_separator( rows[0])] +
+      rows[1..-1].collect {|row| table_row( row)}
     end
 
-    def table_begin
-      @table_state = :header
+    def table_separator( row)
+      '|' + row.collect{'-|'}.join('')
     end
 
-    def table_end
+    def table_row( row)
+      '|' + row.collect {|cell| cell.gsub( '|', '\\|')}.join('|') + '|'
     end
 
     def text( str)
-      if @line_start
-        str = str.sub( /^\s*/, '')
-        @line_start = (str == '')
+      [str.strip]
+    end
+
+    def textual?( markdown)
+      markdown.each do |line|
+        return false if /^[<]/ =~ line
       end
-      @markdown << str.gsub( /\s*\n/, ' ')
+      true
     end
 
     def to_root( article)

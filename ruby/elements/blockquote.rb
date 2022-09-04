@@ -3,9 +3,12 @@ require_relative 'group'
 module Elements
   class Blockquote < Group
     def generate( generator)
-      generator.blockquote_begin
-      super
-      generator.blockquote_end
+      md = generate_children( generator)
+      if generator.nestable?( md)
+        generator.blockquote( md)
+      else
+        [raw]
+      end
     end
   end
 end

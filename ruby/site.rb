@@ -23,7 +23,6 @@ require_relative 'elements/list'
 require_relative 'elements/list_item'
 require_relative 'elements/paragraph'
 require_relative 'elements/pre'
-require_relative 'elements/raw'
 require_relative 'elements/row'
 require_relative 'elements/span'
 require_relative 'elements/styling'
@@ -121,6 +120,7 @@ class Site
   end
 
   def absolutise( page_url, url)
+    url      = url.strip
     root_url = @config['root_url']
     dir_url  = page_url.split('?')[0]
 
@@ -220,6 +220,10 @@ class Site
       Elements::Description.new( place)
     end
 
+    on_element 'del' do  |place|
+      Elements::Ignore.new( place)
+    end
+
     on_element 'div' do  |place|
       place.content? ? nil : Elements::Ignore.new( place)
     end
@@ -300,6 +304,10 @@ class Site
       Elements::ListItem.new( place)
     end
 
+    on_element 'link' do  |place|
+      Elements::Ignore.new( place)
+    end
+
     on_element 'medium' do  |place|
       Elements::Styling.new( place, [:medium])
     end
@@ -321,7 +329,7 @@ class Site
     end
 
     on_element 'pre' do  |place|
-      Elements::Raw.new( place)
+      Elements::Pre.new( place)
     end
 
     on_element 'script', :grokked => false do  |place|
@@ -360,7 +368,7 @@ class Site
       Elements::Styling.new( place, [])
     end
 
-    on_element 'td', :parent => 'tr' do  |place|
+    on_element 'td' do  |place|
       Elements::Cell.new( place)
     end
 
@@ -368,7 +376,7 @@ class Site
       Elements::Text.new( place, place.text)
     end
 
-    on_element 'th', :parent => 'tr' do  |place|
+    on_element 'th' do  |place|
       Elements::Cell.new( place)
     end
 
@@ -376,7 +384,7 @@ class Site
       Elements::Styling.new( place, [])
     end
 
-    on_element 'tr', :parent => 'table' do  |place|
+    on_element 'tr' do  |place|
       Elements::Row.new( place)
     end
 

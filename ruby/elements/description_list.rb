@@ -6,25 +6,22 @@ module Elements
       true
     end
 
-    def error?
-      @contents.each do |child|
-        if child.is_a?( DescriptionTerm)
-        elsif child.is_a?( Description)
-        else
-          return true if child.content?
-        end
-      end
-      false
-    end
-
     def generate( generator)
+      list = []
       @contents.each do |child|
+        md = child.generate_children( generator)
         if child.is_a?( DescriptionTerm)
-          generator.description_term( child)
+          return [raw] unless generator.textual?( md)
+          list << [[md.join( ' ')]]
         elsif child.is_a?( Description)
-          generator.description( child)
+          return [raw] unless generator.textual?( md)
+          return [raw] if list.empty?
+          list[-1] << md.join( ' ')
+        elsif child.content?
+          return [raw]
         end
       end
+      generator.description_list( list)
     end
   end
 end

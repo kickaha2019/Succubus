@@ -7,9 +7,7 @@ module Elements
     end
 
     def generate( generator)
-      generator.newline
       generator.hr
-      generator.newline
     end
 
     def grokked?

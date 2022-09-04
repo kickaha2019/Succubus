@@ -1,15 +1,13 @@
-require_relative 'text_group'
+require_relative 'group'
 
 module Elements
-  class Pre < TextGroup
+  class Pre < Group
     def content?
       true
     end
 
     def generate( generator)
-      generator.pre_begin
-      super( generator)
-      generator.pre_end
+      [raw]
     end
   end
 end

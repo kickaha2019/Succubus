@@ -21,7 +21,6 @@ class Analyser < Processor
 .grokked_and_content {background: yellow}
 .error {background: red}
 .section {background: cyan}
-.raw {background: grey}
 </style>
 <script>
 function expand( index) {
@@ -51,8 +50,6 @@ DUMP2
       if element.error?
         focus[element.index] = true
       elsif element.is_a?( Elements::Article)
-        focus[element.index] = true
-      elsif element.is_a?( Elements::Raw)
         focus[element.index] = true
       end
       p ['dump_expand1', element.index, focus[element.index]] if debug && focus[element.index]
@@ -95,8 +92,6 @@ DUMP2
       scheme = 'error'
     elsif struct.article?
       scheme = 'section'
-    elsif struct.is_a?( Elements::Raw)
-      scheme = 'raw'
     elsif struct.grokked?
       if struct.content?
         scheme = 'grokked_and_content'
@@ -147,7 +142,7 @@ DUMP2
     end
 
     open_files( dir)
-    n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed, n_raw = 0, 0, 0, 0, 0, 0, 0
+    n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0
 
     addresses     = @pages.keys.sort
     @is_error     = true
@@ -167,11 +162,10 @@ DUMP2
       n_grabbed += 1
       n_error   += 1 if @is_error
 
-      old_articles, date, tags, old_raw = n_articles, '', '', n_raw
+      old_articles, date, tags = n_articles, '', ''
       if parsed
         parsed.tree do |child|
           if child.is_a?( Elements::Article)
-            n_raw += child.raw_count
             n_articles += 1
             if child.date
               date = child.date.strftime( '%Y-%m-%d')
@@ -227,17 +221,17 @@ DUMP2
       if parsed
         dump( parsed, dir + "/#{i}.html", debug)
       end
-      write_files "<td>#{(n_raw > old_raw) ? (n_raw - old_raw) : ''}</td></tr>"
+      write_files "</tr>"
     end
 
     @is_asset     = false
     @is_error     = true
     @has_articles = true
-    report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed, n_raw)
+    report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed)
     close_files
   end
 
-  def report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed, n_raw)
+  def report_footer( n_all, n_articles, n_error, n_redirect, n_asset, n_grabbed)
     write_files <<FOOTER1
 </table></div>
 <div class="menu"><table><tr>
@@ -247,7 +241,6 @@ DUMP2
 <td>Redirects: #{n_redirect}</td>
 <td>Errors: #{n_error}</td>
 <td>Grabbed: #{n_grabbed}</td>
-<td>Raw: #{n_raw}</td>
 </tr></table></div>
 <div class="menu"><table><tr>
 FOOTER1
@@ -300,7 +293,6 @@ HEADER1
 <th>Tags</th>
 <th>Comment</th>
 <th>Timestamp</th>
-<th>Raw</th>
 </tr>
 HEADER2
   end
