@@ -11,11 +11,11 @@ module Elements
       @contents.each do |child|
         if child.is_a?( Elements::Row)
           row = generate_row( generator, child, header)
-          return [raw] if row.nil?
+          return generator.raw( raw) if row.nil?
           rows << row
           header = false
         elsif child.content?
-          return [raw]
+          return generator.raw( raw)
         end
       end
 

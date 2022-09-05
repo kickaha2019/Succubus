@@ -7,7 +7,7 @@ module Elements
       if generator.nestable?( md)
         generator.blockquote( md)
       else
-        [raw]
+        generator.raw( raw)
       end
     end
   end

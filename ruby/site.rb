@@ -10,6 +10,7 @@ require_relative 'elements/blockquote'
 require_relative 'elements/break'
 require_relative 'elements/caption'
 require_relative 'elements/cell'
+require_relative 'elements/debug'
 require_relative 'elements/description'
 require_relative 'elements/description_list'
 require_relative 'elements/description_term'
@@ -70,6 +71,12 @@ class Site
       if applies
         if @args[:grandparent]
           applies = element.parent && element.parent.parent && (element.parent.parent.name == @args[:grandparent])
+        end
+      end
+
+      if applies
+        if @args[:attribute]
+          applies = ! element[@args[:attribute]].nil?
         end
       end
 

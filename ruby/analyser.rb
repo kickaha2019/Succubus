@@ -109,8 +109,7 @@ DUMP2
     #   p [struct.doc.name, scheme, struct.class.name, struct.grokked?, struct.content?]
     # end
 
-    tooltip = struct.tooltip unless struct_error || (tooltip && (tooltip != ''))
-    io.print "<span class=\"label #{scheme}\" title=\"#{tooltip}\">"
+    io.print "<span class=\"label #{scheme}\" title=\"#{struct.tooltip}#{tooltip}\">"
     io.print( struct.describe)
     io.puts "</span><br>"
 

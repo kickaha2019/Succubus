@@ -11,14 +11,14 @@ module Elements
       @contents.each do |child|
         md = child.generate_children( generator)
         if child.is_a?( DescriptionTerm)
-          return [raw] unless generator.textual?( md)
-          list << [[md.join( ' ')]]
+          return generator.raw( raw) unless generator.textual?( md)
+          list << [md]
         elsif child.is_a?( Description)
-          return [raw] unless generator.textual?( md)
-          return [raw] if list.empty?
-          list[-1] << md.join( ' ')
+          return generator.raw( raw) unless generator.textual?( md)
+          return generator.raw( raw) if list.empty?
+          list[-1] << md
         elsif child.content?
-          return [raw]
+          return generator.raw( raw)
         end
       end
       generator.description_list( list)

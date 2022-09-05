@@ -34,6 +34,10 @@ class BGA < Site
       Elements::Styling.new( place, [:bold])
     end
 
+    # on_element 'div', :class => '', :attribute => 'debug' do |place|
+    #   Elements::Debug.new( place)
+    # end
+
     on_element 'div', :class => '' do |place|
       place.children
     end

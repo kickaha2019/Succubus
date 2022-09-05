@@ -36,7 +36,7 @@ module Elements
       if ok
         generator.link( text, @href)
       else
-        [raw]
+        generator.raw( raw)
       end
     end
 

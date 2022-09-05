@@ -54,22 +54,9 @@ module Elements
     end
 
     def generate_children( generator)
-      lines = @contents.collect do |child|
+      generator.merge( @contents.collect do |child|
         child.generate( generator)
-      end.flatten
-
-      merged = []
-      lines.each do |line|
-        if /\n$/ =~ merged[-1]
-          merged << line
-        elsif merged[-1]
-          merged[-1] = merged[-1] + ' ' + line
-        else
-          merged << line if line != ''
-        end
-      end
-
-      merged
+      end)
     end
 
     def grokked?
@@ -83,7 +70,7 @@ module Elements
     end
 
     def raw
-      [@element.to_html]
+      @element.to_html
     end
 
     def self.reset_next_index
@@ -103,7 +90,7 @@ module Elements
     end
 
     def tooltip
-      nil
+      "#{self.class.to_s}: "
     end
 
     def tree

@@ -34,8 +34,8 @@ HEADER
     clean_old_files
   end
 
-  def compile_article( url, article)
-    @generator.article_begin( url, article)
+  def compile_article( timestamp, url, article)
+    @generator.article_begin( "#{@cache}/#{timestamp}.html", url, article)
     if article.date
       @generator.article_date( article.date)
     end
@@ -62,7 +62,7 @@ LINE
 
       parsed.tree do |child|
         if child.is_a?( Elements::Article)
-          compile_article( url, child)
+          compile_article( info['timestamp'], url, child)
         end
       end
     end

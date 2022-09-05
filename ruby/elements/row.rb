@@ -16,7 +16,7 @@ module Elements
     end
 
     def generate( generator)
-      [raw]
+      generator.raw( raw)
     end
   end
 end

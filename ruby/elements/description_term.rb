@@ -3,7 +3,7 @@ require_relative 'group'
 module Elements
   class DescriptionTerm < Group
     def generate( generator)
-      [raw]
+      generator.raw( raw)
     end
   end
 end

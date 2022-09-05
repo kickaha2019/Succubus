@@ -92,6 +92,10 @@ exclude_urls:
 - https://britgo.org/membership/memberap
 - https://britgo.org/clubs/ https://online-go.com
 - https://britgo.org/aga-ejournal
+- "^https://britgo.org/comment/\\d+"
+- https://britgo.org/forum
+- https://britgo.org/node/5151
+- https://britgo.org/node/5166
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

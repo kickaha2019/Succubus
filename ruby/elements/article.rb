@@ -70,7 +70,7 @@ module Elements
     end
 
     def tooltip
-      "Title: #{@title} Date: #{@date} Mode: #{@mode} Tags: #{@tags.collect {|tag| tag[1]}.join( ' ')}"
+      "Article: Title: #{@title} Date: #{@date} Mode: #{@mode} Tags: #{@tags.collect {|tag| tag[1]}.join( ' ')}"
     end
 
     # def tree

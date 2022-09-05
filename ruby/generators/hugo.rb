@@ -25,7 +25,7 @@ module Generators
       @table_state   = nil
     end
 
-    def article_begin( url, article)
+    def article_begin( cached, url, article)
       @article_url   = url
       @article_error = false
       @path          = output_path( url, article)
@@ -33,7 +33,8 @@ module Generators
                         'toRoot'   => to_root( article),
                         'fromRoot' => from_root( article),
                         'mode'     => article.mode.to_s,
-                        'origin'   => url}
+                        'origin'   => url,
+                        'cache'    => cached}
       @comment       = []
       @line_start    = true
 
@@ -131,7 +132,7 @@ module Generators
     end
 
     def blockquote( md)
-      md.collect {|line| '< ' + line}
+      ["\n"] + strip(md).collect {|line| '< ' + line} + ["\n"]
     end
 
     def clean_old_files
@@ -177,9 +178,10 @@ module Generators
     end
 
     def description_list( list)
-      list.collect do |entry|
-        entry[0] + entry[1..-1].collect {|text| ': ' + text}
-      end
+      ["\n"] + list.collect do |entry|
+        [entry[0][0] + "\n"] +
+        entry[1..-1].collect {|text| [': ' + text[0] + "\n"]}
+      end.flatten + ["\n"]
     end
 
     def disambiguate_path( stem, article)
@@ -269,7 +271,9 @@ module Generators
     end
 
     def heading( level, markdown)
-      markdown.collect {|line| '######'[0...level] + line}
+      ["\n"] +
+      strip(markdown).collect {|line| '######'[0...level] + ' ' + line} +
+      ["\n"]
     end
 
     def hr
@@ -278,7 +282,7 @@ module Generators
 
     def image( src, title)
       local, src = localise?( src)
-      ["![#{title}](#{local ? @front_matter['toRoot'] : ''}#{src})"]
+      ["![#{title}](#{local ? @front_matter['toRoot'] : ''}#{src})\n"]
     end
 
     def link( text, href)
@@ -297,25 +301,25 @@ module Generators
 
     def list( type, items)
       items = items.collect do |item|
-        item.select {|line| line && line.strip != ''}
+        item.select {|line| line && line.strip != ''} #.collect {|line| line.rstrip}
       end
 
       items = items.select {|item| ! item.empty?}
 
       if type == :ordered
-        items.collect do |item|
-          ['- ' + item[0]] +
-          item[1..-1].collect {|line| '  ' + line}
-        end.flatten
-      else
         out = []
         items.each_index do |i|
           item = items[i]
           indent = "          "[0...((i+1).to_s.size+2)]
-          out << ["#{i+1}. " + item[0]] +
-                 item[1..-1].collect {|line| indent + line}
+          out << ["#{i+1}. " + item[0] + "\n"] +
+              item[1..-1].collect {|line| indent + line + "\n"}
         end
-        out.flatten
+        ["\n"] + out.flatten + ["\n"]
+      else
+        ["\n"] + items.collect do |item|
+          ['- ' + item[0] + "\n"] +
+              item[1..-1].collect {|line| '  ' + line + "\n"}
+        end.flatten + ["\n"]
       end
     end
 
@@ -363,6 +367,21 @@ module Generators
       return true, @front_matter['toRoot'] + url
     end
 
+    def merge( markdown)
+      merged, carry = [], ''
+
+      markdown.flatten.each do |line|
+        if /\n$/ =~ line
+          merged << carry + line
+          carry = ''
+        else
+          carry += line
+        end
+      end
+
+      (carry != '') ? merged + [carry] : merged
+    end
+
     def method_missing( verb, *args)
       error( verb.to_s + ": ???")
     end
@@ -388,11 +407,7 @@ module Generators
     end
 
     def paragraph( md)
-      if md.empty? || (md[-1][-1] == "\n")
-        md + ["\n"]
-      else
-        md + ["\n", "\n"]
-      end
+      strip( md) + ["\n", "\n"]
     end
 
     def raw( html)
@@ -414,7 +429,7 @@ module Generators
         end
       end
 
-      [html]
+      ["\n", html, "\n"]
     end
 
     def raw?( markdown)
@@ -459,6 +474,23 @@ module Generators
       @taxonomies[singular] = plural
     end
 
+    def strip( markdown)
+      while (! markdown.empty?) && (markdown[0] == "\n")
+        markdown = markdown[1..-1]
+      end
+
+      while (! markdown.empty?) && (markdown[-1] == "\n")
+        markdown = markdown[0..-2]
+      end
+
+      if ! markdown.empty?
+        markdown[0] = markdown[0].lstrip
+        markdown[-1] = markdown[-1].rstrip
+      end
+
+      markdown
+    end
+
     def style( styles, md)
       styling = ''
       styles.each do |style|
@@ -489,8 +521,9 @@ module Generators
     end
 
     def table( rows)
-      [table_row( rows[0]), table_separator( rows[0])] +
-      rows[1..-1].collect {|row| table_row( row)}
+      ["\n"] + [table_row( rows[0]), table_separator( rows[0])] +
+      rows[1..-1].collect {|row| table_row( row)} +
+      ["\n"]
     end
 
     def table_separator( row)
@@ -498,17 +531,17 @@ module Generators
     end
 
     def table_row( row)
-      '|' + row.collect {|cell| cell.gsub( '|', '\\|')}.join('|') + '|'
+      '|' + row.collect {|cell| cell.gsub( '|', '\\|')}.join('|') + "|\n"
     end
 
     def text( str)
-      [str.strip]
+      [str.gsub( "\n", ' ')]
     end
 
     def textual?( markdown)
-      markdown.each do |line|
-        return false if /^[<]/ =~ line
-      end
+      return false if markdown.size != 1
+      return false if /^[<]/ =~ markdown[0]
+      return false if /\n$/ =~ markdown[0]
       true
     end
 

@@ -20,7 +20,7 @@ module Elements
       if generator.textual?( md)
         generator.heading( @level, md)
       else
-        [raw]
+        generator.raw( raw)
       end
     end
   end

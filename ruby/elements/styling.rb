@@ -20,7 +20,7 @@ module Elements
       if generator.textual?( md)
         generator.style( @types, md)
       else
-        [raw]
+        generator.raw( raw)
       end
     end
   end

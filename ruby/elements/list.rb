@@ -20,10 +20,10 @@ module Elements
       @contents.each do |child|
         if child.is_a?( ListItem)
           md = child.generate_children( generator)
-          return [raw] unless generator.nestable?( md)
+          return generator.raw( raw) unless generator.nestable?( md)
           list << md
         elsif child.content?
-          return [raw]
+          return generator.raw( raw)
         end
       end
       generator.list( @type, list)
