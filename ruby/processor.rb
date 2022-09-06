@@ -69,16 +69,20 @@ class Processor
       return asset?( url), info['comment'], false, info['secured'], nil
     end
 
+    if info['parsed']
+      return false, info['error'], false, info['secured'], info['parsed']
+    end
+
     unless File.exist?( @cache + "/#{ts}.html")
       puts "examine1: #{url}" if debug
       return false, true, false, info['secured'], nil
     end
 
     begin
-      parsed = parse( url, ts)
+      info['parsed'] = parse( url, ts)
 
-      error = parsed.content?
-      parsed.tree do |child|
+      error = info['parsed'].content?
+      info['parsed'].tree do |child|
         child_error, child_msg = child.error?
         if child_error
           p ['examine3', child.index, child.class.to_s, child_msg] if debug
@@ -86,7 +90,8 @@ class Processor
         end
       end
 
-      return false, error, false, info['secured'], parsed
+      info['error'] = error
+      return false, error, false, info['secured'], info['parsed']
     rescue
       puts "*** File: #{info['timestamp']}.html"
       raise

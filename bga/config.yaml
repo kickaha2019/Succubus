@@ -83,7 +83,6 @@ exclude_urls:
 - https://britgo.org/organisers/handbook/handbook.html
 - https://britgo.org/results/1998/shrew
 - https://britgo.org/results/1999/shrew
-- https://britgo.org/taxonomy/term/29?page=6
 - "^https://britgo.org/news/enews1a98.*"
 - https://britgo.org/news/../results/2002/cornlight
 - https://britgo.org/results/2002/bham
@@ -96,6 +95,7 @@ exclude_urls:
 - https://britgo.org/forum
 - https://britgo.org/node/5151
 - https://britgo.org/node/5166
+- https://britgo.org/files/people/bryantc.jpg
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

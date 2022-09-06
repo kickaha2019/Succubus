@@ -1,10 +1,13 @@
 #!/bin/csh
 cd $0:h
 cd ..
-ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus ~/temp/Hugo
+time ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus ~/temp/Hugo
 if ($status != 0) exit 1
+ruby ruby/to_check.rb ./bga/to_check.yaml /tmp/to_check.html
+if ($status != 0) exit 1
+cd ~/temp/Hugo_public
+find . -name '*.html' -exec rm {} \;
 cd ~/temp/Hugo
-find public -name '*.html' -exec rm {} \;
 hugo
 if ($status != 0) exit 1
-open ~/temp/Hugo_public/index.html
+open /tmp/to_check.html

@@ -7,12 +7,20 @@ class Compiler < Processor
     @errors     = false
     @output_dir = output_dir
     @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, output_dir)
-    @generated  = File.open( output_dir + '/content/generated.html', 'w')
-    @generated.puts <<"HEADER"
+    @generated  = []
+    @comments   = Hash.new {|h,k| h[k] = 0}
+    @generated << <<"HEADER"
 <html>
 <head>
+<style>
+body {display: flex; align-items: center}
+table {border-spacing: 0px; border-collapse: collapse}
+th, td {padding: 5px; border-style: solid;
+        border-width: 1px; border-color: black;
+        font-size: 18px}
+</style>
 </head>
-<body><center><table>
+<body><table>
 <tr><th>Origin</th><th>Generated</th><th>Comment</th></tr>
 HEADER
   end
@@ -24,8 +32,13 @@ HEADER
   def compile
     preparse_all
     compile_site
-    @generated.puts '</table></center></body></html>'
-    @generated.close
+    @generated << '</table></body></html>'
+    @generator.write_file( @output_dir + '/content/generated.html',
+                           @generated.join( "\n"))
+
+    @comments.each_pair do |k,v|
+      puts "... #{k}: #{v}"
+    end
 
     if @generator.error?
       puts "*** Compilation errors"
@@ -46,13 +59,17 @@ HEADER
     @generator.article_description( article.description)
     md = article.generate( @generator)
     generated, comment = @generator.article_end( md)
-    @generated.puts <<"LINE"
+    @generated << <<"LINE"
 <tr>
 <td><a href="#{url}">#{url}</a></td>
 <td><a href="#{generated}">#{generated}</a></td>
 <td>#{comment}</td>
 </tr>
 LINE
+
+    comment.split( ' ').each do |word|
+      @comments[word] += 1
+    end
   end
 
   def compile_pages

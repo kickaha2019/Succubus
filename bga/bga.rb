@@ -175,6 +175,10 @@ class BGA < Site
       Elements::Line.new( place)
     end
 
+    on_element 'div', :class => 'view-taxonomy-term' do |place|
+      Elements::Ignore.new( place)
+    end
+
     on_element 'h3' do |place|
       h3 = Elements::Heading.new( place, 3)
       h3.error? ? Elements::Group.new( place) : h3

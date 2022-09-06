@@ -88,7 +88,11 @@ module Generators
 
     def article_end( markdown)
       write_file( @path, "#{@front_matter.to_yaml}\n---\n#{markdown.join('')}")
-      return @path[(@output_dir.size+1)..-1], raw?( markdown) ? 'Raw' : ''
+      wrote = @path[(@output_dir.size+9)..-1].sub( /\.md$/, '.html').sub( '_index', 'index')
+      unless /\/(_|)index\.html$/ =~ wrote
+        wrote = wrote.sub( /\.html$/, '/index.html')
+      end
+      return wrote, raw?( markdown) ? 'Raw' : ''
     end
 
     def article_tags( tags)
@@ -203,8 +207,13 @@ module Generators
     end
 
     def ensure_index_md( dir)
-      return if File.exist?( dir + '/_index.md')
-      write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
+      if File.exist?( dir + '.md')
+        write_file( dir + '/_index.md', IO.read( dir + '.md'))
+        File.delete( dir + '.md')
+      else
+        return if File.exist?( dir + '/_index.md')
+        write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
+      end
     end
 
     def error( msg)
@@ -282,17 +291,13 @@ module Generators
 
     def image( src, title)
       local, src = localise?( src)
-      ["![#{title}](#{local ? @front_matter['toRoot'] : ''}#{src})\n"]
+      ["![#{title}](#{src})"]
     end
 
     def link( text, href)
       return [] unless text && ! text.empty?
       local, href = localise? href
-      if local
-        ["[#{text.join(' ')}](#{@front_matter['toRoot']}#{href})"]
-      else
-        ["[#{text.join(' ')}](#{href})"]
-      end
+      ["[#{text.join(' ')}](#{href})"]
     end
 
     def link_text_only?
@@ -407,7 +412,7 @@ module Generators
     end
 
     def paragraph( md)
-      strip( md) + ["\n", "\n"]
+      ["\n"] + strip( md) + ["\n", "\n"]
     end
 
     def raw( html)
