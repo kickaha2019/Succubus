@@ -223,22 +223,6 @@ class BGA < Site
       end
     end
 
-    # on_element 'th', :parent => 'tr', :grandparent => 'table' do  |place|
-    #   Elements::Cell.new( place)
-    # end
-    #
-    # on_element 'th' do  |place|
-    #   Elements::Group.new( place)
-    # end
-
-    # on_element 'tr', :parent => 'table' do  |place|
-    #   Elements::Row.new( place)
-    # end
-    #
-    # on_element 'tr' do  |place|
-    #   Elements::Group.new( place)
-    # end
-
     on_element 'rss', :grokked => false do |place|
       Elements::Ignore.new( place)
     end
@@ -276,7 +260,14 @@ class BGA < Site
       true
     end
 
-    on_page %r{^(taxonomy/|news$|results/12months$)} do |page|
+    on_page %r{^(taxonomy/)} do |page|
+      on_element 'body', :grokked => false do |place|
+        Elements::Ignore.new( place)
+      end
+      false
+    end
+
+    on_page %r{^(news$|results/12months$)} do |page|
       on_element 'div', :class => 'block-system-main-block' do |place|
         Elements::Ignore.new( place)
       end
@@ -459,8 +450,8 @@ class BGA < Site
     end
   end
 
-  def preparse( url, page)
-    nodes = page_to_nodes( page)
+  def preparse( url, document)
+    nodes = page_to_nodes( document)
 
     nodes.css( 'td.views-field-title a') do |node|
       [absolutise( url, node['href'])]
@@ -471,14 +462,14 @@ class BGA < Site
       false
     end
 
-    nodes.css( 'td.views-field-title a') do |node|
-      [absolutise( url, node['href'])]
-    end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |node1, href|
-      if m = /(\d+) (\w*) (\d\d\d\d)/.match( node1.text)
-        @post_dates[href] = to_date( m[3], m[2], m[1])
-      end
-      false
-    end
+    # nodes.css( 'td.views-field-title a') do |node|
+    #   [absolutise( url, node['href'])]
+    # end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |node1, href|
+    #   if m = /(\d+) (\w*) (\d\d\d\d)/.match( node1.text)
+    #     @post_dates[href] = to_date( m[3], m[2], m[1])
+    #   end
+    #   false
+    # end
   end
 
   def redirect( url, target)

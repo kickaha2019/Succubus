@@ -28,7 +28,9 @@ exclude_urls:
 - https://britgo.org/image/tid/53
 - https://britgo.org/image/tid/77
 - https://britgo.org/image/tid/80
+- https://britgo.org/image/tid/81
 - https://britgo.org/image/tid/82
+- https://britgo.org/image/tid/83
 - https://britgo.org/join/pay
 - https://britgo.org/junior/youthgonews
 - "\\?order="

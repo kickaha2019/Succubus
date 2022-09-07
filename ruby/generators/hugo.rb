@@ -509,8 +509,10 @@ module Generators
           styling = '*'
         elsif style == :italic
           styling = '*'
+        elsif style == :inserted
         elsif style == :keyboard
         elsif style == :small
+        elsif style == :strike
         elsif style == :superscript
         elsif style == :teletype
         elsif style == :underline

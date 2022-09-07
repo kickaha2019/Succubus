@@ -45,4 +45,4 @@ main>div {margin: 20px;
 
 dt {font-weight: bold}
 
-a img {height: 100px}
+a img {max-height: 100px; object-fit: contain}

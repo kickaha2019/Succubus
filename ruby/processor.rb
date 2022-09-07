@@ -79,7 +79,7 @@ class Processor
     end
 
     begin
-      info['parsed'] = parse( url, ts)
+      info['parsed'] = parse( url, info)
 
       error = info['parsed'].content?
       info['parsed'].tree do |child|
@@ -98,9 +98,11 @@ class Processor
     end
   end
 
-  def parse( url, ts)
-    body = IO.read( "#{@cache}/#{ts}.html")
-    @site.parse( url, body)
+  def parse( url, info)
+    unless info['document']
+      info['document'] = @site.parse_document( "#{@cache}/#{ts}.html")
+    end
+    @site.parse( url, info['document'])
   end
 
   def preparse_all
@@ -108,7 +110,8 @@ class Processor
       if ts = info['timestamp']
         path = "#{@cache}/#{ts}.html"
         if File.exist?( path)
-          @site.preparse( url, IO.read( path))
+          info['document'] = @site.parse_document( path)
+          @site.preparse( url, info['document'])
         end
       end
     end

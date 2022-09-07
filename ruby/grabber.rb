@@ -197,7 +197,7 @@ class Grabber < Processor
 
       path = @cache + "/#{@pages[url]['timestamp']}.html"
       if File.exist?( path)
-        parsed = parse( url, @pages[url]['timestamp'])
+        parsed = parse( url, @pages[url])
         parsed.links do |found|
           found = found.split( '#')[0]
           if trace?( found)

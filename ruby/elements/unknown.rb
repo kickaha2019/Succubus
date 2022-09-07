@@ -1,6 +1,6 @@
 module Elements
   class Unknown
-    attr_reader :index, :contents
+    attr_reader :index, :contents, :element
     @@next_index = 0
 
     def initialize( place)

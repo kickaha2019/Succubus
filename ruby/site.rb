@@ -299,6 +299,10 @@ class Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'ins' do  |place|
+      Elements::Styling.new( place, [:inserted])
+    end
+
     on_element 'kbd' do  |place|
       Elements::Styling.new( place, [:keyboard])
     end
@@ -353,6 +357,10 @@ class Site
 
     on_element 'span' do  |place|
       Elements::Span.new( place)
+    end
+
+    on_element 'strike' do  |place|
+      Elements::Styling.new( place, [:strike])
     end
 
     on_element 'strong' do  |place|
@@ -436,14 +444,12 @@ class Site
     @page_initialised = false
   end
 
-  def page_to_nodes( page)
-    Nodes.new( [[Nokogiri::HTML( page).root.at_xpath( '//body')]])
+  def page_to_nodes( document)
+    Nodes.new( [[document.root.at_xpath( '//body')]])
   end
 
-  def parse( url, page)
+  def parse( url, html_doc)
     Elements::Unknown.reset_next_index
-
-    html_doc    = Nokogiri::HTML( page)
     page = Page.new( self, @config['root_url'], @taxonomy, url, html_doc)
 
     relative_url = url[@config['root_url'].size..-1]
@@ -480,6 +486,10 @@ class Site
     end
 
     Elements::Unknown.new( place)
+  end
+
+  def parse_document( path)
+    Nokogiri::HTML( IO.read( path))
   end
 
   def preparse( url, page)

@@ -15,11 +15,11 @@ pages:
 - original: https://britgo.org/whatisgo
   compiled: file:///Users/peter/Temp/Hugo_public/whatisgo/index.html
   title:    What is Go
-  features:
+  features: Missing images
 - original: https://britgo.org/whatisgo/culture-history
   compiled: file:///Users/peter/Temp/Hugo_public/whatisgo/culture-history/index.html
   title:    Go culture
-  features: Image layout
+  features: Image layout missing header title at top?
 - original: https://britgo.org/results/2022/cheshire
   compiled: file:///Users/peter/Temp/Hugo_public/results/2022/cheshire/index.html
   title:    Cheshire 2022 results
@@ -28,7 +28,19 @@ pages:
   compiled: file:///Users/peter/Temp/Hugo_public/clubs/reading/index.html
   title:    Reading Go club
   features:
-- original: https://britgo.org/club/cardiff
-  compiled: file:///Users/peter/Temp/Hugo_public/club/cardiff/index.html
-  title:    Cardiff Go club
+- original: https://britgo.org/club/arundel
+  compiled: file:///Users/peter/Temp/Hugo_public/club/arundel/index.html
+  title:    Arundel Go club
   features: Description list and map
+- original: https://britgo.org/tournaments/londonopen
+  compiled: file:///Users/peter/Temp/Hugo_public/tournaments/londonopen/index.html
+  title:    London Open tournament
+  features: Formatting issue
+- original: https://britgo.org/youth/hikaru
+  compiled: file:///Users/peter/Temp/Hugo_public/youth/hikaru/index.html
+  title:    Hikaru manga
+  features: Images problem
+- original: https://britgo.org/obits/davidwoodnutt
+  compiled: file:///Users/peter/Temp/Hugo_public/obits/davidwoodnutt/index.html
+  title:    Obituary
+  features: Odd text at top
