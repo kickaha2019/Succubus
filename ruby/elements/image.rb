@@ -6,7 +6,7 @@ module Elements
 
     def initialize( place, path, title)
       super( place)
-      @path  = path
+      @path  = path.gsub( /[\s\n]/, '')
       @title = title
     end
 

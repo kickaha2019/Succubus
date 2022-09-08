@@ -10,4 +10,6 @@ find . -name '*.html' -exec rm {} \;
 cd ~/temp/Hugo
 hugo
 if ($status != 0) exit 1
+ruby ~/Succubus/ruby/relativize.rb ~/temp/Hugo_public
+if ($status != 0) exit 1
 open /tmp/to_check.html

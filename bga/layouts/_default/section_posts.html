@@ -2,27 +2,17 @@
 {{ $paginator := .Paginate (where (where .Site.AllPages "Params.mode" "post") "Params.section0" .Params.section0).ByDate.Reverse }}
 <html lang="en_GB">
   <head>
-    {{ if $paginator.Prev }}
-    {{ partial "head1" . }}
-    {{ else }}
     {{ partial "head" . }}
-    {{ end }}
   </head>
   <body class="{{ .Layout }}">
-    {{ $ascend := "../" }}
-    {{ if $paginator.Prev }}
-    {{ $ascend := "../../../" }}
-    {{ partial "navbar1" . }}
-    {{ else }}
     {{ partial "navbar" . }}
-    {{ end }}
 
     <main>
         <div class="medium_width">
           {{ partial "pagination" $paginator }}
           {{ range $paginator.Pages }}
             <article>
-                <a href="{{ $ascend }}{{ .Params.fromRoot }}">{{ .Title }}</a>
+                <a href="{{ .RelPermalink }}">{{ .Title }}</a>
                 <p> {{ .Params.description }} </p>
             </article>
           {{ end }}

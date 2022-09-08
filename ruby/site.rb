@@ -323,6 +323,10 @@ class Site
       Elements::Styling.new( place, [:medium])
     end
 
+    on_element 'meta', :grokked => false do  |place|
+      Elements::Ignore.new( place)
+    end
+
     on_element 'nav', :grokked => false do  |place|
       Elements::Ignore.new( place)
     end

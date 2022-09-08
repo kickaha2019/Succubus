@@ -35,18 +35,12 @@ class Processor
         end
       end
     end
+
+    @page_data = Hash.new {|h,k| h[k] = {}}
   end
 
   def asset?( url)
     @site.asset?( url)
-  end
-
-  def exclude_url?( url)
-    return true if @exclude_url_strings.include?( url)
-    @exclude_url_regexes.each do |re|
-      return true if re =~ url
-    end
-    false
   end
 
   def examine( url, debug = false)
@@ -69,8 +63,8 @@ class Processor
       return asset?( url), info['comment'], false, info['secured'], nil
     end
 
-    if info['parsed']
-      return false, info['error'], false, info['secured'], info['parsed']
+    if @page_data[url]['parsed']
+      return false, @page_data[url]['error'], false, info['secured'], @page_data[url]['parsed']
     end
 
     unless File.exist?( @cache + "/#{ts}.html")
@@ -79,10 +73,10 @@ class Processor
     end
 
     begin
-      info['parsed'] = parse( url, info)
+      parsed = @page_data[url]['parsed'] = parse( url, info)
 
-      error = info['parsed'].content?
-      info['parsed'].tree do |child|
+      error = parsed.content?
+      parsed.tree do |child|
         child_error, child_msg = child.error?
         if child_error
           p ['examine3', child.index, child.class.to_s, child_msg] if debug
@@ -90,19 +84,27 @@ class Processor
         end
       end
 
-      info['error'] = error
-      return false, error, false, info['secured'], info['parsed']
+      @page_data[url]['error'] = error
+      return false, error, false, info['secured'], parsed
     rescue
       puts "*** File: #{info['timestamp']}.html"
       raise
     end
   end
 
-  def parse( url, info)
-    unless info['document']
-      info['document'] = @site.parse_document( "#{@cache}/#{ts}.html")
+  def exclude_url?( url)
+    return true if @exclude_url_strings.include?( url)
+    @exclude_url_regexes.each do |re|
+      return true if re =~ url
     end
-    @site.parse( url, info['document'])
+    false
+  end
+
+  def parse( url, info)
+    unless @page_data[url]['document']
+      @page_data[url]['document'] = @site.parse_document( "#{@cache}/#{info['timestamp']}.html")
+    end
+    @site.parse( url, @page_data[url]['document'])
   end
 
   def preparse_all
@@ -110,8 +112,8 @@ class Processor
       if ts = info['timestamp']
         path = "#{@cache}/#{ts}.html"
         if File.exist?( path)
-          info['document'] = @site.parse_document( path)
-          @site.preparse( url, info['document'])
+          @page_data[url]['document'] = @site.parse_document( path)
+          @site.preparse( url, @page_data[url]['document'])
         end
       end
     end

@@ -10,7 +10,7 @@
         <div class="small_width">
           <table>
           {{ range $section := .Params.SectionIndex }}
-            <tr><td><a href="section-{{ $section.key }}/index.html">{{ $section.name }}</a></td></tr>
+            <tr><td><a href="/section-{{ $section.key }}/index.html">{{ $section.name }}</a></td></tr>
           {{ end }}
           </table>
         </div>
@@ -23,12 +23,12 @@
           <h2>Recent posts</h2>
           {{ range first 10 (where .Site.AllPages "Params.mode" "post").ByDate.Reverse }}
             <article>
-                <a href="{{ .Params.fromRoot }}">{{ .Title }}</a>
+                <a href="{{ .RelPermalink }}">{{ .Title }}</a>
                 <p> {{ .Params.description }} </p>
             </article>
           {{ end }}
 
-          <a class="black" href="index-posts/index.html">All posts</a>
+          <a class="black" href="/index-posts/index.html">All posts</a>
         </div>
     </main>
 

@@ -44,3 +44,7 @@ pages:
   compiled: file:///Users/peter/Temp/Hugo_public/obits/davidwoodnutt/index.html
   title:    Obituary
   features: Odd text at top
+- original: https://britgo.org/news/2022/cand
+  compiled: file:///Users/peter/Temp/Hugo_public/news/2022/cand/index.html
+  title:    Gaoge Wang Wins Candidates
+  features: Odd text at top too wide

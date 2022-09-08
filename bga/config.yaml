@@ -103,7 +103,7 @@ class:  BGA
 generator:  Hugo
 hugo:
   config:
-    baseURL:      https://alofmethbin.com/experiment
+    baseURL:      https://xxx.yyy/
     title:        Experiment
     languageCode: en-gb
     disableKinds:

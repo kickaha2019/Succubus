@@ -6,7 +6,7 @@ module Elements
 
     def initialize( place, href, title)
       super( place)
-      @href  = href.strip
+      @href  = href.gsub( /[\s\n]/, '')
       @title = title
     end
 

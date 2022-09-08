@@ -30,8 +30,6 @@ module Generators
       @article_error = false
       @path          = output_path( url, article)
       @front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
-                        'toRoot'   => to_root( article),
-                        'fromRoot' => from_root( article),
                         'mode'     => article.mode.to_s,
                         'origin'   => url,
                         'cache'    => cached}
@@ -66,7 +64,7 @@ module Generators
           end
         end
       else
-        @front_matter['parents'] = [{'url' => 'index.html', 'title' => 'Home'}]
+        @front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
       end
 
       if @written[@path]
@@ -110,12 +108,12 @@ module Generators
 
       section = @front_matter["section0"]
       if (@front_matter['mode'] == 'article') || (@front_matter['mode'] == 'post')
-        @front_matter['parents'] << {'url'   => 'section-' + section + '/index.html',
+        @front_matter['parents'] << {'url'   => '/section-' + section + '/index.html',
                                      'title' => (names[section] ? names[section] : 'General')}
       end
 
       if @front_matter['mode'] == 'post'
-        @front_matter['parents'] << {'url'   => 'section-' + section + '-posts/index.html',
+        @front_matter['parents'] << {'url'   => '/section-' + section + '-posts/index.html',
                                      'title' => 'Posts'}
       end
     end
@@ -228,19 +226,10 @@ module Generators
       @any_errors
     end
 
-    def from_root( article)
-      return 'index.html' if article.mode == :home
-      path = article.relative_url.sub( /\.[a-z]*$/, '')
-      unless /(^|\/)index$/ =~ path
-        path = path + '/index'
-      end
-      path + '.html'
-    end
-
     def generate_posts_page
       save_generation
       @path          = @output_dir + '/content/index-posts/_index.md'
-      parents        = [{'url'    => 'index.html', 'title' => 'Home'}]
+      parents        = [{'url'    => '/index.html', 'title' => 'Home'}]
       @front_matter  = {'layout'  => 'home_posts',
                         'toRoot'  => '../',
                         'title'   => 'All posts',
@@ -254,7 +243,7 @@ module Generators
       #@article_url   = @config['root_url'] + "/section-#{collection}.html"
       #@article_error = false
       @path          = @output_dir + '/content/section-' + collection + '.md'
-      parents        = [{'url' => 'index.html', 'title' => 'Home'}]
+      parents        = [{'url' => '/index.html', 'title' => 'Home'}]
       @front_matter  = {'layout'    => 'section',
                         'toRoot'    => '../',
                         'title'     => title,
@@ -268,8 +257,8 @@ module Generators
     def generate_section_posts_page( section, title)
       save_generation
       @path          = @output_dir + '/content/section-' + section + '-posts/_index.md'
-      parents        = [{'url'    => 'index.html', 'title' => 'Home'},
-                        {'url'    => 'section-' + section + '/index.html', 'title' => title}]
+      parents        = [{'url'    => '/index.html', 'title' => 'Home'},
+                        {'url'    => '/section-' + section + '/index.html', 'title' => title}]
       @front_matter  = {'layout'   => 'section_posts',
                         'section0' => section,
                         'toRoot'   => '../',
@@ -290,14 +279,12 @@ module Generators
     end
 
     def image( src, title)
-      local, src = localise?( src)
-      ["![#{title}](#{src})"]
+      ["![#{title}](#{localise(src)})"]
     end
 
     def link( text, href)
       return [] unless text && ! text.empty?
-      local, href = localise? href
-      ["[#{text.join(' ')}](#{href})"]
+      ["[#{text.join(' ')}](#{localise href})"]
     end
 
     def link_text_only?
@@ -328,11 +315,11 @@ module Generators
       end
     end
 
-    def localise?( url)
+    def localise(url)
       # if /pairs19a-s.jpg/ =~ url
       #   p ['localise?1', url, @config['root_url']]
       # end
-      url0, url = url, url.sub( /^http:/, 'https:')
+      url0, url = url, url.strip.sub( /^http:/, 'https:')
       root_url = @config['root_url'].sub( /^http:/, 'https:')
 
       if /^\// =~ url
@@ -348,8 +335,8 @@ module Generators
       #   p ['localise?2', url, @article_url]
       # end
 
-      return false, url0 unless url[0...(root_url.size)] == root_url
-      url = url[(root_url.size)..-1]
+      return url0 unless url[0...(root_url.size)] == root_url
+      url = url[(root_url.size-1)..-1]
 
       if /#/ =~ url
         url = url.split( '#')[0]
@@ -369,7 +356,7 @@ module Generators
       #   p ['localise?3', url, @front_matter['toRoot']]
       # end
 
-      return true, @front_matter['toRoot'] + url
+      return url
     end
 
     def merge( markdown)
@@ -417,21 +404,13 @@ module Generators
 
     def raw( html)
       html = html.gsub( /href\s*=\s*"[^"]*"/) do |ref|
-        local, ref1 = localise?( ref.split('"')[1])
-        if local
-          "href=\"#{ref1}\""
-        else
-          ref
-        end
+        ref1 = localise(ref.split('"')[1])
+        "href=\"#{ref1}\""
       end
 
       html = html.gsub( /src\s*=\s*"[^"]*"/) do |ref|
-        local, ref1 = localise?( ref.split('"')[1])
-        if local
-          "src=\"#{ref1}\""
-        else
-          ref
-        end
+        ref1 = localise(ref.split('"')[1])
+        "src=\"#{ref1}\""
       end
 
       ["\n", html, "\n"]
@@ -550,12 +529,6 @@ module Generators
       return false if /^[<]/ =~ markdown[0]
       return false if /\n$/ =~ markdown[0]
       true
-    end
-
-    def to_root( article)
-      path = from_root( article).split('/')
-      return '' if path.size < 2
-      path[1..-1].collect {'../'}.join( '')
     end
 
     def write_file( path, data)

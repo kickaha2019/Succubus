@@ -3,10 +3,9 @@
 </nav>
 
 {{ if .Params.parents }}
-  {{ $ascend := .Params.toRoot }}
   <div class="breadcrumbs">
-    {{ range $parent := .Params.parents }}
-      <a href="{{ $ascend }}{{ $parent.url }}">{{ $parent.title }}</a> &raquo;
+    {{ range .Params.parents }}
+      <a href="{{ .url }}">{{ .title }}</a> &raquo;
     {{ end }}
     {{ .Title }}
   </div>
