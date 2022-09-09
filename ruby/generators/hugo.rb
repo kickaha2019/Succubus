@@ -525,7 +525,8 @@ module Generators
     end
 
     def textual?( markdown)
-      return false if markdown.size != 1
+      return true if markdown.size == 0
+      return false if markdown.size > 1
       return false if /^[<]/ =~ markdown[0]
       return false if /\n$/ =~ markdown[0]
       true

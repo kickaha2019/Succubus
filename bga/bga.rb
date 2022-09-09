@@ -375,6 +375,15 @@ class BGA < Site
 
   def fabricate_description_lists( place)
     final, interim, do_dl = [], [], false
+    if place.debug?
+      puts "... #{place.element['debug']} fabricate_description_lists"
+    end
+    # if /londonopen/ =~ place.page.url
+    #   place.children.each do |child|
+    #     puts "...  #{child.class.to_s}: #{child.text}"
+    #   end
+    #   puts "\n"
+    # end
 
     place.children.each do |child|
       if child.is_a?( Elements::Description)

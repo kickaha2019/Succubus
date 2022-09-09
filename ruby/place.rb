@@ -23,6 +23,10 @@ class Place
     @page.date
   end
 
+  def debug?
+    @element['debug']
+  end
+
   def description
     @page.description
   end

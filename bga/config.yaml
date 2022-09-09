@@ -13,7 +13,6 @@ exclude_urls:
 - "^https://britgo.org/user/login"
 - https://britgo.org/howtoplaygo
 - https://britgo.org/renew
-- https://britgo.org/whatisgo
 - https://britgo.org/softwarereviews
 - https://britgo.org/tournams/welsh-open/tour-entries.html
 - https://britgo.org/tournams/welsh-open/welsh-open-form.html
@@ -98,6 +97,10 @@ exclude_urls:
 - https://britgo.org/node/5151
 - https://britgo.org/node/5166
 - https://britgo.org/files/people/bryantc.jpg
+- https://britgo.org/files/2017/UKYouthSummerGoCamp2017entryformv3.pdf
+- https://britgo.org/files/2022/caythorpe21a.jpg
+- https://britgo.org/files/press/1968-10-11BristolEveningPost.jpg
+- https://britgo.org/files/teaching/ReferenceformTeachersofYPs.pdf
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

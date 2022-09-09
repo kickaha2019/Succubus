@@ -8,6 +8,15 @@ module Elements
       @index       = @@next_index
       @contents    = place.children
       @element     = place.element
+      @debug       = @element['debug']
+
+      if @debug
+        puts "... #{@debug}: Initialisation"
+        @contents.each do |child|
+          puts "...  #{child.class.to_s}"
+        end
+        puts "\n"
+      end
     end
 
     def article?
