@@ -64,8 +64,12 @@ class BGA < Site
       Elements::Styling.new( place, [:block])
     end
 
-    on_element 'div', :class => 'clearfix' do |place|
+    on_element 'div', :class => 'content' do |place|
       fabricate_description_lists( place)
+    end
+
+    on_element 'div', :class => 'clearfix' do |place|
+      place.children
     end
 
     on_element 'div', :class => 'even' do |place|
@@ -76,16 +80,16 @@ class BGA < Site
       place.children
     end
 
+    on_element 'div', :class => 'field__item' do |place|
+      Elements::Description.new( place)
+    end
+
     on_element 'div', :class => 'field' do |place|
       place.children
     end
 
     on_element 'div', :class => 'field-content' do |place|
       place.children
-    end
-
-    on_element 'div', :class => 'field__item' do |place|
-      Elements::Description.new( place)
     end
 
     on_element 'div', :class => 'field__items' do |place|
@@ -375,9 +379,6 @@ class BGA < Site
 
   def fabricate_description_lists( place)
     final, interim, do_dl = [], [], false
-    if place.debug?
-      puts "... #{place.element['debug']} fabricate_description_lists"
-    end
     # if /londonopen/ =~ place.page.url
     #   place.children.each do |child|
     #     puts "...  #{child.class.to_s}: #{child.text}"
@@ -409,6 +410,13 @@ class BGA < Site
       final << Elements::DescriptionList.new( Place.new( place.page, place.element, interim))
     else
       final = final + interim
+    end
+
+    if place.debug?
+      puts "\n... fabricate_description_lists"
+      final.each do |child|
+        puts "...  #{child.class.to_s}: #{child.text[0..29].gsub( /\s/, ' ').strip}"
+      end
     end
 
     final

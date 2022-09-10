@@ -9,7 +9,6 @@ module Elements
       @contents    = place.children
       @element     = place.element
       @debug       = @element['debug']
-      place.debug_report( self)
     end
 
     def article?
@@ -33,6 +32,10 @@ module Elements
         return true if child.content?
       end
       false
+    end
+
+    def debug?
+      @debug
     end
 
     def describe

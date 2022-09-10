@@ -180,9 +180,9 @@ module Generators
     end
 
     def description_list( list)
-      ["\n"] + list.collect do |entry|
+      ["\n", "\n"] + list.collect do |entry|
         [entry[0][0] + "\n"] +
-        entry[1..-1].collect {|text| [': ' + text[0] + "\n"]}
+        entry[1..-1].collect {|text| [': ' + text[0] + "\n"]} + ["\n"]
       end.flatten + ["\n"]
     end
 

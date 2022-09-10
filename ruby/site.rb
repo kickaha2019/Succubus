@@ -473,11 +473,18 @@ class Site
     children = doc.children.collect {|child| parse1( page, child)}.flatten
     place    = Place.new( page, doc, children)
 
+    if place.debug?
+      puts "... #{place.element['debug']}: Parse"
+      children.each do |child|
+        puts "...  #{child.class.to_s}: #{child.text[0..29].gsub( /\s/, ' ').strip}"
+      end
+    end
+
     @page_element_rules[doc.name.upcase].each do |rule|
       if rule.applies?( doc, children)
         if result = rule.apply( place)
-          unless result.is_a?( Elements::Unknown)
-            place.debug_report( result)
+          if place.debug?
+            puts "... Result: #{result.class.to_s}\n\n"
           end
           return result
         end
@@ -487,14 +494,17 @@ class Site
     @element_rules[doc.name.upcase].each do |rule|
       if rule.applies?( doc, children)
         if result = rule.apply( place)
-          unless result.is_a?( Elements::Unknown)
-            place.debug_report( result)
+          if place.debug?
+            puts "... Result: #{result.class.to_s}\n\n"
           end
           return result
         end
       end
     end
 
+    if place.debug?
+      puts "... Result: Unknown\n\n"
+    end
     Elements::Unknown.new( place)
   end
 
