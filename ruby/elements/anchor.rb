@@ -10,18 +10,6 @@ module Elements
       @title = title
     end
 
-    def anchor_text( generator)
-      t = generate_children( generator)
-      return false, t unless generator.textual?( t)
-      return true, t unless t.empty?
-
-      t = @title
-      @contents.each do |child|
-        t = child.title if t.nil?
-      end
-      return true, [t ? t.strip : @href]
-    end
-
     def content?
       true
     end
@@ -32,8 +20,10 @@ module Elements
 
     def generate( generator)
       return [] if /^#/ =~ @href
-      ok, text = anchor_text( generator)
-      if ok
+      text = generate_children( generator)
+      p ['Anchor::generate', @href, text] if debug?
+      return [] if text.empty?
+      if generator.textual?( text)
         generator.link( text, @href)
       else
         generator.raw( raw)

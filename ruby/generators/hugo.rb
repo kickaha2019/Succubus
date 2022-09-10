@@ -90,7 +90,11 @@ module Generators
       unless /\/(_|)index\.html$/ =~ wrote
         wrote = wrote.sub( /\.html$/, '/index.html')
       end
-      return wrote, raw?( markdown) ? 'Raw' : ''
+
+      comment = []
+      comment << 'Raw' if raw?( markdown)
+      comment << 'Root' if root_url?( markdown)
+      return wrote, comment.join(' ')
     end
 
     def article_tags( tags)
@@ -431,6 +435,13 @@ module Generators
 
     def restore_generation
       @article_url, @article_error, @path, @front_matter = * @saved.pop
+    end
+
+    def root_url?( markdown)
+      markdown.each do |line|
+        return true if line.include?( @config['root_url'])
+      end
+      false
     end
 
     def save_generation

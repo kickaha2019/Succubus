@@ -6,7 +6,7 @@ if ($status != 0) exit 1
 cd ~/temp/Hugo_public
 find . -name '*.html' -exec rm {} \;
 cd ~/temp/Hugo
-hugo
+hugo --quiet 
 if ($status != 0) exit 1
 ruby ~/Succubus/ruby/to_check.rb ~/Succubus/bga/to_check.yaml ~/Succubus/bga/golden_files /tmp/to_check.html
 if ($status != 0) exit 1
