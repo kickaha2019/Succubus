@@ -476,6 +476,9 @@ class Site
     @page_element_rules[doc.name.upcase].each do |rule|
       if rule.applies?( doc, children)
         if result = rule.apply( place)
+          unless result.is_a?( Elements::Unknown)
+            place.debug_report( result)
+          end
           return result
         end
       end
@@ -484,6 +487,9 @@ class Site
     @element_rules[doc.name.upcase].each do |rule|
       if rule.applies?( doc, children)
         if result = rule.apply( place)
+          unless result.is_a?( Elements::Unknown)
+            place.debug_report( result)
+          end
           return result
         end
       end

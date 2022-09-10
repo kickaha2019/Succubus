@@ -27,6 +27,23 @@ class Place
     @element['debug']
   end
 
+  def debug_report( element)
+    if debug?
+      contents = []
+      if element.is_a?( Elements::Unknown)
+        puts "... #{@element['debug']}: #{element.class.to_s} initialisation"
+        contents = element.contents
+      else
+        puts "... #{@element['debug']}: Array initialisation"
+        contents = element
+      end
+      contents.each do |child|
+        puts "...  #{child.class.to_s}: #{child.text[0..29].gsub( /\s/, ' ').strip}"
+      end
+      puts "\n"
+    end
+  end
+
   def description
     @page.description
   end

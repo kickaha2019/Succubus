@@ -3,7 +3,7 @@ cd $0:h
 cd ..
 time ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus ~/temp/Hugo
 if ($status != 0) exit 1
-ruby ruby/to_check.rb ./bga/to_check.yaml /tmp/to_check.html
+ruby ruby/to_check.rb ./bga/to_check.yaml  ./bga/golden_files /tmp/to_check.html
 if ($status != 0) exit 1
 cd ~/temp/Hugo_public
 find . -name '*.html' -exec rm {} \;

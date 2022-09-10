@@ -1,50 +1,62 @@
 ---
 pages:
 - original: https://britgo.org/
-  compiled: file:///Users/peter/Temp/Hugo_public/index.html
+  compiled: /Users/peter/Temp/Hugo_public/index.html
   title:    Home page
   features: Unordered list RAW headings
+  golden:   home.html
 - original: https://britgo.org/clubs/map
-  compiled: file:///Users/peter/Temp/Hugo_public/clubs/map/index.html
+  compiled: /Users/peter/Temp/Hugo_public/clubs/map/index.html
   title:    Club Map page
   features: Coronavirus header complex map
+  golden:   club_map.html
 - original: https://britgo.org/tournaments
-  compiled: file:///Users/peter/Temp/Hugo_public/tournaments/index.html
+  compiled: /Users/peter/Temp/Hugo_public/tournaments/index.html
   title:    Events Calendar
   features: Broken
+  golden:   events_calendar.html
 - original: https://britgo.org/whatisgo
-  compiled: file:///Users/peter/Temp/Hugo_public/whatisgo/index.html
+  compiled: /Users/peter/Temp/Hugo_public/whatisgo/index.html
   title:    What is Go
   features: Missing images
+  golden:   whatisgo.html
 - original: https://britgo.org/whatisgo/culture-history
-  compiled: file:///Users/peter/Temp/Hugo_public/whatisgo/culture-history/index.html
+  compiled: /Users/peter/Temp/Hugo_public/whatisgo/culture-history/index.html
   title:    Go culture
   features: Image layout missing header title at top?
+  golden:   go_culture.html
 - original: https://britgo.org/results/2022/cheshire
-  compiled: file:///Users/peter/Temp/Hugo_public/results/2022/cheshire/index.html
+  compiled: /Users/peter/Temp/Hugo_public/results/2022/cheshire/index.html
   title:    Cheshire 2022 results
   features: Results table
+  golden:   cheshire_2022.html
 - original: https://britgo.org/clubs/reading
-  compiled: file:///Users/peter/Temp/Hugo_public/clubs/reading/index.html
+  compiled: /Users/peter/Temp/Hugo_public/clubs/reading/index.html
   title:    Reading Go club
   features:
+  golden:   reading_club.html
 - original: https://britgo.org/club/arundel
-  compiled: file:///Users/peter/Temp/Hugo_public/club/arundel/index.html
+  compiled: /Users/peter/Temp/Hugo_public/club/arundel/index.html
   title:    Arundel Go club
   features: Description list and map
+  golden:   arundel_club.html
 - original: https://britgo.org/tournaments/londonopen
-  compiled: file:///Users/peter/Temp/Hugo_public/tournaments/londonopen/index.html
+  compiled: /Users/peter/Temp/Hugo_public/tournaments/londonopen/index.html
   title:    London Open tournament
   features: Formatting issue
+  golden:   london_open.html
 - original: https://britgo.org/youth/hikaru
-  compiled: file:///Users/peter/Temp/Hugo_public/youth/hikaru/index.html
+  compiled: /Users/peter/Temp/Hugo_public/youth/hikaru/index.html
   title:    Hikaru manga
   features: Images problem
+  golden:   hikaru.html
 - original: https://britgo.org/obits/davidwoodnutt
-  compiled: file:///Users/peter/Temp/Hugo_public/obits/davidwoodnutt/index.html
+  compiled: /Users/peter/Temp/Hugo_public/obits/davidwoodnutt/index.html
   title:    Obituary
   features: Odd text at top
+  golden:   obituary.html
 - original: https://britgo.org/news/2022/cand
-  compiled: file:///Users/peter/Temp/Hugo_public/news/2022/cand/index.html
+  compiled: /Users/peter/Temp/Hugo_public/news/2022/cand/index.html
   title:    Gaoge Wang Wins Candidates
   features: Odd text at top too wide
+  golden:   gaoge_wang.html

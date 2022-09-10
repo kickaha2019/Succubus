@@ -9,14 +9,7 @@ module Elements
       @contents    = place.children
       @element     = place.element
       @debug       = @element['debug']
-
-      if @debug
-        puts "... #{@debug}: Initialisation"
-        @contents.each do |child|
-          puts "...  #{child.class.to_s}"
-        end
-        puts "\n"
-      end
+      place.debug_report( self)
     end
 
     def article?

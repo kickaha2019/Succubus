@@ -30,6 +30,7 @@ exclude_urls:
 - https://britgo.org/image/tid/81
 - https://britgo.org/image/tid/82
 - https://britgo.org/image/tid/83
+- https://britgo.org/image/tid/85
 - https://britgo.org/join/pay
 - https://britgo.org/junior/youthgonews
 - "\\?order="
@@ -101,6 +102,7 @@ exclude_urls:
 - https://britgo.org/files/2022/caythorpe21a.jpg
 - https://britgo.org/files/press/1968-10-11BristolEveningPost.jpg
 - https://britgo.org/files/teaching/ReferenceformTeachersofYPs.pdf
+- https://britgo.org/results/2010/shrew
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo
