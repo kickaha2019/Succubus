@@ -2,7 +2,7 @@ require_relative 'unknown'
 
 module Elements
   class Article < Unknown
-    attr_reader :date, :title, :tags, :mode, :root
+    attr_reader :date, :title, :index, :mode, :root, :url
 
     def initialize( place)
       super
@@ -10,7 +10,7 @@ module Elements
       @date        = place.page.date
       @description = place.page.description
       @mode        = place.page.mode
-      @tags        = place.page.tags
+      @index       = place.page.index
       @root        = place.page.root?
       @root_url    = place.page.root_url
       @url         = place.url
@@ -37,7 +37,7 @@ module Elements
       return true, 'No title' unless @title
       if @mode == :post
         return true, 'No date' unless @date
-        return true, 'No tags' unless @tags
+        return true, 'No index' unless @index
       end
 
       tree do |child|
@@ -70,7 +70,7 @@ module Elements
     end
 
     def tooltip
-      "Article: Title: #{@title} Date: #{@date} Mode: #{@mode} Tags: #{@tags.collect {|tag| tag[1]}.join( ' ')}"
+      "Article: Title: #{@title} Date: #{@date} Mode: #{@mode} Index: #{@index.join( ' ')}"
     end
 
     # def tree

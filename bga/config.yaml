@@ -103,6 +103,10 @@ exclude_urls:
 - https://britgo.org/files/press/1968-10-11BristolEveningPost.jpg
 - https://britgo.org/files/teaching/ReferenceformTeachersofYPs.pdf
 - https://britgo.org/results/2010/shrew
+- "^https://britgo.org/rating/graph/.*"
+- https://britgo.org/files/images/london/london10p1.jpg
+- https://britgo.org/organisers/index
+- https://britgo.org/files/images/bpgc09%20009.preview.jpg
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo

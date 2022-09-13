@@ -203,8 +203,11 @@ class Grabber < Processor
       if File.exist?( path)
         parsed = parse( url, @pages[url])
         parsed.links do |found|
-          found = found.split( '#')[0]
           if trace?( found)
+            if /allnews\?created/ =~ found
+              p [url, path, found]
+              raise 'Ouch'
+            end
             reached( url, found)
           end
         end

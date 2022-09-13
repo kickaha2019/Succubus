@@ -12,7 +12,7 @@ class Place
   end
 
   def absolutise( url)
-    @page.absolutise( url)
+    @page.absolutise(url)
   end
 
   def content?
@@ -35,12 +35,12 @@ class Place
     @children.select {|child| child.is_a?( clazz)}
   end
 
-  def name
-    @element.name
+  def index
+    @page.index
   end
 
-  def tags
-    @page.tags
+  def name
+    @element.name
   end
 
   def text

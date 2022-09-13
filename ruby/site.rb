@@ -163,6 +163,11 @@ class Site
       url = url[0..-2]
     end
 
+    url1 = url.sub( /^http:/, 'https:')
+    if local?(url1)
+      url = url1
+    end
+
     if @url_replaces[url]
       url = @url_replaces[url]
     end
@@ -177,7 +182,7 @@ class Site
   def define_rules
     on_element 'a' do  |place|
       if place['href']
-        Elements::Anchor.new( place, place.absolutise( place['href']), place['title'])
+        Elements::Anchor.new(place, place.absolutise(place['href']), place['title'])
       else
         Elements::Text.new( place, '')
       end
@@ -288,11 +293,11 @@ class Site
     end
 
     on_element 'img' do  |place|
-      Elements::Image.new( place, place.absolutise( place['src']), place['title'])
+      Elements::Image.new(place, place.absolutise(place['src']), place['title'])
     end
 
     on_element 'image' do  |place|
-      Elements::Image.new( place, place.absolutise( place['src']), place['title'])
+      Elements::Image.new(place, place.absolutise(place['src']), place['title'])
     end
 
     on_element 'input' do  |place|
@@ -430,6 +435,13 @@ class Site
 
   def html?( url)
     /\/[^\.\/]*(|\.htm|\.html)$/ =~ url
+  end
+
+  def local?( url)
+    return true unless /^\w*:/ =~ url
+    root_url = @config['root_url']
+    return false unless url.size > root_url.size
+    url[0...root_url.size] == root_url
   end
 
   def on_element(name, args={}, &block)

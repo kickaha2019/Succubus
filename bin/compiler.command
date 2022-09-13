@@ -8,7 +8,7 @@ find . -name '*.html' -exec rm {} \;
 cd ~/temp/Hugo
 hugo --quiet 
 if ($status != 0) exit 1
-ruby ~/Succubus/ruby/to_check.rb ~/Succubus/bga/to_check.yaml ~/Succubus/bga/golden_files /tmp/to_check.html
+ruby ~/Succubus/ruby/to_check.rb ~/Succubus/bga/to_check.yaml ~/Succubus/bga/golden_files ~/temp/Hugo/content/generated.csv /tmp/to_check.html
 if ($status != 0) exit 1
 ruby ~/Succubus/ruby/relativize.rb ~/temp/Hugo_public
 if ($status != 0) exit 1

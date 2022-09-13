@@ -9,14 +9,14 @@
     <main>
         <div class="medium_width">
           <h2>Articles</h2>
-          {{ range where (where .Site.AllPages "Params.mode" "article") "Params.section0" .Params.section0 }}
+          {{ range where (where .Site.AllPages "Params.mode" "article") "Params.section" .Params.section }}
             <article>
                 <a href="{{ .RelPermalink }}">{{ .Title }}</a>
             </article>
           {{ end }}
         </div>
 
-        {{ $p := where (where .Site.AllPages "Params.mode" "post") "Params.section0" .Params.section0 }}
+        {{ $p := where (where .Site.AllPages "Params.mode" "post") "Params.section" .Params.section }}
         {{ if ( gt ( len $p ) 0 ) }}
         <div class="medium_width">
           <h2>Recent posts for {{ .Title }}</h2>
@@ -27,7 +27,7 @@
             </article>
           {{ end }}
 
-          <a class="black" href="/section-{{ .Params.section0 }}-posts/index.html">All posts for {{ .Title }}</a>
+          <a class="black" href="/section-{{ .Params.sections }}-posts/index.html">All posts for {{ .Title }}</a>
         </div>
         {{ end }}
     </main>

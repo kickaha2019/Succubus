@@ -169,9 +169,8 @@ DUMP2
             if child.date
               date = child.date.strftime( '%Y-%m-%d')
             end
-            if child.tags
-              tags = child.tags.collect {|tag| tag[1]}.join( ' ')
-            end
+
+            tags = child.index.join( ' ')
           end
         end
       end

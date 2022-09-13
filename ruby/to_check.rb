@@ -1,6 +1,12 @@
 require 'yaml'
 
-File.open( ARGV[2], 'w') do |io|
+compiled = {}
+IO.readlines( ARGV[2])[1..-1].each do |line|
+  line = line.split( "\t")
+  compiled[line[0]] = line[1]
+end
+
+File.open( ARGV[3], 'w') do |io|
   io.puts <<"HEADER"
 <html><head>
 <style>
@@ -19,14 +25,26 @@ th, td {padding: 5px; border-style: solid;
 </tr>
 HEADER
   YAML.load( IO.read( ARGV[0]))['pages'].each do |page|
-    colour = 'lime'
+    colour  = 'lime'
     comment = page['features']
-    golden = ARGV[1] + '/' + page['golden']
-    if File.exist?( golden)
-      unless IO.read( golden) == IO.read( page['compiled'])
-        colour = 'red'
-        comment = "diff #{page['compiled']} #{golden}"
+    golden  = ARGV[1] + '/' + page['golden']
+    got     = compiled[page['original']]
+
+    if got
+      if File.exist?( golden)
+        if File.exist?( got)
+          unless IO.read( golden) == IO.read( got)
+            colour = 'red'
+            comment = "diff #{page['compiled']} #{golden}"
+          end
+        else
+          colour = 'red'
+          comment = "Compiled file missing"
+        end
       end
+    else
+      colour = 'red'
+      comment = "Unknown original"
     end
 
     io.puts <<"LINE"

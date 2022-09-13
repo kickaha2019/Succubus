@@ -6,7 +6,12 @@ class BGA < Site
   end
 
   def absolutise( page_url, url)
-    super( page_url, page_param_only( url))
+    url = super
+    if local? url
+      url = page_param_only( url.split('#')[0])
+    else
+      url
+    end
   end
 
   def define_rules
@@ -24,7 +29,7 @@ class BGA < Site
 
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
-        Elements::Anchor.new( place, place.absolutise( m[1]), nil)
+        Elements::Anchor.new(place, place.absolutise(m[1]), nil)
       else
         nil
       end
@@ -242,6 +247,26 @@ class BGA < Site
       true
     end
 
+    on_page /.*/ do |page|
+      page.title= page.css( '.page-title').text.strip
+      page.mode=  :article
+      page.index= ['General']
+
+      if m = /Newsletter.*\s(\w*) (\d\d\d\d)$/.match( page.title)
+        if d = to_date( m[2], m[1], 1)
+          page.date= d
+          page.mode= :post
+        end
+      end
+
+      if date = @post_dates[page.url]
+        page.date= date
+        page.mode= :post
+      end
+
+      false
+    end
+
     on_page 'bgj/bgj108' do |page|
       on_element 'td' do |place|
         Elements::Paragraph.new( place)
@@ -283,24 +308,6 @@ class BGA < Site
         page.date= Time.new( page.relative_path[1][-4..-1].to_i)
         page.mode= :post
       end
-      false
-    end
-
-    on_page /.*/ do |page|
-      page.title= page.css( '.page-title').text.strip
-      page.mode=  :article
-      if m = /Newsletter.*\s(\w*) (\d\d\d\d)$/.match( page.title)
-        if d = to_date( m[2], m[1], 1)
-          page.date= d
-          page.mode= :post
-        end
-      end
-
-      if date = @post_dates[page.url]
-        page.date= date
-        page.mode= :post
-      end
-
       false
     end
 
@@ -365,12 +372,12 @@ class BGA < Site
           'tournaments' => 'Events',
           'youth'       => 'Youth'
       }[page.relative_path[0]]
-      page.add_tag( 'Section', section) if section
+      page.index= [section] if section
       false
     end
 
     on_page 'committee/clubs' do |page|
-      page.add_tag( 'Section', 'Clubs')
+      page.index= ['Clubs']
       false
     end
 

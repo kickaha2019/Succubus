@@ -1,5 +1,5 @@
 class Page
-  attr_reader :url, :document, :tags, :root_url
+  attr_reader :url, :document, :index, :root_url
   attr_accessor :date, :mode, :title, :description
 
   def initialize( site, root_url, taxonomy, url, document)
@@ -11,17 +11,16 @@ class Page
     @description = nil
     @title       = nil
     @date        = nil
-    @tags        = {}
+    @index       = []
     @mode        = nil
   end
 
-  def absolutise( url)
-    @site.absolutise( @url, url)
+  def absolutise(url)
+    @site.absolutise(@url, url)
   end
 
-  def add_tag( species, name)
-    raise "Unknown taxonomy #{species}" unless @taxonomy[species]
-    @tags[species] = name
+  def index=( names)
+    @index = names
   end
 
   def css( expr)

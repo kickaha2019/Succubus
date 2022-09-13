@@ -16,8 +16,12 @@ module Generators
       # Stack to allow for recursive generation
       @saved = []
 
-      # Tag internal names
-      @tag2internal  = Hash.new {|h,k| h[k] = "t#{@tag2internal.size}"}
+      # Redirects
+      @redirects = {}
+
+      # Articles organised by index and URL
+      @index2articles  = Hash.new {|h,k| h[k] = {}}
+      @url2articles    = {}
 
       # Control the markdown generation
       @line_start    = false
@@ -28,11 +32,16 @@ module Generators
     def article_begin( cached, url, article)
       @article_url   = url
       @article_error = false
-      @path          = output_path( url, article)
+      if article.root
+        @path = @output_dir + '/content/_index.md'
+      else
+        @path = @output_dir + '/content' + output_path(url).sub(/.html$/, '.md')
+      end
       @front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
                         'mode'     => article.mode.to_s,
                         'origin'   => url,
-                        'cache'    => cached}
+                        'cache'    => cached,
+                        'section'  => article.index.join('-')}
       @comment       = []
       @line_start    = true
 
@@ -44,28 +53,19 @@ module Generators
         @front_matter['layout'] = 'home'
         generate_posts_page
 
-        unless @taxonomies.empty?
-          sections = []
-          taxa0 = @taxonomies.keys[0]
-          @tag2internal.keys.sort.each do |taxa_tag|
-            if taxa_tag[0..taxa0.size] == taxa0 + ':'
-              name = taxa_tag[(taxa0.size+1)..-1]
-              sections << {'name' => name, 'key' => @tag2internal[taxa_tag]}
-            end
-          end
+        sections = @index2articles.keys.sort
+        @front_matter['sectionIndex'] = sections.collect do |section|
+          {'name' => section, 'key' => slug( section)}
+        end
 
-          sections.sort_by! {|section| section['name']}
-          @front_matter['sectionIndex'] =
-              sections.select {|section| section['name'] == 'General'} +
-                  sections.select {|section| section['name'] != 'General'}
-
-          sections.each do |section|
-            generate_section_page( section['key'], section['name'])
-          end
+        sections.each do |section|
+          generate_section_page( section)
         end
       else
         @front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
       end
+
+      article_parents
 
       if @written[@path]
         error( "Duplicate output path for #{url} and #{@written[@path]}")
@@ -97,23 +97,13 @@ module Generators
       return wrote, comment.join(' ')
     end
 
-    def article_tags( tags)
+    def article_parents
       return if @front_matter['section_index']
-      taxas, names = {}, {}
-      tags.each_pair do |taxa, name|
-        taxas[taxa] = @tag2internal[taxa+':'+name]
-        names[taxas[taxa]] = name
-      end
+      section = @front_matter['section']
 
-      @taxonomies.keys.each_index do |i|
-        taxa = @taxonomies.keys[i]
-        @front_matter["section#{i}"] = taxas[taxa] ? taxas[taxa] : @tag2internal[taxa+':General']
-      end
-
-      section = @front_matter["section0"]
       if (@front_matter['mode'] == 'article') || (@front_matter['mode'] == 'post')
-        @front_matter['parents'] << {'url'   => '/section-' + section + '/index.html',
-                                     'title' => (names[section] ? names[section] : 'General')}
+        @front_matter['parents'] << {'url'   => '/section-' + slug(section) + '/index.html',
+                                     'title' => section}
       end
 
       if @front_matter['mode'] == 'post'
@@ -143,20 +133,27 @@ module Generators
 
     def clean_old_files
       clean_old_files1( @output_dir + '/content')
+      ensure_index_md( @output_dir + '/content')
     end
 
     def clean_old_files1( dir)
       empty = true
 
       Dir.entries( dir).each do |f|
-        next if /^[\._]/ =~ f
+        next if /^\./ =~ f
         path = dir +'/' + f
+        raise "Bad path #{path}" if /[ \?\*]/ =~ path
 
         if File.directory?( path)
           if clean_old_files1( path)
-            begin
-              File.delete( path)
-            rescue
+            # @generated.each_pair do |k,v|
+            #   p ['clean_old_files', k, v] if /66-qualifiers/ =~ k
+            # end
+            puts "... Cleaning #{path}"
+            #raise 'Dev'
+            #File.delete( path)
+            unless system( "rm -r #{path}")
+              raise "Error removing #{path}"
             end
           else
             empty = false
@@ -164,7 +161,11 @@ module Generators
         elsif @generated[path]
           empty = false
         else
+          puts "... Cleaning #{path}"
           File.delete( path)
+          # unless system( "rm -r #{path}")
+          #   raise "Error removing #{path}"
+          # end
         end
       end
 
@@ -190,18 +191,6 @@ module Generators
       end.flatten + ["\n"]
     end
 
-    def disambiguate_path( stem, article)
-      index = 1
-      stem  = stem.split('?')[0]
-      path  = stem
-      while @path2article[path] && (@path2article[path] != article)
-        index += 1
-        path   = stem + "-#{index}"
-      end
-      @path2article[path] = article
-      path
-    end
-
     def e( name)
       encoded = name.gsub( /\W/, '_')
       @enc2names[encoded] = name
@@ -209,12 +198,14 @@ module Generators
     end
 
     def ensure_index_md( dir)
-      if File.exist?( dir + '.md')
-        write_file( dir + '/_index.md', IO.read( dir + '.md'))
-        File.delete( dir + '.md')
-      else
-        return if File.exist?( dir + '/_index.md')
+      unless File.exist?( dir + '/index.md') || File.exist?( dir + '/_index.md')
         write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
+      end
+
+      Dir.entries( dir) do |f|
+        next if /^\./ =~ f
+        path = dir + '/' + f
+        ensure_index_md( path) if File.directory?( path)
       end
     end
 
@@ -242,31 +233,32 @@ module Generators
       restore_generation
     end
 
-    def generate_section_page( collection, title)
+    def generate_section_page( section)
       save_generation
-      #@article_url   = @config['root_url'] + "/section-#{collection}.html"
-      #@article_error = false
-      @path          = @output_dir + '/content/section-' + collection + '.md'
-      parents        = [{'url' => '/index.html', 'title' => 'Home'}]
-      @front_matter  = {'layout'    => 'section',
-                        'toRoot'    => '../',
-                        'title'     => title,
-                        'parents'   => parents,
-                        'section0'  => collection}
+      @path          = @output_dir + '/content/section-' + slug(section) + '.md'
+      parents        = [{'url'     => '/index.html',
+                         'title'   => 'Home'}]
+      @front_matter  = {'layout'   => 'section',
+                        'title'    => section,
+                        'parents'  => parents,
+                        'section'  => section,
+                        'sections' => slug(section)}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
-      generate_section_posts_page( collection, title)
+      generate_section_posts_page( section)
     end
 
-    def generate_section_posts_page( section, title)
+    def generate_section_posts_page( section)
       save_generation
-      @path          = @output_dir + '/content/section-' + section + '-posts/_index.md'
-      parents        = [{'url'    => '/index.html', 'title' => 'Home'},
-                        {'url'    => '/section-' + section + '/index.html', 'title' => title}]
+      @path          = @output_dir + '/content/section-' + slug(section) + '-posts.md'
+      parents        = [{'url'     => '/index.html',
+                         'title'   => 'Home'},
+                        {'url'     => '/section-' + slug(section) + '/index.html',
+                         'title'   => section}]
       @front_matter  = {'layout'   => 'section_posts',
-                        'section0' => section,
-                        'toRoot'   => '../',
-                        'title'    => 'All posts for ' + title,
+                        'section'  => section,
+                        'sections' => slug(section),
+                        'title'    => 'All posts for ' + section,
                         'parents'  => parents}
       write_file( @path, "#{@front_matter.to_yaml}\n---\n")
       restore_generation
@@ -340,27 +332,16 @@ module Generators
       # end
 
       return url0 unless url[0...(root_url.size)] == root_url
-      url = url[(root_url.size-1)..-1]
 
-      if /#/ =~ url
-        url = url.split( '#')[0]
+      # Redirected?
+      limit = 100
+      while @redirects[url] && (limit > 0)
+        url = @redirects[url]
+        limit -= 1
       end
 
-      if m = /\.([a-z]*)$/i.match( url)
-        if m[1] == 'html'
-          unless /\/index.html$/ =~ url
-            url = url.sub( /\.html$/, '/index.html')
-          end
-        end
-      else
-        url += '/index.html'
-      end
-
-      # if /pairs19a-s.jpg/ =~ url
-      #   p ['localise?3', url, @front_matter['toRoot']]
-      # end
-
-      return url
+      raise "Too many redirects for #{url0}" if limit == 0
+      output_path( url)
     end
 
     def merge( markdown)
@@ -393,13 +374,22 @@ module Generators
       true
     end
 
-    def output_path( url, article)
-      if article.root
-        return @output_dir + '/content/_index.md'
-      end
+    def output_path( url)
+      url = url.split('#')[0].sub( /^http:/, 'https:')
+      if article = @url2articles[url]
+        return '/index.html' if article.root
+        section = article.index.join('-')
 
-      stem = @output_dir + '/content/' + article.relative_url.sub( /\.[a-z]*$/i, '').sub( '/index', '/_index')
-      disambiguate_path( stem, article) + '.md'
+        '/' +
+        article.index.collect {|i| slug(i)}.join('/') +
+        "/#{@index2articles[section][article.url]}-#{slug(article.title)}" +
+        '/index.html'
+
+      elsif m = %r{^[^/]*//[^/]*(/.*)$}.match( url)
+        m[1]
+      else
+        raise "output_trail: #{url}"
+      end
     end
 
     def paragraph( md)
@@ -427,10 +417,15 @@ module Generators
       false
     end
 
+    def redirect( from, to)
+      @redirects[from] = to
+    end
+
     def register_article( url, article)
-      article.tags.each_pair do |section, tag|
-        @tag2internal[section + ':' + tag]
-      end
+      #url = url.sub( /^http:/, 'https:')
+      @url2articles[url] = article
+      section = article.index.join('-')
+      @index2articles[section][url] = (1 + @index2articles[section].size)
     end
 
     def restore_generation
@@ -458,15 +453,16 @@ module Generators
     def site_end
       site_config = @config['hugo']['config']
       write_file( @output_dir + '/config.yaml', site_config.to_yaml)
-      @generated.keys.each do |path|
-        ensure_index_md( File.dirname( path))
-      end
       toml = @output_dir + '/config.toml'
       File.delete( toml) if File.exist?( toml)
     end
 
     def site_taxonomy( singular, plural)
       @taxonomies[singular] = plural
+    end
+
+    def slug( text)
+      text.gsub( /[^a-z0-9]/i, '_').downcase
     end
 
     def strip( markdown)

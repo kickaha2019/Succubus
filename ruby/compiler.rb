@@ -9,20 +9,7 @@ class Compiler < Processor
     @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, output_dir)
     @generated  = []
     @comments   = Hash.new {|h,k| h[k] = 0}
-    @generated << <<"HEADER"
-<html>
-<head>
-<style>
-body {display: flex; align-items: center}
-table {border-spacing: 0px; border-collapse: collapse}
-th, td {padding: 5px; border-style: solid;
-        border-width: 1px; border-color: black;
-        font-size: 18px}
-</style>
-</head>
-<body><table>
-<tr><th>Origin</th><th>Generated</th><th>Comment</th></tr>
-HEADER
+    @generated << "Original\tCompiled\tComment"
   end
 
   def clean_old_files
@@ -32,8 +19,7 @@ HEADER
   def compile
     preparse_all
     compile_site
-    @generated << '</table></body></html>'
-    @generator.write_file( @output_dir + '/content/generated.html',
+    @generator.write_file( @output_dir + '/content/generated.csv',
                            @generated.join( "\n"))
 
     @comments.each_pair do |k,v|
@@ -55,17 +41,10 @@ HEADER
     if article.title
       @generator.article_title( article.title)
     end
-    @generator.article_tags( article.tags ? article.tags : {})
     @generator.article_description( article.description)
     md = article.generate( @generator)
     generated, comment = @generator.article_end( md)
-    @generated << <<"LINE"
-<tr>
-<td><a href="#{url}">#{url}</a></td>
-<td><a href="#{generated}">#{generated}</a></td>
-<td>#{comment}</td>
-</tr>
-LINE
+    @generated << "#{url}\t#{generated}\t#{comment}"
 
     comment.split( ' ').each do |word|
       @comments[word] += 1
@@ -87,9 +66,7 @@ LINE
 
   def compile_site
     @generator.site_begin
-    @site.taxonomies do |singular, plural|
-      @generator.site_taxonomy( singular, plural)
-    end
+    page_redirects
     copy_assets
     precompile_pages
     compile_pages
@@ -102,6 +79,14 @@ LINE
       next unless asset && (! error) && (! redirect)
       next unless info['timestamp'] > 0
       @generator.asset_copy( "#{@cache}/#{info['timestamp']}.#{url.split('.')[-1]}", url)
+    end
+  end
+
+  def page_redirects
+    @pages.each_pair do |url, info|
+      asset, error, redirect, comment, _ = examine( url)
+      next unless (! error) && redirect
+      @generator.redirect( url, comment)
     end
   end
 
