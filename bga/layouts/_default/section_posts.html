@@ -1,5 +1,6 @@
 <!doctype html>
-{{ $paginator := .Paginate (where (where .Site.AllPages "Params.mode" "post") "Params.section" .Params.section).ByDate.Reverse }}
+{{ $pages := where (where .Site.AllPages "Params.mode" "post") "Params.section" .Params.section }}
+{{ $paginator := .Paginate $pages.ByDate.Reverse }}
 <html lang="en_GB">
   <head>
     {{ partial "head" . }}
@@ -8,7 +9,6 @@
     {{ partial "navbar" . }}
 
     <main>
-        {{ if $paginator }}
         <div class="medium_width">
           {{ partial "pagination" $paginator }}
           {{ range $paginator.Pages }}
@@ -19,7 +19,6 @@
           {{ end }}
           {{ partial "pagination" $paginator }}
         </div>
-        {{ end }}
     </main>
 
     {{ partial "footer" . }}

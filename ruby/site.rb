@@ -127,7 +127,10 @@ class Site
   end
 
   def absolutise( page_url, url)
-    url      = url.strip
+    url      = url.strip.gsub( '%20', ' ')
+    url      = url.gsub( /.\/\//) do |match|
+      (match == '://' ? match : match[0..1])
+    end
     root_url = @config['root_url']
     dir_url  = page_url.split('?')[0]
 

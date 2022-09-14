@@ -41,7 +41,8 @@ module Generators
                         'mode'     => article.mode.to_s,
                         'origin'   => url,
                         'cache'    => cached,
-                        'section'  => article.index.join('-')}
+                        'section'  => article.index.join('-'),
+                        'sections' => slug(article.index.join('-'))}
       @comment       = []
       @line_start    = true
 
@@ -86,15 +87,10 @@ module Generators
 
     def article_end( markdown)
       write_file( @path, "#{@front_matter.to_yaml}\n---\n#{markdown.join('')}")
-      wrote = @path[(@output_dir.size+9)..-1].sub( /\.md$/, '.html').sub( '_index', 'index')
-      unless /\/(_|)index\.html$/ =~ wrote
-        wrote = wrote.sub( /\.html$/, '/index.html')
-      end
-
       comment = []
       comment << 'Raw' if raw?( markdown)
       comment << 'Root' if root_url?( markdown)
-      return wrote, comment.join(' ')
+      return @path, comment.join(' ')
     end
 
     def article_parents
@@ -107,7 +103,7 @@ module Generators
       end
 
       if @front_matter['mode'] == 'post'
-        @front_matter['parents'] << {'url'   => '/section-' + section + '-posts/index.html',
+        @front_matter['parents'] << {'url'   => '/section-' + slug(section) + '-posts/index.html',
                                      'title' => 'Posts'}
       end
     end
@@ -117,8 +113,11 @@ module Generators
     end
 
     def asset_copy( cached, url)
-      path = @output_dir + '/content/' + url[(@config['root_url'].size)..-1]
+      path = @output_dir + '/content/' + url[(@config['root_url'].size)..-1].downcase
       @generated[path] = true
+      # if /2005\/thameshotel/ =~ path
+      #   p ['asset_copy1', cached, url, path]
+      # end
       unless File.exist?( path)
         create_dir( File.dirname( path))
         unless system( "cp #{cached} #{path}")
@@ -250,7 +249,7 @@ module Generators
 
     def generate_section_posts_page( section)
       save_generation
-      @path          = @output_dir + '/content/section-' + slug(section) + '-posts.md'
+      @path          = @output_dir + '/content/section-' + slug(section) + '-posts/_index.md'
       parents        = [{'url'     => '/index.html',
                          'title'   => 'Home'},
                         {'url'     => '/section-' + slug(section) + '/index.html',
@@ -334,9 +333,11 @@ module Generators
       return url0 unless url[0...(root_url.size)] == root_url
 
       # Redirected?
+      p ['localise1', url0, url] if /results\/2005\/mk/ =~ url
       limit = 100
       while @redirects[url] && (limit > 0)
         url = @redirects[url]
+        p ['localise2', url0, url] if /results\/2005\/mk/ =~ url
         limit -= 1
       end
 
@@ -418,6 +419,7 @@ module Generators
     end
 
     def redirect( from, to)
+      p ['redirect', from, to] if /results\/2005\/mk/ =~ from
       @redirects[from] = to
     end
 

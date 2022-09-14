@@ -30,6 +30,12 @@ HEADER
     golden  = ARGV[1] + '/' + page['golden']
     got     = compiled[page['original']]
 
+    got = got.sub( /\.md$/, '.html').sub( /_index\.html$/, 'index.html')
+    unless /\/index\.html$/ =~ got
+      got = got.sub( /\.html$/, '/index.html')
+    end
+    got = got.sub( 'Hugo/content', 'Hugo_public') # Perhaps use config setting?
+
     if got
       if File.exist?( golden)
         if File.exist?( got)
@@ -38,6 +44,7 @@ HEADER
             comment = "diff #{page['compiled']} #{golden}"
           end
         else
+          p [got]
           colour = 'red'
           comment = "Compiled file missing"
         end
@@ -51,7 +58,7 @@ HEADER
 <tr>
 <td>#{page['title']}</td>
 <td><a target="_blank" href="#{page['original']}">Original</a></td>
-<td bgcolor="#{colour}"><a target="_blank" href="file://#{page['compiled']}">Compiled</a></td>
+<td bgcolor="#{colour}"><a target="_blank" href="file://#{got}">Compiled</a></td>
 <td>#{comment}</td>
 </tr>
 LINE
