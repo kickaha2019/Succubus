@@ -333,11 +333,9 @@ module Generators
       return url0 unless url[0...(root_url.size)] == root_url
 
       # Redirected?
-      p ['localise1', url0, url] if /results\/2005\/mk/ =~ url
       limit = 100
       while @redirects[url] && (limit > 0)
         url = @redirects[url]
-        p ['localise2', url0, url] if /results\/2005\/mk/ =~ url
         limit -= 1
       end
 
@@ -419,7 +417,6 @@ module Generators
     end
 
     def redirect( from, to)
-      p ['redirect', from, to] if /results\/2005\/mk/ =~ from
       @redirects[from] = to
     end
 

@@ -19,6 +19,14 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'a' do |place|
+      if %r{^https://britgo.org/taxonomy/} =~ place['href']
+        Elements::Ignore.new( place)
+      else
+        nil
+      end
+    end
+
     on_element 'article', :class => 'section-2' do  |place|
       Elements::Article.new( place).set_title( place.title).set_date( place.date)
     end
@@ -213,11 +221,8 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
-    # on_element 'td', :parent => 'tr', :grandparent => 'table' do  |place|
-    #   Elements::Cell.new( place)
-    # end
-    # on_element 'td' do  |place|
-    #   Elements::Group.new( place)
+    # on_element 'span', :class => 'submitted' do |place|
+    #   Elements::Ignore.new( place)
     # end
 
     on_element 'text' do |place|

@@ -7,7 +7,11 @@ class Relativize
   def edit( file, to_top)
     page = IO.read( file)
 
-    page.scan( /\shref\s*=\s*"(\/[^"]*)"/mi) do |match|
+    page = page.gsub( /\shref\s*=\s*"[^"]*\/"/mi) do |match|
+      match.sub( /\/"/, '/index.html"')
+    end
+
+    page.scan( /\s(?:href|src)\s*=\s*"(\/[^"]*)"/mi) do |match|
       unless File.exist?( @dir + match[0])
         puts "*** #{file}: lost #{match[0]}" if @lost == 0
         @lost += 1

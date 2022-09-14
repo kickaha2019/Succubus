@@ -468,7 +468,7 @@ class Site
   end
 
   def parse( url, html_doc)
-    Elements::Unknown.reset_next_index
+    Elements::Unknown.reset_next_id
     page = Page.new( self, @config['root_url'], @taxonomy, url, html_doc)
 
     relative_url = url[@config['root_url'].size..-1]

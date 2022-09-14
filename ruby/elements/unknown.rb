@@ -1,14 +1,14 @@
 module Elements
   class Unknown
-    attr_reader :index, :contents, :element
-    @@next_index = 0
+    attr_reader :id, :contents, :element
+    @@next_id = 0
 
     def initialize( place)
-      @@next_index += 1
-      @index       = @@next_index
-      @contents    = place.children
-      @element     = place.element
-      @debug       = @element['debug']
+      @@next_id += 1
+      @id       =  @@next_id
+      @contents =  place.children
+      @element  =  place.element
+      @debug    =  @element['debug']
     end
 
     def article?
@@ -78,8 +78,8 @@ module Elements
       @element.to_html
     end
 
-    def self.reset_next_index
-      @@next_index = 0
+    def self.reset_next_id
+      @@next_id = 0
     end
 
     def text

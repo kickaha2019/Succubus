@@ -48,14 +48,14 @@ DUMP2
     expand, focus = {}, {}
     struct.tree do |element|
       if element.error?
-        focus[element.index] = true
+        focus[element.id] = true
       elsif element.is_a?( Elements::Article)
-        focus[element.index] = true
+        focus[element.id] = true
       end
-      p ['dump_expand1', element.index, focus[element.index]] if debug && focus[element.index]
+      p ['dump_expand1', element.id, focus[element.id]] if debug && focus[element.id]
 
       element.contents.each do |child|
-        expand[element.index] = true if expand[child.index] || focus[child.index]
+        expand[element.id] = true if expand[child.id] || focus[child.id]
       end
     end
 
@@ -75,12 +75,12 @@ DUMP2
 
     io.print "<div class=\"indent\">"
     before, after = '', ''
-    exp = expand[struct.index]
+    exp = expand[struct.id]
 
     if struct.contents.size > 0
-      io.print "<span id=\"r#{struct.index}\"#{exp ? ' style="display: none"' : ''} onclick=\"expand(#{struct.index})\">&rtri;</span>"
-      io.print "<span id=\"e#{struct.index}\"#{exp ? '' : ' style="display: none"'} onclick=\"reduce(#{struct.index})\">&dtri;</span>"
-      before = "<div id=\"d#{struct.index}\"#{exp ? '' : ' style="display: none"'}>"
+      io.print "<span id=\"r#{struct.id}\"#{exp ? ' style="display: none"' : ''} onclick=\"expand(#{struct.id})\">&rtri;</span>"
+      io.print "<span id=\"e#{struct.id}\"#{exp ? '' : ' style="display: none"'} onclick=\"reduce(#{struct.id})\">&dtri;</span>"
+      before = "<div id=\"d#{struct.id}\"#{exp ? '' : ' style="display: none"'}>"
       after  = '</div>'
     end
     io.print "</div>"
