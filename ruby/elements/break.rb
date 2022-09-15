@@ -8,7 +8,7 @@ module Elements
     end
 
     def generate( generator)
-      generator.newline( [])
+      generator.newline
     end
 
     def grokked?

@@ -383,6 +383,10 @@ class Site
       Elements::Ignore.new( place)
     end
 
+    on_element 'sub' do  |place|
+      Elements::Styling.new( place, [:subscript])
+    end
+
     on_element 'sup' do  |place|
       Elements::Styling.new( place, [:superscript])
     end

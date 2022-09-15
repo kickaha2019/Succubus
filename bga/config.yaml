@@ -20,6 +20,7 @@ exclude_urls:
 - https://britgo.org/council/minutes20130616
 - https://britgo.org/council/minutes20130708
 - https://britgo.org/covers/covers
+- https://britgo.org/downloads/godraw/help
 - https://britgo.org/events/shodan
 - https://britgo.org/files/2017/UK Youth Summer Go Camp 2017 entry  form v3.pdf
 - https://britgo.org/files/2019/3peaks2019a.jpg
@@ -37,6 +38,7 @@ exclude_urls:
 - https://britgo.org/files/learngoweek/MainPosterA.jpg
 - https://britgo.org/files/learngoweek/MainPosterB_small.jpg
 - https://britgo.org/files/learngoweek/MainPosterB.jpg
+- https://britgo.org/files/press/2013-03-24-redmond.pdf
 - https://britgo.org/files/StockExpGo.jpg
 - https://britgo.org/files/teaching/Reference form Teachers of YPs.pdf
 - https://britgo.org/files/images/gogod_shield.thumbnail.jpg
@@ -53,7 +55,10 @@ exclude_urls:
 - https://britgo.org/form/transfer-your-membership
 - https://britgo.org/forum
 - https://britgo.org/general/
+- https://britgo.org/godrawsys/GoPlayers.gdi
+- https://britgo.org/godrawsys/club_code_table.txt
 - https://britgo.org/gopcres/ http://www.gentgo.be/tetsuki
+- https://britgo.org/history/\rating\list
 - https://britgo.org/howtoplaygo
 - https://britgo.org/image/tid/6
 - https://britgo.org/image/tid/20
@@ -67,6 +72,7 @@ exclude_urls:
 - https://britgo.org/image/tid/85
 - https://britgo.org/image
 - https://britgo.org/history/accounts
+- https://britgo.org/history/\\rating\\list
 - https://britgo.org/join/pay
 - "^https://britgo.org/join/form"
 - https://britgo.org/junior/youthgonews
@@ -82,6 +88,7 @@ exclude_urls:
 - https://britgo.org/node/6840
 - https://britgo.org/node/5151
 - https://britgo.org/node/5166
+- https://britgo.org/obsoletedocuments
 - https://britgo.org/organisers/handbook/handbook.html
 - https://britgo.org/organisers/index
 - https://britgo.org/position/bookseller

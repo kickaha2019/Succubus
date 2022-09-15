@@ -1,5 +1,113 @@
 module Generators
   class Hugo
+
+    # Adorned text stanza
+    class AdornedStanza
+      def initialize( text)
+        @text = text
+      end
+
+      def adorn( prefix)
+        AdornedStanza.new( prefix + @text)
+      end
+
+      def empty?
+        false
+      end
+
+      def include?( str)
+        @text.include?( str)
+      end
+
+      def merge( other)
+        nil
+      end
+
+      def output
+        @text
+      end
+    end
+
+    # Basic text stanza
+    class Stanza
+      attr_reader :text
+
+      def initialize( text)
+        @text = text.gsub( /[\s\n]/, ' ').gsub( '\\', '\\\\')
+      end
+
+      def adorn( prefix)
+        AdornedStanza.new( prefix + output)
+      end
+
+      def empty?
+        @text.strip == ''
+      end
+
+      def include?( str)
+        @text.include?( str)
+      end
+
+      def merge( other)
+        other.is_a?(Stanza) ? Stanza.new( @text + other.text) : nil
+      end
+
+      def output
+        t = @text.strip
+        (/^[:\-#=>\d`\|]/ =~ t) ? ('\\' + t) : t
+      end
+
+      def style( styling)
+        Stanza.new( styling + @text + styling)
+      end
+    end
+
+    # Raw stanza
+    class RawStanza
+      def initialize( text)
+        @text = text
+      end
+
+      def empty?
+        false
+      end
+
+      def include?( str)
+        @text.include?( str)
+      end
+
+      def merge( other)
+        nil
+      end
+
+      def output
+        @text
+      end
+    end
+
+    # Newline stanza
+    class NewlineStanza
+      def adorn( prefix)
+        AdornedStanza.new( prefix)
+      end
+
+      def empty?
+        true
+      end
+
+      def include?( str)
+        false
+      end
+
+      def merge( other)
+        other.is_a?(NewlineStanza) ? self : nil
+      end
+
+      def output
+        ''
+      end
+    end
+
     def initialize( config_dir, config, output_dir)
       @config_dir    = config_dir
       @config        = config
@@ -22,11 +130,6 @@ module Generators
       # Articles organised by index and URL
       @index2articles  = Hash.new {|h,k| h[k] = {}}
       @url2articles    = {}
-
-      # Control the markdown generation
-      @line_start    = false
-      @list_marker   = '#'
-      @table_state   = nil
     end
 
     def article_begin( cached, url, article)
@@ -86,7 +189,7 @@ module Generators
     end
 
     def article_end( markdown)
-      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{markdown.join('')}")
+      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
       comment = []
       comment << 'Raw' if raw?( markdown)
       comment << 'Root' if root_url?( markdown)
@@ -127,7 +230,7 @@ module Generators
     end
 
     def blockquote( md)
-      ["\n"] + strip(md).collect {|line| '< ' + line} + ["\n"]
+      strip(md).collect {|line| line.adorn( '< ')}
     end
 
     def clean_old_files
@@ -184,10 +287,11 @@ module Generators
     end
 
     def description_list( list)
-      ["\n", "\n"] + list.collect do |entry|
-        [entry[0][0] + "\n"] +
-        entry[1..-1].collect {|text| [': ' + text[0] + "\n"]} + ["\n"]
-      end.flatten + ["\n"]
+      newline + list.collect do |entry|
+        entry[0] +
+        entry[1..-1].collect {|md| md.collect {|stanza| stanza.adorn( ': ')}} +
+        newline
+      end.flatten + newline
     end
 
     def e( name)
@@ -264,31 +368,26 @@ module Generators
     end
 
     def heading( level, markdown)
-      ["\n"] +
-      strip(markdown).collect {|line| '######'[0...level] + ' ' + line} +
-      ["\n"]
+      strip(markdown).collect {|m| m.adorn( '######'[0...level] + ' ')}
     end
 
     def hr
-      ["---\n"]
+      [AdornedStanza.new( '---')]
     end
 
     def image( src, title)
-      ["![#{title}](#{localise(src)})"]
+      [Stanza.new("![#{title}](#{localise(src)})")]
     end
 
     def link( text, href)
-      return [] unless text && ! text.empty?
-      ["[#{text.join(' ')}](#{localise href})"]
-    end
-
-    def link_text_only?
-      true
+      return [] if text.empty? || text[0].empty?
+      [Stanza.new("[#{text[0].text}](#{localise href})")]
     end
 
     def list( type, items)
       items = items.collect do |item|
-        item.select {|line| line && line.strip != ''} #.collect {|line| line.rstrip}
+        merge(item)
+        #item.select {|line| line && (! line.empty?)} #.collect {|line| line.rstrip}
       end
 
       items = items.select {|item| ! item.empty?}
@@ -298,15 +397,14 @@ module Generators
         items.each_index do |i|
           item = items[i]
           indent = "          "[0...((i+1).to_s.size+2)]
-          out << ["#{i+1}. " + item[0] + "\n"] +
-              item[1..-1].collect {|line| indent + line + "\n"}
+          out << [item[0].adorn( "#{i+1}. ")] +
+                  item[1..-1].collect {|line| line.adorn(indent)}
         end
-        ["\n"] + out.flatten + ["\n"]
+        out.flatten
       else
-        ["\n"] + items.collect do |item|
-          ['- ' + item[0] + "\n"] +
-              item[1..-1].collect {|line| '  ' + line + "\n"}
-        end.flatten + ["\n"]
+        items.collect do |item|
+          [item[0].adorn( '- ')] + item[1..-1].collect {|line| line.adorn( '  ')}
+        end.flatten
       end
     end
 
@@ -343,32 +441,37 @@ module Generators
       output_path( url)
     end
 
-    def merge( markdown)
-      merged, carry = [], ''
+    def merge(markdown)
+      merged = []
 
-      markdown.flatten.each do |line|
-        if /\n$/ =~ line
-          merged << carry + line
-          carry = ''
+      markdown.flatten.each do |item|
+        if item.is_a?( TrueClass)
+          p [markdown, merged, item]
+        end
+        if merged[0] && (m = merged[-1].merge(item))
+          if m.is_a?( TrueClass)
+            p [markdown, merged, item]
+          end
+          merged[-1] = m
         else
-          carry += line
+          merged << item
         end
       end
 
-      (carry != '') ? merged + [carry] : merged
+      merged
     end
 
     def method_missing( verb, *args)
       error( verb.to_s + ": ???")
     end
 
-    def newline( markdown)
-      markdown + ["\n"]
+    def newline( markdown=[])
+      [NewlineStanza.new()] + markdown
     end
 
     def nestable?( markdown)
       markdown.each do |line|
-        return false if /^<\w/ =~ line
+        return false if line.is_a?( RawStanza)
       end
       true
     end
@@ -392,7 +495,7 @@ module Generators
     end
 
     def paragraph( md)
-      ["\n"] + strip( md) + ["\n", "\n"]
+      newline + strip(md) + newline
     end
 
     def raw( html)
@@ -406,12 +509,12 @@ module Generators
         "src=\"#{ref1}\""
       end
 
-      ["\n", html, "\n"]
+      [RawStanza.new( html)]
     end
 
     def raw?( markdown)
       markdown.each do |line|
-        return true if /^<\w/i =~ line
+        return true if line.is_a?( RawStanza)
       end
       false
     end
@@ -456,33 +559,28 @@ module Generators
       File.delete( toml) if File.exist?( toml)
     end
 
-    def site_taxonomy( singular, plural)
-      @taxonomies[singular] = plural
-    end
-
     def slug( text)
       text.gsub( /[^a-z0-9]/i, '_').downcase
     end
 
     def strip( markdown)
-      while (! markdown.empty?) && (markdown[0] == "\n")
+      markdown = merge(markdown)
+
+      while (! markdown.empty?) && markdown[0].is_a?( NewlineStanza)
         markdown = markdown[1..-1]
       end
 
-      while (! markdown.empty?) && (markdown[-1] == "\n")
+      while (! markdown.empty?) && markdown[-1].is_a?( NewlineStanza)
         markdown = markdown[0..-2]
-      end
-
-      if ! markdown.empty?
-        markdown[0] = markdown[0].lstrip
-        markdown[-1] = markdown[-1].rstrip
       end
 
       markdown
     end
 
     def style( styles, md)
+      raise 'Unable to style' if md.size > 1
       styling = ''
+
       styles.each do |style|
         if style == :bold
           styling = '**'
@@ -498,6 +596,7 @@ module Generators
         elsif style == :keyboard
         elsif style == :small
         elsif style == :strike
+        elsif style == :subscript
         elsif style == :superscript
         elsif style == :teletype
         elsif style == :underline
@@ -509,33 +608,31 @@ module Generators
         end
       end
 
-      [styling] + md + [styling]
+      md.collect {|line| line.style( styling)}
     end
 
     def table( rows)
-      ["\n"] + [table_row( rows[0]), table_separator( rows[0])] +
+      newline + [table_row( rows[0]), table_separator( rows[0])] +
       rows[1..-1].collect {|row| table_row( row)} +
-      ["\n"]
+      newline
     end
 
     def table_separator( row)
-      '|' + row.collect{'-|'}.join('')
+      AdornedStanza.new( '|' + row.collect{'-|'}.join(''))
     end
 
     def table_row( row)
-      '|' + row.collect {|cell| cell.gsub( '|', '\\|')}.join('|') + "|\n"
+      AdornedStanza.new( '|' + row.collect {|cell| cell.gsub( '|', '\\|')}.join('|') + "|")
     end
 
     def text( str)
-      [str.gsub( "\n", ' ')]
+      [Stanza.new( str)]
     end
 
     def textual?( markdown)
       return true if markdown.size == 0
       return false if markdown.size > 1
-      return false if /^[<]/ =~ markdown[0]
-      return false if /\n$/ =~ markdown[0]
-      true
+      markdown[0].is_a?( Stanza)
     end
 
     def write_file( path, data)

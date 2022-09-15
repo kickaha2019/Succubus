@@ -27,13 +27,25 @@ class BGA < Site
       end
     end
 
-    on_element 'article', :class => 'section-2' do  |place|
-      Elements::Article.new( place).set_title( place.title).set_date( place.date)
+    on_element 'article', :parent => 'article' do  |place|
+      place.children
     end
 
-    on_element 'article', :class => 'section-3' do  |place|
-      Elements::Article.new( place).set_title( place.title).set_date( place.date)
+    on_element 'article' do  |place|
+      if place.content?
+        Elements::Article.new( place).set_title( place.title).set_date( place.date)
+      else
+        Elements::Ignore.new( place)
+      end
     end
+
+    # on_element 'article', :class => 'section-2' do  |place|
+    #   Elements::Article.new( place).set_title( place.title).set_date( place.date)
+    # end
+    #
+    # on_element 'article', :class => 'section-3' do  |place|
+    #   Elements::Article.new( place).set_title( place.title).set_date( place.date)
+    # end
 
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
@@ -46,10 +58,6 @@ class BGA < Site
     on_element 'bold' do  |place|
       Elements::Styling.new( place, [:bold])
     end
-
-    # on_element 'div', :class => '', :attribute => 'debug' do |place|
-    #   Elements::Debug.new( place)
-    # end
 
     on_element 'div', :class => '' do |place|
       place.children
@@ -144,6 +152,10 @@ class BGA < Site
       place.children
     end
 
+    on_element 'div', :class => 'note' do |place|
+      place.children
+    end
+
     on_element 'div', :class => 'odd' do |place|
       place.children
     end
@@ -221,9 +233,9 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
-    # on_element 'span', :class => 'submitted' do |place|
-    #   Elements::Ignore.new( place)
-    # end
+    on_element 'span', :class => 'submitted' do |place|
+      Elements::Ignore.new( place)
+    end
 
     on_element 'text' do |place|
       if place.text == "\n — "

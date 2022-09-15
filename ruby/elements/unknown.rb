@@ -59,7 +59,7 @@ module Elements
     end
 
     def generate_children( generator)
-      generator.merge( @contents.collect do |child|
+      generator.merge(@contents.collect do |child|
         child.generate( generator)
       end)
     end
