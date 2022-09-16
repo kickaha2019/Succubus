@@ -121,44 +121,55 @@ module Generators
       @path2article  = {}
       @enc2names     = {}
 
-      # Stack to allow for recursive generation
-      @saved = []
-
       # Redirects
       @redirects = {}
 
-      # Articles organised by index and URL
+      # Articles organised by index and URL and menu
       @index2articles  = Hash.new {|h,k| h[k] = {}}
       @url2articles    = {}
+      @menu            = [[], {}]
     end
 
-    def article_begin( cached, url, article)
+    def article( cached, url, article)
       @article_url   = url
       @article_error = false
+
       if article.root
-        @path = @output_dir + '/content/_index.md'
+        path = @output_dir + '/content/_index.md'
       else
-        @path = @output_dir + '/content' + output_path(url).sub(/.html$/, '.md')
+        path = @output_dir + '/content' + output_path(url).sub(/.html$/, '.md')
       end
-      @front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
-                        'mode'     => article.mode.to_s,
-                        'origin'   => url,
-                        'cache'    => cached,
-                        'section'  => article.index.join('-'),
-                        'sections' => slug(article.index.join('-'))}
-      @comment       = []
-      @line_start    = true
+      front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
+                       'mode'     => article.mode.to_s,
+                       'origin'   => url,
+                       'cache'    => cached,
+                       'section'  => article.index.join('-'),
+                       'sections' => slug(article.index.join('-'))}
+      comment       = []
 
-      # if fm = @config['bridgetown']['front_matter'][article.mode.to_s]
-      #   fm.each_pair {|k,v| @front_matter[k] = v}
-      # end
+      article_layout( article, front_matter)
+      front_matter['date']  = article.date.strftime( '%Y-%m-%d') if article.date
+      front_matter['title'] = article.title if article.title
+      text = article.description
+      if text && (text != '')
+        front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
+      end
+      markdown = article.generate( self)
 
+      write_file( path, "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
+      comment = []
+      comment << 'Raw' if raw?( markdown)
+      comment << 'Root' if root_url?( markdown)
+      return path, comment.join(' ')
+    end
+
+    def article_layout( article, front_matter)
       if article.mode == :home
-        @front_matter['layout'] = 'home'
+        front_matter['layout'] = 'home'
         generate_posts_page
 
         sections = @index2articles.keys.sort
-        @front_matter['sectionIndex'] = sections.collect do |section|
+        front_matter['sectionIndex'] = sections.collect do |section|
           {'name' => section, 'key' => slug( section)}
         end
 
@@ -166,53 +177,19 @@ module Generators
           generate_section_page( section)
         end
       else
-        @front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
+        front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
+        section = front_matter['section']
+
+        if (front_matter['mode'] == 'article') || (front_matter['mode'] == 'post')
+          front_matter['parents'] << {'url'   => '/section-' + slug(section) + '/index.html',
+                                      'title' => section}
+        end
+
+        if front_matter['mode'] == 'post'
+          front_matter['parents'] << {'url'   => '/section-' + slug(section) + '-posts/index.html',
+                                      'title' => 'Posts'}
+        end
       end
-
-      article_parents
-
-      if @written[@path]
-        error( "Duplicate output path for #{url} and #{@written[@path]}")
-      end
-
-      @written[@path] = url
-    end
-
-    def article_date( date)
-      @front_matter['date'] = date.strftime( '%Y-%m-%d')
-    end
-
-    def article_description( text)
-      if text && (text != '')
-        @front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
-      end
-    end
-
-    def article_end( markdown)
-      write_file( @path, "#{@front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
-      comment = []
-      comment << 'Raw' if raw?( markdown)
-      comment << 'Root' if root_url?( markdown)
-      return @path, comment.join(' ')
-    end
-
-    def article_parents
-      return if @front_matter['section_index']
-      section = @front_matter['section']
-
-      if (@front_matter['mode'] == 'article') || (@front_matter['mode'] == 'post')
-        @front_matter['parents'] << {'url'   => '/section-' + slug(section) + '/index.html',
-                                     'title' => section}
-      end
-
-      if @front_matter['mode'] == 'post'
-        @front_matter['parents'] << {'url'   => '/section-' + slug(section) + '-posts/index.html',
-                                     'title' => 'Posts'}
-      end
-    end
-
-    def article_title( title)
-      @front_matter['title'] = title
     end
 
     def asset_copy( cached, url)
@@ -325,46 +302,40 @@ module Generators
     end
 
     def generate_posts_page
-      save_generation
-      @path          = @output_dir + '/content/index-posts/_index.md'
-      parents        = [{'url'    => '/index.html', 'title' => 'Home'}]
-      @front_matter  = {'layout'  => 'home_posts',
-                        'toRoot'  => '../',
-                        'title'   => 'All posts',
-                        'parents' => parents}
-      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
-      restore_generation
+      path          = @output_dir + '/content/index-posts/_index.md'
+      parents       = [{'url'    => '/index.html', 'title' => 'Home'}]
+      front_matter  = {'layout'  => 'home_posts',
+                       'toRoot'  => '../',
+                       'title'   => 'All posts',
+                       'parents' => parents}
+      write_file( path, "#{front_matter.to_yaml}\n---\n")
     end
 
     def generate_section_page( section)
-      save_generation
-      @path          = @output_dir + '/content/section-' + slug(section) + '.md'
-      parents        = [{'url'     => '/index.html',
-                         'title'   => 'Home'}]
-      @front_matter  = {'layout'   => 'section',
-                        'title'    => section,
-                        'parents'  => parents,
-                        'section'  => section,
-                        'sections' => slug(section)}
-      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
-      restore_generation
+      path          = @output_dir + '/content/section-' + slug(section) + '.md'
+      parents       = [{'url'     => '/index.html',
+                        'title'   => 'Home'}]
+      front_matter  = {'layout'   => 'section',
+                       'title'    => section,
+                       'parents'  => parents,
+                       'section'  => section,
+                       'sections' => slug(section)}
+      write_file( path, "#{front_matter.to_yaml}\n---\n")
       generate_section_posts_page( section)
     end
 
     def generate_section_posts_page( section)
-      save_generation
-      @path          = @output_dir + '/content/section-' + slug(section) + '-posts/_index.md'
-      parents        = [{'url'     => '/index.html',
+      path          = @output_dir + '/content/section-' + slug(section) + '-posts/_index.md'
+      parents       = [{'url'     => '/index.html',
                          'title'   => 'Home'},
                         {'url'     => '/section-' + slug(section) + '/index.html',
                          'title'   => section}]
-      @front_matter  = {'layout'   => 'section_posts',
-                        'section'  => section,
-                        'sections' => slug(section),
-                        'title'    => 'All posts for ' + section,
-                        'parents'  => parents}
-      write_file( @path, "#{@front_matter.to_yaml}\n---\n")
-      restore_generation
+      front_matter  = {'layout'   => 'section_posts',
+                       'section'  => section,
+                       'sections' => slug(section),
+                       'title'    => 'All posts for ' + section,
+                       'parents'  => parents}
+      write_file( path, "#{front_matter.to_yaml}\n---\n")
     end
 
     def heading( level, markdown)
@@ -439,6 +410,36 @@ module Generators
 
       raise "Too many redirects for #{url0}" if limit == 0
       output_path( url)
+    end
+
+    def menu_depth( menu)
+      depth = 0
+      menu[1].each_value do |menu1|
+        d = menu_depth( menu1) + 1
+        depth = d if d > depth
+      end
+      depth
+    end
+
+    def menu_print( keys, menu, depth, io)
+      (0...depth).each do |i|
+        io.print "#{(i < keys.size) ? keys[i] : ''}\t"
+      end
+
+      articles, posts = 0, 0
+      menu[0].each do |article|
+        if article.mode == :article
+          articles += 1
+        else
+          posts += 1
+        end
+      end
+
+      io.puts "#{(articles > 0) ? articles.to_s : ''}\t#{(posts > 0) ? posts.to_s : ''}"
+      
+      menu[1].keys.sort.each do |key|
+        menu_print( keys + [key], menu[1][key], depth, io)
+      end
     end
 
     def merge(markdown)
@@ -528,10 +529,15 @@ module Generators
       @url2articles[url] = article
       section = article.index.join('-')
       @index2articles[section][url] = (1 + @index2articles[section].size)
-    end
 
-    def restore_generation
-      @article_url, @article_error, @path, @front_matter = * @saved.pop
+      menu, index = @menu, article.index
+      while ! index.empty?
+        menu[1][index[0]] = [[], {}] unless menu[1][index[0]]
+        menu  = menu[1][index[0]]
+        index = index[1..-1]
+      end
+
+      menu[0] << article
     end
 
     def root_url?( markdown)
@@ -539,10 +545,6 @@ module Generators
         return true if line.include?( @config['root_url'])
       end
       false
-    end
-
-    def save_generation
-      @saved << [@article_url, @article_error, @path, @front_matter]
     end
 
     def site_begin
@@ -557,6 +559,16 @@ module Generators
       write_file( @output_dir + '/config.yaml', site_config.to_yaml)
       toml = @output_dir + '/config.toml'
       File.delete( toml) if File.exist?( toml)
+
+      depth = menu_depth( @menu)
+      File.open( @config_dir + '/menu.tsv', 'w') do |io|
+        (0...depth).each do |i|
+          io.print "Menu #{i+1}\t"
+        end
+        io.puts "Articles\tPosts"
+
+        menu_print( [], @menu, depth, io)
+      end
     end
 
     def slug( text)

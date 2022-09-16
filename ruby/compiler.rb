@@ -19,7 +19,7 @@ class Compiler < Processor
   def compile
     preparse_all
     compile_site
-    @generator.write_file( @output_dir + '/content/generated.csv',
+    @generator.write_file( @config_dir + '/generated.csv',
                            @generated.join( "\n"))
 
     @comments.each_pair do |k,v|
@@ -34,16 +34,7 @@ class Compiler < Processor
   end
 
   def compile_article( timestamp, url, article)
-    @generator.article_begin( "#{@cache}/#{timestamp}.html", url, article)
-    if article.date
-      @generator.article_date( article.date)
-    end
-    if article.title
-      @generator.article_title( article.title)
-    end
-    @generator.article_description( article.description)
-    md = article.generate( @generator)
-    generated, comment = @generator.article_end( md)
+    generated, comment = @generator.article( "#{@cache}/#{timestamp}.html", url, article)
     @generated << "#{url}\t#{generated}\t#{comment}"
 
     comment.split( ' ').each do |word|
