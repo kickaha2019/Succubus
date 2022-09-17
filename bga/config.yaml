@@ -13,6 +13,11 @@ exclude_urls:
 - https://britgo.org/bchamp/qualifiers2020
 - https://britgo.org/bchamp/qualifiers2021
 - https://britgo.org/bchamp/qualifiers2022
+- https://britgo.org/bgabooks/supplier
+- https://britgo.org/book/export/html/
+- https://britgo.org/book/export/html/tournament4
+- https://britgo.org/book/export/html/tournament6
+- https://britgo.org/book/export/html/tournamentd
 - https://britgo.org/booklist/
 - https://britgo.org/clubs/ https://online-go.com
 - "^https://britgo.org/comment/\\d+"
@@ -92,6 +97,7 @@ exclude_urls:
 - https://britgo.org/obsoletedocuments
 - https://britgo.org/organisers/handbook/handbook.html
 - https://britgo.org/organisers/index
+- https://britgo.org/organisers/oldhandbook
 - https://britgo.org/position/bookseller
 - https://britgo.org/pubs/stock
 - https://britgo.org/ratings/current
@@ -118,6 +124,7 @@ exclude_urls:
 - https://britgo.org/tournams/trigantius/tour-entries.html
 - https://britgo.org/tournams/welsh-open/tour-entries.html
 - https://britgo.org/tournams/welsh-open/welsh-open-form.html
+- https://britgo.org/tournaments/2020/
 - https://britgo.org/tournaments/britishyouthchampionship
 - "^https://britgo.org/user/login"
 - https://britgo.org/user/password

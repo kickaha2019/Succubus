@@ -436,7 +436,7 @@ module Generators
       end
 
       io.puts "#{(articles > 0) ? articles.to_s : ''}\t#{(posts > 0) ? posts.to_s : ''}"
-      
+
       menu[1].keys.sort.each do |key|
         menu_print( keys + [key], menu[1][key], depth, io)
       end

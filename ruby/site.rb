@@ -75,6 +75,21 @@ class Site
       end
 
       if applies
+        if @args[:ancestor]
+          applies = false
+          parent  = element.parent
+          while (parent != nil) && parent.is_a?( Nokogiri::XML::Element)
+            if parent.name == @args[:ancestor]
+              applies = true
+              break
+            else
+              parent  = parent.parent
+            end
+          end
+        end
+      end
+
+      if applies
         if @args[:attribute]
           applies = ! element[@args[:attribute]].nil?
         end

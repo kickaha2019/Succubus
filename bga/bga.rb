@@ -27,7 +27,7 @@ class BGA < Site
       end
     end
 
-    on_element 'article', :parent => 'article' do  |place|
+    on_element 'article', :ancestor => 'article' do  |place|
       place.children
     end
 
@@ -279,6 +279,22 @@ class BGA < Site
       if date = @post_dates[page.url]
         page.date= date
         page.mode= :post
+      end
+
+      ignores = [
+          /-entries\.html$/,
+          /-form\.html$/
+      ]
+
+      ignored = false
+      ignores.each do |re|
+        ignored = true if re =~ page.url
+      end
+
+      if ignored
+        on_element 'body', :grokked => false do |place|
+          Elements::Ignore.new( place)
+        end
       end
 
       false
