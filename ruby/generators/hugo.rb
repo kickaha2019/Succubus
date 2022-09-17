@@ -421,6 +421,21 @@ module Generators
       depth
     end
 
+    def menu_generate( keys, menu, list)
+      if ! keys.empty?
+        list << {
+            'identifier' => keys.collect {|key| slug(key)}.join('-'),
+            'name'       => keys[-1],
+            'url'        => 'index.html',
+            'parent'     => (keys.size > 1) ? keys[0...-1].collect {|key| slug(key)}.join('-') : nil
+                }
+      end
+
+      menu[1].each_pair do |key, menu1|
+        menu_generate( keys + [key], menu1, list)
+      end
+    end
+
     def menu_print( keys, menu, depth, io)
       (0...depth).each do |i|
         io.print "#{(i < keys.size) ? keys[i] : ''}\t"
@@ -556,6 +571,8 @@ module Generators
 
     def site_end
       site_config = @config['hugo']['config']
+      site_config['menu'] = {'main' => []}
+      menu_generate( [], @menu, site_config['menu']['main'])
       write_file( @output_dir + '/config.yaml', site_config.to_yaml)
       toml = @output_dir + '/config.toml'
       File.delete( toml) if File.exist?( toml)

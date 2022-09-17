@@ -69,7 +69,7 @@ class Compiler < Processor
       asset, error, redirect, _, _ = examine( url)
       next unless asset && (! error) && (! redirect)
       next unless info['timestamp'] > 0
-      @generator.asset_copy( "#{@cache}/#{info['timestamp']}.#{url.split('.')[-1]}", url)
+      @generator.asset_copy( "#{@cache}/#{info['timestamp']}.#{url.split('.')[-1]}", url.gsub( /[\(\)]/, '_'))
     end
   end
 
