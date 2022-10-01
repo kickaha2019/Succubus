@@ -53,9 +53,6 @@ class Grabber < Processor
   def elide_unreachable
     @pages, old_pages = {}, @pages
     old_pages.each_pair do |url, info|
-      if @reachable[url] && exclude_url?( url)
-        raise url
-      end
       @pages[url] = info if @reachable[url]
     end
   end
@@ -157,7 +154,6 @@ class Grabber < Processor
   end
 
   def reached( referral, url)
-    return if exclude_url?( url)
     @reachable[url] = true
     if @pages[url]
       @pages[url]['referral'] = referral
@@ -182,7 +178,7 @@ class Grabber < Processor
 
   def trace?( url)
     return false unless @root == url[0...(@root.size)]
-    ! exclude_url?( url)
+    true
   end
 
   def trace_from_reachable

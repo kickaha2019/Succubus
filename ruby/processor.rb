@@ -23,19 +23,6 @@ class Processor
       @pages = {}
     end
 
-    @exclude_url_strings = []
-    @exclude_url_regexes = []
-
-    if @config['exclude_urls']
-      @config['exclude_urls'].each do |url|
-        if /[\\^$]/ =~ url
-          @exclude_url_regexes << Regexp.new( url)
-        else
-          @exclude_url_strings << url
-        end
-      end
-    end
-
     @page_data = Hash.new {|h,k| h[k] = {}}
   end
 
@@ -90,14 +77,6 @@ class Processor
       puts "*** File: #{info['timestamp']}.html"
       raise
     end
-  end
-
-  def exclude_url?( url)
-    return true if @exclude_url_strings.include?( url)
-    @exclude_url_regexes.each do |re|
-      return true if re =~ url
-    end
-    false
   end
 
   def parse( url, info)

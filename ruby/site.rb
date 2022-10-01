@@ -134,11 +134,6 @@ class Site
 
     define_rules
     @initialised = true
-
-    @url_replaces = {}
-    @config['url_replace'].each do |replace|
-      @url_replaces[replace['from']] = replace['to']
-    end
   end
 
   def absolutise( page_url, url)
@@ -184,10 +179,6 @@ class Site
     url1 = url.sub( /^http:/, 'https:')
     if local?(url1)
       url = url1
-    end
-
-    if @url_replaces[url]
-      url = @url_replaces[url]
     end
 
     url

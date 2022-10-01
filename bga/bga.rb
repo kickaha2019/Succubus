@@ -282,13 +282,19 @@ class BGA < Site
       end
 
       ignores = [
-          /-entries\.html$/,
-          /-form\.html$/
+          /-entries\.html$/,                      # Temporary pages for tournaments
+          /-form\.html$/,
+          'https://britgo.org/bakabanrev',        # HTML errors
+          'https://britgo.org/reviews/mygofriend'
       ]
 
       ignored = false
       ignores.each do |re|
-        ignored = true if re =~ page.url
+        if re.is_a?( String)
+          ignored = true if re == page.url
+        else
+          ignored = true if re =~ page.url
+        end
       end
 
       if ignored
