@@ -141,6 +141,7 @@ class Site
     url      = url.gsub( /.\/\//) do |match|
       (match == '://' ? match : match[0..1])
     end
+
     root_url = @config['root_url']
     dir_url  = page_url.split('?')[0]
 
@@ -154,10 +155,10 @@ class Site
       dir_url = dir_url.split('/')[0..-2].join('/')
     end
 
-    # while /^\.\.\// =~ url
-    #   url     = url[3..-1]
-    #   dir_url = dir_url.split('/')[0..-2].join('/')
-    # end
+    while /^\.\.(\/|\\)/ =~ url
+      url     = url[3..-1]
+      dir_url = dir_url.split('/')[0..-2].join('/')
+    end
 
     if /^\// =~ url
       url = root_url + url[1..-1]

@@ -197,8 +197,17 @@ DUMP2
       if ts == 0
         write_files "<tr><td>#{addr}</td>"
       else
-        write_files "<tr><td><a title=\"#{@pages[addr]['referral']}\" target=\"_blank\" href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
+        write_files "<tr><td><a target=\"_blank\" href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
       end
+
+      outs = []
+      if refs = @pages[addr]['referrals']
+        refs.each_index do |i|
+          outs << "<a target=\"_blank\" href=\"#{refs[i]}\">#{i+1}</a>" if i < 3
+          outs << '+' if i == 3
+        end
+      end
+      write_files "<td>#{outs.join( '&nbsp;')}</td>"
 
       if parsed
         write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">"
@@ -302,6 +311,7 @@ HEADER1
     write_files <<HEADER2
 <div class="pages"><table><tr>
 <th>Page</th>
+<th>Refs</th>
 <th>State</th>
 <th>Articles</th>
 <th>Date</th>

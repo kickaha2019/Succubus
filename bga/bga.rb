@@ -8,7 +8,7 @@ class BGA < Site
   def absolutise( page_url, url)
     url = super
     if local? url
-      url = page_param_only( url.split('#')[0])
+      page_param_only( url.split('#')[0])
     else
       url
     end
@@ -50,6 +50,8 @@ class BGA < Site
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
         Elements::Anchor.new(place, place.absolutise(m[1]), nil)
+      elsif m = /^rating_sort\(/.match( place['onclick'])
+        Elements::Ignore.new( place)
       else
         nil
       end
@@ -284,8 +286,17 @@ class BGA < Site
       ignores = [
           /-entries\.html$/,                      # Temporary pages for tournaments
           /-form\.html$/,
+
+          'https://britgo.org/form/transfer-your-membership', # Forms
+          'https://britgo.org/user/login',
+
           'https://britgo.org/bakabanrev',        # HTML errors
-          'https://britgo.org/reviews/mygofriend'
+          'https://britgo.org/reviews/mygofriend',
+          'https://britgo.org/bgj/06014.html',
+          'https://britgo.org/bgj/06026.html',
+          'https://britgo.org/softwarereviews',
+
+          'https://britgo.org/junior/youthgonews' # Index pages
       ]
 
       ignored = false

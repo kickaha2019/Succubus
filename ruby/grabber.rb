@@ -81,9 +81,9 @@ class Grabber < Processor
     @candidates.each do |url|
       puts "... Grabbing #{url}"
       ts = Time.now.to_i
-      referer = @pages[url]['referral']
-      info    = @pages[url] = {'timestamp' => ts,
-                            'referral'     => referer}
+      referers = @pages[url]['referrals']
+      info     = @pages[url] = {'timestamp' => ts,
+                                'referrals' => referers}
 
       begin
         URI.parse( url)
@@ -92,7 +92,7 @@ class Grabber < Processor
         next
       end
 
-      response = http_get( url, 30, 'Referer' => referer)
+      response = http_get( url, 30)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
         if asset?( url)
@@ -156,13 +156,18 @@ class Grabber < Processor
   def reached( referral, url)
     @reachable[url] = true
     if @pages[url]
-      @pages[url]['referral'] = referral
+      @pages[url]['referrals'] = [] unless @pages[url]['referrals']
+      @pages[url]['referrals'] << referral
     else
-      @pages[url] = {'timestamp' => 0, 'referral' => referral}
+      @pages[url] = {'timestamp' => 0, 'referrals' => [referral]}
     end
   end
 
   def save_info
+    @pages.each_value do |info|
+      info.delete('referral')
+      info['referrals'] = info['referrals'].uniq.select {|ref| ref && (ref.strip != '')} if info['referrals']
+    end
     File.open( "#{@cache}/grabbed.yaml", 'w') do |io|
       io.print @pages.to_yaml
     end
