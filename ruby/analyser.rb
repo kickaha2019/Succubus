@@ -127,7 +127,9 @@ DUMP2
         File.open( dir + '/index2.html', 'w'),
         File.open( dir + '/index3.html', 'w'),
         File.open( dir + '/index4.html', 'w'),
-        File.open( dir + '/index5.html', 'w')
+        File.open( dir + '/index5.html', 'w'),
+        File.open( dir + '/index6.html', 'w'),
+        File.open( dir + '/index7.html', 'w')
     ]
     @is_asset = false
   end
@@ -146,24 +148,28 @@ DUMP2
     n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0, 0, 0
 
     addresses     = @pages.keys.sort
+    @is_asset     = true
     @is_error     = true
     @is_break     = true
     @is_secure    = true
     @has_articles = true
+    @is_redirect  = true
+    @is_grabbed   = true
     report_header
 
     addresses.each_index do |i|
       addr = addresses[i]
 
       debug = (addr == @config['debug_url'])
-      @is_asset, @is_error, redirect, secure, parsed = examine( addr, debug)
-      @is_break = @is_secure = false
-      if secure
-        @is_secure =  true
+      @is_asset, @is_error, @is_redirect, @is_secure, parsed = examine( addr, debug)
+      @is_break = false
+      if @is_secure
         @is_error  =  false
         n_secure   += 1
       end
+
       ts   = @pages[addr]['timestamp']
+      @is_grabbed = (ts != 0)
       ext  = @is_asset ? addr.split('.')[-1] : 'html'
 
       n_all     += 1
@@ -212,9 +218,9 @@ DUMP2
       if parsed
         write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">"
         write_files "<a target=\"_blank\" href=\"#{i}.html\">"
-        write_files( @is_error ? '&cross;' : (secure ? '&timesb;' : '&check;'))
+        write_files( @is_error ? '&cross;' : (@is_secure ? '&timesb;' : '&check;'))
         write_files "</a></th>"
-      elsif redirect
+      elsif @is_redirect
         n_redirect += 1
         write_files "<th bgcolor=\"lime\">&rArr;</th>"
       elsif ts == 0
@@ -228,7 +234,7 @@ DUMP2
           write_files "<th bgcolor=\"lime\">&check;</th>"
         end
       else
-        write_files "<th bgcolor=\"red\">#{secure ? '&timesb;' : '&cross;'}</th>"
+        write_files "<th bgcolor=\"red\">#{@is_secure ? '&timesb;' : '&cross;'}</th>"
       end
 
       write_files "<td>#{@has_articles ? (n_articles - old_articles) : ''}</td>"
@@ -248,45 +254,42 @@ DUMP2
       write_files "</tr>"
     end
 
-    @is_asset     = false
+    @is_asset     = true
     @is_error     = true
     @is_break     = true
     @is_secure    = true
+    @is_redirect  = true
+    @is_grabbed   = true
     @has_articles = true
     report_footer( n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed)
     close_files
   end
 
   def report_footer( n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed)
+    stats = [
+        "Pages(#{n_all})",
+        "Articles(#{n_articles})",
+        "Assets(#{n_asset})",
+        "Breaks(#{n_break})",
+        "Errors(#{n_error})",
+        "Redirects(#{n_redirect})",
+        "Secure(#{n_secure})",
+        "Grabbed(#{n_grabbed})"
+    ]
+
     write_files <<FOOTER1
-</table></div>
-<div class="menu"><table><tr>
-<td>Records: #{n_all}</td>
-<td>Articles: #{n_articles}</td>
-<td>Assets: #{n_asset}</td>
-<td>Redirects: #{n_redirect}</td>
-<td>Breaks: #{n_break}</td>
-<td>Errors: #{n_error}</td>
-<td>Secure: #{n_secure}</td>
-<td>Grabbed: #{n_grabbed}</td>
-</tr></table></div>
-<div class="menu"><table><tr>
+</table></div><div class="menu"><table><tr>
 FOOTER1
 
-    @files[0].print "<td><a href=\"index1.html\">Hide assets</a><td>"
-    @files[0].print "<td><a href=\"index4.html\">Just breaks</a><td>"
-    @files[0].print "<td><a href=\"index2.html\">Just errors</a><td>"
-    @files[0].print "<td><a href=\"index5.html\">Just secure</a><td>"
-    @files[0].print "<td><a href=\"index3.html\">Just articles</a><td>"
-    @files[1].print "<td><a href=\"index.html\">Show assets</a><td>"
-    @files[1].print "<td><a href=\"index4.html\">Just breaks</a><td>"
-    @files[1].print "<td><a href=\"index2.html\">Just errors</a><td>"
-    @files[1].print "<td><a href=\"index5.html\">Just secure</a><td>"
-    @files[1].print "<td><a href=\"index3.html\">Just articles</a><td>"
-    @files[2].print "<td><a href=\"index.html\">Show all</a><td>"
-    @files[3].print "<td><a href=\"index.html\">Show all</a><td>"
-    @files[4].print "<td><a href=\"index.html\">Show all</a><td>"
-    @files[5].print "<td><a href=\"index.html\">Show all</a><td>"
+    stats.each_index do |i|
+      stats.each_index do |j|
+        if i == j
+          @files[j].print "<td>#{stats[i]}</td>"
+        else
+          @files[j].print "<td><a href=\"index#{(i==0)?'':i}.html\">#{stats[i]}</a></td>"
+        end
+      end
+    end
 
     write_files <<FOOTER2
 </tr></table><div></body></html>
@@ -324,11 +327,13 @@ HEADER2
 
   def write_files( text)
     @files[0].print text
-    @files[1].print text unless @is_asset
-    @files[2].print text if @is_error
-    @files[3].print text if @has_articles
-    @files[4].print text if @is_break
-    @files[5].print text if @is_secure
+    @files[1].print text if @has_articles
+    @files[2].print text if @is_asset
+    @files[3].print text if @is_break
+    @files[4].print text if @is_error
+    @files[5].print text if @is_redirect
+    @files[6].print text if @is_secure
+    @files[7].print text if @is_grabbed
   end
 end
 

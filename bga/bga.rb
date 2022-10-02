@@ -289,11 +289,14 @@ class BGA < Site
 
           'https://britgo.org/form/transfer-your-membership', # Forms
           'https://britgo.org/user/login',
+          'https://britgo.org/tournaments/britishopen/entryform',
+          'https://britgo.org/user/password',
 
           'https://britgo.org/bakabanrev',        # HTML errors
           'https://britgo.org/reviews/mygofriend',
           'https://britgo.org/bgj/06014.html',
           'https://britgo.org/bgj/06026.html',
+          'https://britgo.org/bgj/06320.html',
           'https://britgo.org/softwarereviews',
 
           'https://britgo.org/junior/youthgonews' # Index pages
