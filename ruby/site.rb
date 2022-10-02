@@ -137,7 +137,7 @@ class Site
   end
 
   def absolutise( page_url, url)
-    url      = url.strip.gsub( '%20', ' ')
+    url      = url.strip.gsub( '%20', ' ').gsub( '\\', '/')
     url      = url.gsub( /.\/\//) do |match|
       (match == '://' ? match : match[0..1])
     end
@@ -155,7 +155,7 @@ class Site
       dir_url = dir_url.split('/')[0..-2].join('/')
     end
 
-    while /^\.\.(\/|\\)/ =~ url
+    while /^\.\.\// =~ url
       url     = url[3..-1]
       dir_url = dir_url.split('/')[0..-2].join('/')
     end

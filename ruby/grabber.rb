@@ -17,8 +17,8 @@ class Grabber < Processor
     @pages.each_pair do |url, page|
       next if page['redirect']
       next if page['secured']
+      next if page['comment']
 
-      #p ['check_files_deleted', url, asset?( url)]
       ext = 'html'
       if asset?( url)
         ext = url.split('.')[-1]
