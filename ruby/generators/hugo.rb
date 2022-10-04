@@ -143,9 +143,12 @@ module Generators
                        'mode'     => article.mode.to_s,
                        'origin'   => url,
                        'cache'    => cached,
-                       'section'  => article.index.join('-'),
-                       'sections' => slug(article.index.join('-'))}
+                       'section'  => slug(article.index)}
       comment       = []
+
+      article.index.each_index do |i|
+        front_matter["index#{i}"] = slug(article.index[0..i])
+      end
 
       article_layout( article, front_matter)
       front_matter['date']  = article.date.strftime( '%Y-%m-%d') if article.date
@@ -167,13 +170,7 @@ module Generators
       if article.mode == :home
         front_matter['layout'] = 'home'
         generate_posts_page
-
-        sections = @index2articles.keys.sort
-        front_matter['sectionIndex'] = sections.collect do |section|
-          {'name' => section, 'key' => slug( section)}
-        end
-
-        sections.each do |section|
+        @index2articles.keys.sort.each do |section|
           generate_section_page( section)
         end
       else
@@ -181,13 +178,8 @@ module Generators
         section = front_matter['section']
 
         if (front_matter['mode'] == 'article') || (front_matter['mode'] == 'post')
-          front_matter['parents'] << {'url'   => '/section-' + slug(section) + '/index.html',
+          front_matter['parents'] << {'url'   => '/section-' + section + '/index.html',
                                       'title' => section}
-        end
-
-        if front_matter['mode'] == 'post'
-          front_matter['parents'] << {'url'   => '/section-' + slug(section) + '-posts/index.html',
-                                      'title' => 'Posts'}
         end
       end
     end
@@ -312,29 +304,15 @@ module Generators
     end
 
     def generate_section_page( section)
-      path          = @output_dir + '/content/section-' + slug(section) + '.md'
+      path          = @output_dir + '/content/sections/' + section + '/_index.md'
       parents       = [{'url'     => '/index.html',
                         'title'   => 'Home'}]
-      front_matter  = {'layout'   => 'section',
-                       'title'    => section,
-                       'parents'  => parents,
-                       'section'  => section,
-                       'sections' => slug(section)}
-      write_file( path, "#{front_matter.to_yaml}\n---\n")
-      generate_section_posts_page( section)
-    end
 
-    def generate_section_posts_page( section)
-      path          = @output_dir + '/content/section-' + slug(section) + '-posts/_index.md'
-      parents       = [{'url'     => '/index.html',
-                         'title'   => 'Home'},
-                        {'url'     => '/section-' + slug(section) + '/index.html',
-                         'title'   => section}]
-      front_matter  = {'layout'   => 'section_posts',
-                       'section'  => section,
-                       'sections' => slug(section),
-                       'title'    => 'All posts for ' + section,
-                       'parents'  => parents}
+      first_article = @url2articles[@index2articles[section].keys[0]]
+      front_matter  = {'layout'   => 'section',
+                       'title'    => first_article.index.join(' / '),
+                       'parents'  => parents,
+                       'section'  => section}
       write_file( path, "#{front_matter.to_yaml}\n---\n")
     end
 
@@ -421,18 +399,19 @@ module Generators
       depth
     end
 
-    def menu_generate( keys, menu, list)
+    def menu_generate( keys, menu, list, depth=0)
       if ! keys.empty?
+        ident = slug( keys)
         list << {
-            'identifier' => keys.collect {|key| slug(key)}.join('-'),
+            'identifier' => ident,
             'name'       => keys[-1],
-            'url'        => 'index.html',
-            'parent'     => (keys.size > 1) ? keys[0...-1].collect {|key| slug(key)}.join('-') : nil
+            'url'        => "/sections/#{ident}/index.html",
+            'parent'     => (keys.size > 1) ? slug(keys[0...-1]) : nil
                 }
       end
 
       menu[1].each_pair do |key, menu1|
-        menu_generate( keys + [key], menu1, list)
+        menu_generate( keys + [key], menu1, list, depth+1)
       end
     end
 
@@ -496,7 +475,7 @@ module Generators
       url = url.split('#')[0].sub( /^http:/, 'https:')
       if article = @url2articles[url]
         return '/index.html' if article.root
-        section = article.index.join('-')
+        section = slug(article.index)
 
         '/' +
         article.index.collect {|i| slug(i)}.join('/') +
@@ -542,7 +521,7 @@ module Generators
     def register_article( url, article)
       #url = url.sub( /^http:/, 'https:')
       @url2articles[url] = article
-      section = article.index.join('-')
+      section = slug(article.index)
       @index2articles[section][url] = (1 + @index2articles[section].size)
 
       menu, index = @menu, article.index
@@ -589,7 +568,11 @@ module Generators
     end
 
     def slug( text)
-      text.gsub( /[^a-z0-9]/i, '_').downcase
+      if text.is_a?( Array)
+        text.collect {|t| slug(t)}.join('-')
+      else
+        text.gsub( /[^a-z0-9]/i, '_').downcase
+      end
     end
 
     def strip( markdown)

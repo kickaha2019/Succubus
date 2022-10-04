@@ -46,3 +46,10 @@ main>div {margin: 20px;
 dt {font-weight: bold}
 
 a img {max-height: 100px; object-fit: contain}
+
+.menu {display: flex; flex-direction: column; width: 180px; max-width: 180px; overflow-clip: false}
+.is_active {color: red}
+.menu0 {display: flex; flex-direction: row}
+.menu1 .menu2 {display: none}
+.menu0:hover menu1 {display: flex; flex-direction: row}
+.menu1:hover menu2 {display: flex; flex-direction: row}

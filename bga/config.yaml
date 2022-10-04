@@ -21,35 +21,3 @@ hugo:
           definitionList: true
         renderer:
           unsafe: true
-bridgetown:
-  config:
-    baseURL:      https://alofmethbin.com/experiment
-    title:        Experiment
-    pagination:
-      enabled: true
-    collections:
-      sections:
-        output: true
-        relations:
-          belongs_to:
-            - articles
-            - news
-      articles:
-        output: true
-        relations:
-          has_many: sections
-      news:
-        output: true
-        relations:
-          has_many: sections
-  front_matter:
-    home:
-      layout: home
-      paginate:
-        collection: posts
-        per_page: 10
-    posts:
-      layout: posts
-      paginate:
-        collection: posts
-        per_page: 10

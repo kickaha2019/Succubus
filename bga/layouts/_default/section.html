@@ -14,22 +14,20 @@
                 <a href="{{ .RelPermalink }}">{{ .Title }}</a>
             </article>
           {{ end }}
-        </div>
 
-        {{ $p := where (where .Site.AllPages "Params.mode" "post") "Params.section" .Params.section }}
-        {{ if ( gt ( len $p ) 0 ) }}
-        <div class="medium_width">
-          <h2>Recent posts for {{ .Title }}</h2>
-          {{ range first 10 $p.ByDate.Reverse }}
-            <article>
-                <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-                <p> {{ .Params.description }} </p>
-            </article>
+          {{ $posts := where (where .Site.AllPages "Params.mode" "post") "Params.section" .Params.section }}
+          {{ if ( gt ( len $posts ) 0 ) }}
+            {{ $paginator := .Paginate $posts.ByDate.Reverse }}
+            {{ partial "pagination" $paginator }}
+            {{ range $paginator.Pages }}
+              <article>
+                 <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                 <p> {{ .Params.description }} </p>
+              </article>
+            {{ end }}
+            {{ partial "pagination" $paginator }}
           {{ end }}
-
-          <a class="black" href="/section-{{ .Params.sections }}-posts/index.html">All posts for {{ .Title }}</a>
         </div>
-        {{ end }}
     </main>
 
     {{ partial "footer" . }}

@@ -284,22 +284,29 @@ class BGA < Site
       end
 
       ignores = [
-          /-entries\.html$/,                      # Temporary pages for tournaments
+          # Temporary pages for tournaments
+          /-entries\.html$/,
           /-form\.html$/,
 
-          'https://britgo.org/form/transfer-your-membership', # Forms
+          # Forms
+          'https://britgo.org/form/transfer-your-membership',
           'https://britgo.org/user/login',
           'https://britgo.org/tournaments/britishopen/entryform',
           'https://britgo.org/user/password',
 
-          'https://britgo.org/bakabanrev',        # HTML errors
+          # Applets
+          'https://britgo.org/capturego/play',
+
+          # HTML errors
+          'https://britgo.org/bakabanrev',
           'https://britgo.org/reviews/mygofriend',
           'https://britgo.org/bgj/06014.html',
           'https://britgo.org/bgj/06026.html',
           'https://britgo.org/bgj/06320.html',
           'https://britgo.org/softwarereviews',
 
-          'https://britgo.org/junior/youthgonews' # Index pages
+          # Index pages
+          'https://britgo.org/junior/youthgonews'
       ]
 
       ignored = false
