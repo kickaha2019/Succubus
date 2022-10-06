@@ -7,18 +7,31 @@
 
   {{ $currentPage := . }}
   {{ range .Site.Menus.main }}
-    <div class="menu0 {{ if eq $currentPage.Params.index0 .Identifier }}is-active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a>
-      {{ if .HasChildren }}
-        {{ range .Children }}
-          <div class="menu1 {{ if eq $currentPage.Params.index1 .Identifier }}is-active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a>
-            {{ if .HasChildren }}
-              {{ range .Children }}
-                <div class="menu2 {{ if eq $currentPage.Params.index2 .Identifier }}is-active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a></div>
-              {{ end }}
-            {{ end }}
-          </div>
+    <div class="menu0 {{ if eq $currentPage.Params.index0 .Identifier }}is_active{{ end }}">
+    {{ if eq .URL "" }}
+      {{ .Name }}
+    {{ else }}
+      <a href="{{ .URL }}">{{ .Name }}</a>
+    {{ end }}
+
+    {{ if .HasChildren }}
+      {{ range .Children }}
+        <div class="menu1 {{ if eq $currentPage.Params.index1 .Identifier }}is_active{{ end }}">
+        {{ if eq .URL "" }}
+          {{ .Name }}
+        {{ else }}
+          <a href="{{ .URL }}">{{ .Name }}</a>
         {{ end }}
+
+        {{ if .HasChildren }}
+          {{ range .Children }}
+            <div class="menu2 {{ if eq $currentPage.Params.index2 .Identifier }}is_active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a></div>
+          {{ end }}
+        {{ end }}
+        </div>
       {{ end }}
+    {{ end }}
+
     </div>
   {{ end }}
 </div>

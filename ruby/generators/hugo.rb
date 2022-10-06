@@ -173,14 +173,6 @@ module Generators
         @index2articles.keys.sort.each do |section|
           generate_section_page( section)
         end
-      else
-        front_matter['parents'] = [{'url' => '/index.html', 'title' => 'Home'}]
-        section = front_matter['section']
-
-        if (front_matter['mode'] == 'article') || (front_matter['mode'] == 'post')
-          front_matter['parents'] << {'url'   => '/section-' + section + '/index.html',
-                                      'title' => section}
-        end
       end
     end
 
@@ -313,6 +305,11 @@ module Generators
                        'title'    => first_article.index.join(' / '),
                        'parents'  => parents,
                        'section'  => section}
+
+      first_article.index.each_index do |i|
+        front_matter["index#{i}"] = slug(first_article.index[0..i])
+      end
+
       write_file( path, "#{front_matter.to_yaml}\n---\n")
     end
 
@@ -401,11 +398,21 @@ module Generators
 
     def menu_generate( keys, menu, list, depth=0)
       if ! keys.empty?
-        ident = slug( keys)
+        ident         = slug( keys)
+        article_urls  = @index2articles[ident].keys
+
+        if article_urls.empty?
+          url = ''
+        elsif article_urls.size == 1
+          url = output_path( article_urls[0])
+        else
+          url = "/sections/#{ident}/index.html"
+        end
+
         list << {
             'identifier' => ident,
             'name'       => keys[-1],
-            'url'        => "/sections/#{ident}/index.html",
+            'url'        => url,
             'parent'     => (keys.size > 1) ? slug(keys[0...-1]) : nil
                 }
       end

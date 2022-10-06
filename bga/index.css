@@ -21,9 +21,12 @@ main>div {margin: 20px;
           background: white;
 }
 
-.page_width {max-width: 90%; min-width: 600px}
+title {font-weight: bold; display: flex; font-size: 25px; min-height: 20px;
+       align-items: center; justify-content: center}
 
-.big_width {max-width: 800px; min-width: 400px}
+.page_width {max-width: 75%; min-width: 600px}
+
+.big_width {max-width: 600px; min-width: 400px}
 
 .medium_width {width: 400px}
 
@@ -48,7 +51,7 @@ dt {font-weight: bold}
 a img {max-height: 100px; object-fit: contain}
 
 .menu {display: flex; flex-direction: column; width: 180px; max-width: 180px; overflow-clip: false}
-.is_active {color: red}
+.is_active, .is_active a {color: red}
 .menu0 {display: flex; flex-direction: row}
 .menu1 .menu2 {display: none}
 .menu0:hover menu1 {display: flex; flex-direction: row}
