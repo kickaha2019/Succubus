@@ -154,7 +154,7 @@ DUMP2
     @is_secure    = true
     @has_articles = true
     @is_redirect  = true
-    @is_grabbed   = true
+    @is_grabbed   = false
     report_header
 
     addresses.each_index do |i|
@@ -259,7 +259,7 @@ DUMP2
     @is_break     = true
     @is_secure    = true
     @is_redirect  = true
-    @is_grabbed   = true
+    @is_grabbed   = false
     @has_articles = true
     report_footer( n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed)
     close_files
@@ -274,7 +274,7 @@ DUMP2
         "Errors(#{n_error})",
         "Redirects(#{n_redirect})",
         "Secure(#{n_secure})",
-        "Grabbed(#{n_grabbed})"
+        "New(#{n_all-n_grabbed})"
     ]
 
     write_files <<FOOTER1
@@ -333,7 +333,7 @@ HEADER2
     @files[4].print text if @is_error
     @files[5].print text if @is_redirect
     @files[6].print text if @is_secure
-    @files[7].print text if @is_grabbed
+    @files[7].print text unless @is_grabbed
   end
 end
 

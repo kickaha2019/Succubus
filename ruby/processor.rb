@@ -17,10 +17,11 @@ class Processor
     @cache = cache
     @site  = Kernel.const_get( @config['class']).new( @config)
 
+    @pages = {}
     if File.exist?( cache + '/grabbed.yaml')
-      @pages = YAML.load( IO.read( cache + '/grabbed.yaml'))
-    else
-      @pages = {}
+      YAML.load( IO.read( cache + '/grabbed.yaml')).each_pair do |url, info|
+        @pages[unify(url)] = info   # Coalese URLs with and without trailing /s
+      end
     end
 
     @page_data = Hash.new {|h,k| h[k] = {}}
@@ -108,5 +109,15 @@ class Processor
         @site.redirect( url, target)
       end
     end
+  end
+
+  def unify( url)
+    return url if @pages[url]
+    if /\/$/ =~ url
+      return url[0..-2] if @pages[url[0..-2]]
+    else
+      return( url + '/') if @pages[url + '/']
+    end
+    url
   end
 end

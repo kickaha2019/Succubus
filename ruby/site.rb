@@ -173,10 +173,6 @@ class Site
       url = url.sub( /\/[a-z0-9_\-]+\/\.\.\//i, '/')
     end
 
-    if (url.size > root_url.size) && (/\/$/ =~ url)
-      url = url[0..-2]
-    end
-
     url1 = url.sub( /^http:/, 'https:')
     if local?(url1)
       url = url1

@@ -154,7 +154,9 @@ class Grabber < Processor
   end
 
   def reached( referral, url)
+    url = unify( url)
     @reachable[url] = true
+
     if @pages[url]
       @pages[url]['referrals'] = [] unless @pages[url]['referrals']
       @pages[url]['referrals'] << referral
