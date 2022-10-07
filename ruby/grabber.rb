@@ -15,6 +15,7 @@ class Grabber < Processor
 
   def check_files_deleted
     @pages.each_pair do |url, page|
+      page['referrals'] = []
       next if page['redirect']
       next if page['secured']
       next if page['comment']
@@ -103,12 +104,25 @@ class Grabber < Processor
         end
 
       elsif response.is_a?( Net::HTTPRedirection)
-        url = response['Location']
-        if login_redirect?( url)
-          info['secured'] = true
-        else
-          info['comment']  = url
-          info['redirect'] = true
+        handled = false
+        if unify(response['Location']) == url
+          response2 = http_get( response['Location'], 30)
+          if response2.is_a?( Net::HTTPOK)
+            File.open( "#{@cache}/#{ts}.html", 'wb') do |io|
+              io.write response2.body
+            end
+            handled = true
+          end
+        end
+
+        unless handled
+          url = response['Location']
+          if login_redirect?( url)
+            info['secured'] = true
+          else
+            info['comment']  = url
+            info['redirect'] = true
+          end
         end
 
       else
@@ -167,7 +181,6 @@ class Grabber < Processor
 
   def save_info
     @pages.each_value do |info|
-      info.delete('referral')
       info['referrals'] = info['referrals'].uniq.select {|ref| ref && (ref.strip != '')} if info['referrals']
     end
     File.open( "#{@cache}/grabbed.yaml", 'w') do |io|
@@ -190,17 +203,16 @@ class Grabber < Processor
 
   def trace_from_reachable
     while url = to_trace
-      #p ['trace_from_reachable1', url, @pages[url]['timestamp']]
       @traced[url] = true
       next if @pages[url]['timestamp'] == 0
       #p ['trace_from_reachable2', url, asset?( url)]
-      next if asset?( url)
 
       if @pages[url]['redirect']
         reached( url, @pages[url]['comment'])
         next
       end
       next if @pages[url]['comment']
+      next if asset?( url)
 
       path = @cache + "/#{@pages[url]['timestamp']}.html"
       if File.exist?( path)

@@ -75,9 +75,18 @@ class Compiler < Processor
 
   def page_redirects
     @pages.each_pair do |url, info|
-      asset, error, redirect, _, _ = examine( url)
-      next unless (! error) && redirect
-      @generator.redirect( url, info['comment'])
+      _, error, redirect, _, parsed = examine( url)
+      next if error
+
+      if parsed
+        parsed.links do |found|
+          if found != unify(found)
+            @generator.redirect( found, unify(found))
+          end
+        end
+      end
+
+      @generator.redirect( url, info['comment']) if redirect
     end
   end
 

@@ -436,6 +436,21 @@ class BGA < Site
       false
     end
 
+    on_page /^bchamp\/(book|chrules)/ do |page|
+      page.index= ['Procedures','British Championship']
+      false
+    end
+
+    on_page /^bchamp\/(history|matthew)/ do |page|
+      page.index= ['History','British Championship']
+      false
+    end
+
+    on_page /^bgj\/0/ do |page|
+      page.index= []
+      false
+    end
+
     on_page 'committee/clubs' do |page|
       page.index= ['Clubs']
       false

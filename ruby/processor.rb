@@ -31,8 +31,38 @@ class Processor
     @site.asset?( url)
   end
 
+  def deref( url)
+    url, _ = deref_with_limit( url)
+    url
+  end
+
+  def deref_error(url)
+    url, limit = deref_with_limit( url)
+    (limit == 0) || @pages[url].nil?
+  end
+
+  def deref_with_limit( url)
+    limit = 3
+    while limit > 0
+      if info = @pages[url]
+        if info['redirect']
+          url   =  unify(info['comment'])
+          limit -= 1
+        else
+          break
+        end
+      else
+        break
+      end
+    end
+    return url, limit
+  end
+
   def examine( url, debug = false)
     info = @pages[url]
+    unless info
+      return false, true, false, false, nil
+    end
     ts   = info['timestamp']
 
     if ts == 0
@@ -44,7 +74,7 @@ class Processor
     end
 
     if info['redirect']
-      return asset?( url), false, true, info['secured'], nil
+      return asset?( url), deref_error(url), true, info['secured'], nil
     end
 
     if asset?( url)
@@ -88,6 +118,8 @@ class Processor
   end
 
   def preparse_all
+#    suppress_indexes = []
+
     @pages.each_pair do |url, info|
       if ts = info['timestamp']
         path = "#{@cache}/#{ts}.html"
@@ -97,19 +129,58 @@ class Processor
         end
       end
     end
+
+    #   _, _, _, _, parsed = examine( deref( url))  # Parsing may not have been yet
+    #
+    #   if parsed
+    #     parsed.tree do |child|
+    #       if child.is_a?( Elements::Article)
+    #         if /bgj\/01901/ =~ url
+    #           p ['preparse_all2', url, info['referrals']]
+    #         end
+    #         suppress_child_article_indexing( url, info['referrals'], child, suppress_indexes)
+    #       end
+    #     end
+    #   end
+    # end
+    #
+    # suppress_indexes.each {|article| article.index = []}
   end
 
   def propagate_redirects
     @pages.each_key do |url|
-      target = url
-      while @pages[target] && @pages[target]['redirect']
-        target = @pages[target]['comment']
-      end
+      target = deref(url)
       if url != target
         @site.redirect( url, target)
       end
     end
   end
+
+  # def suppress_child_article_indexing( url, referrals, child, suppress_indexes)
+  #   return if child.index.empty?
+  #
+  #   referrals.each do |referral|
+  #     unless @pages[unify( referral)]
+  #       p ['suppress_child_article_indexing', url, referral, unify(referral)]
+  #     end
+  #     _, _, _, _, parsed = examine( unify( referral))
+  #     if parsed
+  #       parsed.tree do |parent|
+  #         if parent.is_a?( Elements::Article)
+  #           suppress = true
+  #           child.index.each_index do |i|
+  #             suppress = false unless child.index[i] == parent.index[i]
+  #           end
+  #
+  #           if suppress
+  #             suppress_indexes << child
+  #             return
+  #           end
+  #         end
+  #       end
+  #     end
+  #   end
+  # end
 
   def unify( url)
     return url if @pages[url]

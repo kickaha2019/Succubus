@@ -51,6 +51,10 @@ module Elements
       false
     end
 
+    def index=( index)
+      @index = index
+    end
+
     def relative_url
       @url[@root_url.size..-1]
     end

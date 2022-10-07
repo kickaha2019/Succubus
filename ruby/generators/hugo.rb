@@ -327,7 +327,11 @@ module Generators
 
     def link( text, href)
       return [] if text.empty? || text[0].empty?
-      [Stanza.new("[#{text[0].text}](#{localise href})")]
+      if loc = localise href
+        [Stanza.new("[#{text[0].text}](#{loc})")]
+      else
+        [Stanza.new( "*#{loc}*")]
+      end
     end
 
     def list( type, items)
@@ -492,7 +496,7 @@ module Generators
       elsif m = %r{^[^/]*//[^/]*(/.*)$}.match( url)
         m[1]
       else
-        raise "output_trail: #{url}"
+        raise "output_path: #{url}"
       end
     end
 

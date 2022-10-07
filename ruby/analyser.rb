@@ -175,7 +175,7 @@ DUMP2
       n_all     += 1
       n_grabbed += 1
       if @is_error
-        if parsed
+        if parsed || @is_redirect
           n_error += 1
         else
           n_break += 1
@@ -193,7 +193,7 @@ DUMP2
               date = child.date.strftime( '%Y-%m-%d')
             end
 
-            tags = child.index.join( ' ')
+            tags = child.index.join( ' / ')
           end
         end
       end
