@@ -15,8 +15,7 @@ class Grabber < Processor
   end
 
   def check_files_deleted
-    @pages.each_pair do |url, page|
-      page['referrals'] = []
+    @reachable.each_pair do |url, page|
       next if page['redirect']
       next if page['secured']
       next if page['comment']
@@ -32,13 +31,8 @@ class Grabber < Processor
   end
 
   def clean_cache
-    @pages, old_pages = {}, @pages
-    old_pages.each_pair do |url, info|
-      @pages[url] = info if @reachable[url]
-    end
-
     extant = {}
-    @pages.each_value {|page| extant[page['timestamp'].to_i] = true}
+    @reachable.each_value {|page| extant[page['timestamp'].to_i] = true}
 
     to_delete = []
     Dir.entries( @cache + '/grabbed').each do |f|
@@ -52,13 +46,6 @@ class Grabber < Processor
     end
   end
 
-  def elide_unreachable
-    @pages, old_pages = {}, @pages
-    old_pages.each_pair do |url, info|
-      @pages[url] = info if @reachable[url]
-    end
-  end
-
   def get_candidates( limit, explicit)
     if explicit
       @candidates = [explicit]
@@ -66,7 +53,7 @@ class Grabber < Processor
     end
     @candidates = []
 
-    @pages.each_pair do |url, info|
+    @reachable.each_pair do |url, info|
       if asset? url
         if info['timestamp'] == 0
           @candidates << url
@@ -76,16 +63,16 @@ class Grabber < Processor
       end
     end
 
-    @candidates = @candidates.sort_by {|url| @pages[url]['timestamp']}[0...limit]
+    @candidates = @candidates.sort_by {|url| @reachable[url]['timestamp']}[0...limit]
   end
 
   def grab_candidates
     @candidates.each do |url|
       puts "... Grabbing #{url}"
       ts = Time.now.to_i
-      referers = @pages[url]['referrals']
-      info     = @pages[url] = {'timestamp' => ts,
-                                'referrals' => referers}
+      referers = @reachable[url]['referrals']
+      info     = @reachable[url] = {'timestamp' => ts,
+                                    'referrals' => referers}
 
       begin
         URI.parse( url)
@@ -171,27 +158,30 @@ class Grabber < Processor
 
   def reached( referral, url)
     url = unify( url)
-    @reachable[url] = true
+    info = lookup( url)
 
-    if @pages[url]
-      @pages[url]['referrals'] = [] unless @pages[url]['referrals']
-      @pages[url]['referrals'] << referral
+    if info
+      @reachable[url] = {'referrals' => info.referrals + [referral],
+                         'timestamp' => info.timestamp}
+      @reachable[url]['redirect'] = true if info.redirect?
+      @reachable[url]['secured']  = true if info.secure?
+      @reachable[url]['comment']  = info.comment if info.comment
     else
-      @pages[url] = {'timestamp' => 0, 'referrals' => [referral]}
+      @reachable[url] = {'timestamp' => 0, 'referrals' => [referral]}
     end
   end
 
   def save_info
-    @pages.each_value do |info|
+    @reachable.each_value do |info|
       info['referrals'] = info['referrals'].uniq.select {|ref| ref && (ref.strip != '')} if info['referrals']
     end
     File.open( "#{@cache}/grabbed.yaml", 'w') do |io|
-      io.print @pages.to_yaml
+      io.print @reachable.to_yaml
     end
   end
 
   def to_trace
-    @pages.each_pair do |url, info|
+    pages do |url|
       next if @traced[url]
       return url if @reachable[url]
     end
@@ -206,30 +196,25 @@ class Grabber < Processor
   def trace_from_reachable
     while url = to_trace
       @traced[url] = true
-      next if @pages[url]['timestamp'] == 0
+      info = lookup( url)
+      next if info.timestamp == 0
       #p ['trace_from_reachable2', url, asset?( url)]
 
-      if @pages[url]['redirect']
-        reached( url, @pages[url]['comment'])
+      if info.redirect?
+        reached( url, info.comment)
         next
       end
-      next if @pages[url]['comment']
-      next if asset?( url)
+      next if info.error?
+      next if info.asset?
 
-      path = @cache + "/grabbed/#{@pages[url]['timestamp']}.html"
-      if File.exist?( path)
-        parsed = parse( url, @pages[url])
-        parsed.links do |found|
-          if trace?( found)
-            if /allnews\?created/ =~ found
-              p [url, path, found]
-              raise 'Ouch'
-            end
-            reached( url, found)
+      info.links do |found|
+        if trace?( found)
+          if /allnews\?created/ =~ found
+            p [url, path, found]
+            raise 'Ouch'
           end
+          reached( url, found)
         end
-      else
-        @pages[url]['timestamp'] = 0
       end
     end
 
@@ -239,10 +224,9 @@ class Grabber < Processor
 end
 
 g = Grabber.new( ARGV[0], ARGV[1])
-g.check_files_deleted
 g.initialise_reachable
 g.trace_from_reachable
-g.elide_unreachable
+g.check_files_deleted
 g.get_candidates( ARGV[2].to_i, ARGV[3])
 g.grab_candidates
 g.clean_cache

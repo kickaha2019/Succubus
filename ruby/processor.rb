@@ -4,6 +4,53 @@ require 'pry'
 require_relative 'site'
 
 class Processor
+  class PageInfo
+    def initialize( processor, cache, url, info)
+      @processor = processor
+      @cache     = cache
+      @url       = url
+      @info      = info
+    end
+
+    def asset?
+      @processor.asset?( @url)
+    end
+
+    def comment
+      @info['comment']
+    end
+
+    def error?
+      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
+      is_error
+    end
+
+    def links
+      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
+      if parsed
+        parsed.links do |found|
+          yield found
+        end
+      end
+    end
+
+    def redirect?
+      @info['redirect']
+    end
+
+    def referrals
+      @info['referrals']
+    end
+
+    def secure?
+      @info['secured']
+    end
+
+    def timestamp
+      @info['timestamp']
+    end
+  end
+
   def initialize( config, cache)
     @config     = YAML.load( IO.read( config + '/config.yaml'))
     @config_dir = config
@@ -108,6 +155,15 @@ class Processor
       puts "*** File: #{info['timestamp']}.html"
       raise
     end
+  end
+
+  def lookup( url)
+    return nil unless @pages[url]
+    PageInfo.new( self, @cache, url, @pages[url])
+  end
+
+  def pages
+    @pages.keys.each {|url| yield url}
   end
 
   def parse( url, info)
