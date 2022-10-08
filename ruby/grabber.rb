@@ -11,6 +11,7 @@ class Grabber < Processor
     @root      = @config['root_url']
     @traced    = {}
     @reachable = {}
+    @delay     = 0
   end
 
   def check_files_deleted
@@ -24,7 +25,7 @@ class Grabber < Processor
       if asset?( url)
         ext = url.split('.')[-1]
       end
-      unless File.exist?( @cache + "/#{page['timestamp']}.#{ext}")
+      unless File.exist?( @cache + "/grabbed/#{page['timestamp']}.#{ext}")
         page['timestamp'] = 0
       end
     end
@@ -40,14 +41,14 @@ class Grabber < Processor
     @pages.each_value {|page| extant[page['timestamp'].to_i] = true}
 
     to_delete = []
-    Dir.entries( @cache).each do |f|
+    Dir.entries( @cache + '/grabbed').each do |f|
       if m = /^(\d+)\.\w*$/.match( f)
         to_delete << f unless extant[ m[1].to_i]
       end
     end
 
     to_delete.each do |f|
-      File.delete( "#{@cache}/#{f}")
+      File.delete( "#{@cache}/grabbed/#{f}")
     end
   end
 
@@ -93,22 +94,22 @@ class Grabber < Processor
         next
       end
 
-      response = http_get( url, 30)
+      response = http_get( url)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
         if asset?( url)
           ext = url.split('.')[-1]
         end
-        File.open( "#{@cache}/#{ts}.#{ext}", 'wb') do |io|
+        File.open( "#{@cache}/grabbed/#{ts}.#{ext}", 'wb') do |io|
           io.write response.body
         end
 
       elsif response.is_a?( Net::HTTPRedirection)
         handled = false
         if unify(response['Location']) == url
-          response2 = http_get( response['Location'], 30)
+          response2 = http_get( response['Location'])
           if response2.is_a?( Net::HTTPOK)
-            File.open( "#{@cache}/#{ts}.html", 'wb') do |io|
+            File.open( "#{@cache}/grabbed/#{ts}.html", 'wb') do |io|
               io.write response2.body
             end
             handled = true
@@ -131,8 +132,9 @@ class Grabber < Processor
     end
   end
 
-  def http_get( url, delay = 30, headers = {})
-    sleep delay
+  def http_get( url, headers = {})
+    sleep @delay
+    @delay = 30
     uri = URI.parse( url)
 
     request = Net::HTTP::Get.new(uri.request_uri)
@@ -214,7 +216,7 @@ class Grabber < Processor
       next if @pages[url]['comment']
       next if asset?( url)
 
-      path = @cache + "/#{@pages[url]['timestamp']}.html"
+      path = @cache + "/grabbed/#{@pages[url]['timestamp']}.html"
       if File.exist?( path)
         parsed = parse( url, @pages[url])
         parsed.links do |found|

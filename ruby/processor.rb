@@ -85,7 +85,7 @@ class Processor
       return false, @page_data[url]['error'], false, info['secured'], @page_data[url]['parsed']
     end
 
-    unless File.exist?( @cache + "/#{ts}.html")
+    unless File.exist?( @cache + "/grabbed/#{ts}.html")
       puts "examine1: #{url}" if debug
       return false, true, false, info['secured'], nil
     end
@@ -112,7 +112,7 @@ class Processor
 
   def parse( url, info)
     unless @page_data[url]['document']
-      @page_data[url]['document'] = @site.parse_document( "#{@cache}/#{info['timestamp']}.html")
+      @page_data[url]['document'] = @site.parse_document( "#{@cache}/grabbed/#{info['timestamp']}.html")
     end
     @site.parse( url, @page_data[url]['document'])
   end
@@ -122,7 +122,7 @@ class Processor
 
     @pages.each_pair do |url, info|
       if ts = info['timestamp']
-        path = "#{@cache}/#{ts}.html"
+        path = "#{@cache}/grabbed/#{ts}.html"
         if File.exist?( path)
           @page_data[url]['document'] = @site.parse_document( path)
           @site.preparse( url, @page_data[url]['document'])
