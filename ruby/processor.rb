@@ -12,8 +12,24 @@ class Processor
       @info      = info
     end
 
+    def articles
+      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
+      if parsed
+        parsed.tree do |child|
+          if child.is_a?( Elements::Article)
+            yield child
+          end
+        end
+      end
+    end
+
     def asset?
       @processor.asset?( @url)
+    end
+
+    def broken?
+      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
+      is_error && parsed.nil?
     end
 
     def comment
@@ -163,7 +179,7 @@ class Processor
   end
 
   def pages
-    @pages.keys.each {|url| yield url}
+    @pages.keys.sort.each {|url| yield url}
   end
 
   def parse( url, info)

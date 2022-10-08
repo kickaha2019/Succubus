@@ -3,121 +3,8 @@ require 'yaml'
 require_relative 'processor'
 
 class Analyser < Processor
-  @@indents = [' ', '|', '&boxur;', '&boxvr;']
-
   def close_files
     @files.each {|io| io.close}
-  end
-
-  def dump( struct, filename, debug=false)
-    File.open( filename, 'w') do |io|
-      io.puts <<"DUMP1"
-<html><head>
-<style>
-.indent {font-family: courier; font-size: 30px; width: 20px; height: 20px; display: inline-block;
-         cursor: pointer}
-.label {font-size: 20px; height: 20px}
-.grokked {background: lime}
-.grokked_and_content {background: yellow}
-.error {background: red}
-.section {background: cyan}
-</style>
-<script>
-function expand( index) {
-  document.getElementById( 'e' + index).style.display = 'inline';
-  document.getElementById( 'r' + index).style.display = 'none';
-  document.getElementById( 'd' + index).style.display = 'block';
-}
-function reduce( index) {
-  document.getElementById( 'e' + index).style.display = 'none';
-  document.getElementById( 'r' + index).style.display = 'inline';
-  document.getElementById( 'd' + index).style.display = 'none';
-}
-</script>
-</head>
-<body><div>
-DUMP1
-      dump_structure( struct, 0, dump_expand( struct, debug), io)
-      io.puts <<"DUMP2"
-<div><body></html>
-DUMP2
-    end
-  end
-
-  def dump_expand( struct, debug=false)
-    expand, focus = {}, {}
-    struct.tree do |element|
-      if element.error?
-        focus[element.id] = true
-      elsif element.is_a?( Elements::Article)
-        focus[element.id] = true
-      end
-      p ['dump_expand1', element.id, focus[element.id]] if debug && focus[element.id]
-
-      element.contents.each do |child|
-        expand[element.id] = true if expand[child.id] || focus[child.id]
-      end
-    end
-
-    if debug
-      p ['dump_expand2', expand, focus]
-    end
-
-    expand
-  end
-
-  def dump_structure( struct, indent, expand, io)
-    if indent > 0
-      (0...indent).each do
-        io.print "<div class=\"indent\"></div>"
-      end
-    end
-
-    io.print "<div class=\"indent\">"
-    before, after = '', ''
-    exp = expand[struct.id]
-
-    if struct.contents.size > 0
-      io.print "<span id=\"r#{struct.id}\"#{exp ? ' style="display: none"' : ''} onclick=\"expand(#{struct.id})\">&rtri;</span>"
-      io.print "<span id=\"e#{struct.id}\"#{exp ? '' : ' style="display: none"'} onclick=\"reduce(#{struct.id})\">&dtri;</span>"
-      before = "<div id=\"d#{struct.id}\"#{exp ? '' : ' style="display: none"'}>"
-      after  = '</div>'
-    end
-    io.print "</div>"
-
-    scheme, tooltip = '', false, ''
-    struct_error, tooltip = struct.error?
-
-    if struct_error
-      scheme = 'error'
-    elsif struct.article?
-      scheme = 'section'
-    elsif struct.grokked?
-      if struct.content?
-        scheme = 'grokked_and_content'
-      else
-        scheme = 'grokked'
-      end
-    else
-      if struct.content?
-        scheme  = 'error'
-        tooltip = 'Ungrokked content'
-      end
-    end
-
-    # if struct.doc.name == 'nav'
-    #   p [struct.doc.name, scheme, struct.class.name, struct.grokked?, struct.content?]
-    # end
-
-    io.print "<span class=\"label #{scheme}\" title=\"#{struct.tooltip}#{tooltip}\">"
-    io.print( struct.describe)
-    io.puts "</span><br>"
-
-    io.puts before
-    struct.contents.each do |child|
-      dump_structure(  child, indent+1, expand, io)
-    end
-    io.puts after
   end
 
   def open_files( dir)
@@ -147,7 +34,6 @@ DUMP2
     open_files( dir)
     n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0, 0, 0
 
-    addresses     = @pages.keys.sort
     @is_asset     = true
     @is_error     = true
     @is_break     = true
@@ -157,75 +43,62 @@ DUMP2
     @is_grabbed   = false
     report_header
 
-    addresses.each_index do |i|
-      addr = addresses[i]
+    pages do |url|
+      debug = (url == @config['debug_url'])
+      info = lookup(url)
 
-      debug = (addr == @config['debug_url'])
-      @is_asset, @is_error, @is_redirect, @is_secure, parsed = examine( addr, debug)
-      @is_break = false
-      if @is_secure
-        @is_error  =  false
-        n_secure   += 1
-      end
+      @is_asset    = info.asset?
+      @is_break    = info.broken?
+      @is_error    = info.error? && (! info.broken?) && (! info.secure?)
+      @is_redirect = info.redirect?
+      @is_secure   = info.secure?
+      @is_grabbed  = info.timestamp > 0
 
-      ts   = @pages[addr]['timestamp']
-      @is_grabbed = (ts != 0)
-      ext  = @is_asset ? addr.split('.')[-1] : 'html'
+      n_secure   += 1 if @is_secure
+      n_all      += 1
+      n_grabbed  += 1 if @is_grabbed
+      n_error    += 1 if @is_error
+      n_break    += 1 if @is_break
+      n_asset    += 1 if @is_asset
+      n_redirect += 1 if @is_redirect
 
-      n_all     += 1
-      n_grabbed += 1
-      if @is_error
-        if parsed || @is_redirect
-          n_error += 1
-        else
-          n_break += 1
-          @is_break = true
-          @is_error = false
-        end
-      end
+      ext  = @is_asset ? url.split('.')[-1] : 'html'
 
       old_articles, date, tags = n_articles, '', ''
-      if parsed
-        parsed.tree do |child|
-          if child.is_a?( Elements::Article)
-            n_articles += 1
-            if child.date
-              date = child.date.strftime( '%Y-%m-%d')
-            end
-
-            tags = child.index.join( ' / ')
-          end
+      info.articles do |article|
+        n_articles += 1
+        if article.date
+          date = article.date.strftime( '%Y-%m-%d')
         end
+
+        tags = article.index.join( ' / ')
       end
 
       @has_articles = (n_articles > old_articles)
 
-      if ts == 0
-        write_files "<tr><td>#{addr}</td>"
+      if info.timestamp == 0
+        write_files "<tr><td>#{url}</td>"
       else
-        write_files "<tr><td><a target=\"_blank\" href=\"#{@cache}/#{ts}.#{ext}\">#{addr}</a></td>"
+        write_files "<tr><td><a target=\"_blank\" href=\"#{@cache}/#{info.timestamp}.#{ext}\">#{url}</a></td>"
       end
 
       outs = []
-      if refs = @pages[addr]['referrals']
-        refs.each_index do |i|
-          outs << "<a target=\"_blank\" href=\"#{refs[i]}\">#{i+1}</a>" if i < 3
-          outs << '+' if i == 3
-        end
+      info.referrals.each_index do |i|
+        outs << "<a target=\"_blank\" href=\"#{info.referrals[i]}\">#{i+1}</a>" if i < 3
+        outs << '+' if i == 3
       end
       write_files "<td>#{outs.join( '&nbsp;')}</td>"
 
-      if parsed
+      if (info.timestamp > 0) && (! @is_asset)
         write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">"
-        write_files "<a target=\"_blank\" href=\"#{i}.html\">"
+        write_files "<a target=\"_blank\" href=\"#{info.timestamp}.html\">"
         write_files( @is_error ? '&cross;' : (@is_secure ? '&timesb;' : '&check;'))
         write_files "</a></th>"
       elsif @is_redirect
         n_redirect += 1
         write_files "<th bgcolor=\"lime\">&rArr;</th>"
-      elsif ts == 0
+      elsif info.timestamp == 0
         write_files "<th bgcolor=\"yellow\">?</th>"
-        n_grabbed -= 1
       elsif @is_asset
         n_asset += 1
         if @is_error || @is_break
@@ -240,17 +113,14 @@ DUMP2
       write_files "<td>#{@has_articles ? (n_articles - old_articles) : ''}</td>"
       write_files "<td>#{date}</td>"
       write_files "<td>#{tags}</td>"
-      write_files "<td>#{@pages[addr]['comment']}</td>"
+      write_files "<td>#{info.comment}</td>"
 
-      if ts == 0
+      if info.timestamp == 0
         write_files "<td></td>"
       else
-        write_files "<td>#{Time.at(ts).strftime( '%Y-%m-%d')}</td>"
+        write_files "<td>#{Time.at(info.timestamp).strftime( '%Y-%m-%d')}</td>"
       end
 
-      if parsed
-        dump( parsed, dir + "/#{i}.html", debug)
-      end
       write_files "</tr>"
     end
 
