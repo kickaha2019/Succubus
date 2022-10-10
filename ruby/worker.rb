@@ -2,7 +2,43 @@ require 'yaml'
 
 require_relative 'processor'
 
-class Dumper < Processor
+class Worker < Processor
+  def initialize( config, cache)
+    super
+    @digested = {}
+    @dir      = @config['temp_dir']
+
+    unless File.exist?( @dir)
+      Dir.mkdir( @dir)
+    end
+  end
+
+  def digest( url, parsed, debug)
+    entry = @digested[url] = {'articles' => [], 'links' => []}
+
+    parsed.tree do |child|
+      if child.is_a?( Elements::Article)
+        entry['articles'] << {'index' => child.index}
+        if child.date
+          entry['articles'][-1]['date'] = child.date.strftime( '%Y-%m-%d')
+        end
+      end
+    end
+
+    parsed.links do |found|
+      entry['links'] << found
+    end
+
+    entry['error'] = parsed.content?
+    parsed.tree do |child|
+      child_error, child_msg = child.error?
+      if child_error
+        p ['digest', child.index, child.class.to_s, child_msg] if debug
+        entry['error'] = true
+      end
+    end
+  end
+
   def dump( struct, filename, debug=false)
     File.open( filename, 'w') do |io|
       io.puts <<"DUMP1"
@@ -114,23 +150,47 @@ DUMP2
     io.puts after
   end
 
-  def process( dir, counter, every)
-    preparse_all
-
+  def loop( verb, counter, every)
     pages do |url|
+      info = @pages[url]
       debug = (url == @config['debug_url'])
-      _, _, _, _, parsed = examine( url, debug)
-      if parsed
-        if counter == 0
-          dump( parsed, dir + "/#{lookup(url).timestamp}.html", debug)
-          counter = every - 1
-        else
-          counter -= 1
-        end
+
+      path = @cache + "/grabbed/#{info['timestamp']}.html"
+      next unless File.exist?( path)
+
+      if counter == 0
+        step( verb, url, info, parse( url, info), debug)
+        counter = every - 1
+      else
+        counter -= 1
+      end
+    end
+  end
+
+  def process( verb, counter, every)
+    loop( verb, counter, every)
+    teardown( verb, counter)
+  end
+
+  def step( verb, url, info, parsed, debug)
+    if verb == 'digest'
+      digest( url, parsed, debug)
+    end
+
+    if verb == 'dump'
+      digest( url, parsed, debug)
+      dump( parsed, @dir + "/#{info['timestamp']}.html", debug)
+    end
+  end
+
+  def teardown( verb, counter)
+    if (verb == 'digest') || (verb =='dump')
+      File.open( "#{@dir}/digest#{counter}.yaml", 'w') do |io|
+        io.puts @digested.to_yaml
       end
     end
   end
 end
 
-d = Dumper.new( ARGV[0], ARGV[1])
+d = Worker.new( ARGV[0], ARGV[1])
 d.process( ARGV[2], ARGV[3].to_i, ARGV[4].to_i)

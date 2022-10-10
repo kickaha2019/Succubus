@@ -1,5 +1,7 @@
 ---
 root_url: https://britgo.org/
+temp_dir: /tmp/Succubus
+workers:  10
 debug_url: xxx
 include_urls:
 - https://britgo.org/membersarea

@@ -135,6 +135,10 @@ class BGA < Site
       place.children
     end
 
+    on_element 'div', :class => 'indent2' do |place|
+      place.children
+    end
+
     on_element 'div', :class => 'last-updated' do |place|
       Elements::Ignore.new( place)
       # if m = / (\w*) (\d\d) (\d\d\d\d)/.match( place.text)
@@ -293,6 +297,7 @@ class BGA < Site
           'https://britgo.org/user/login',
           'https://britgo.org/tournaments/britishopen/entryform',
           'https://britgo.org/user/password',
+          'https://britgo.org/eygc2014/enterbgc',
 
           # Applets
           'https://britgo.org/capturego/play',

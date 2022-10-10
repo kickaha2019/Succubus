@@ -21,15 +21,9 @@ class Analyser < Processor
     @is_asset = false
   end
 
-  def report( dir)
-    preparse_all
-    to_delete = []
-    Dir.entries( dir).each do |f|
-      to_delete << f if /\.html$/ =~ f
-    end
-    to_delete.each do |f|
-      File.delete( "#{dir}/#{f}")
-    end
+  def report
+    dir = @config['temp_dir']
+    subprocess 'dump'
 
     open_files( dir)
     n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0, 0, 0
@@ -67,11 +61,12 @@ class Analyser < Processor
       old_articles, date, tags = n_articles, '', ''
       info.articles do |article|
         n_articles += 1
-        if article.date
-          date = article.date.strftime( '%Y-%m-%d')
+
+        if article['date']
+          date = article['date']
         end
 
-        tags = article.index.join( ' / ')
+        tags = article['index'].join( ' / ')
       end
 
       @has_articles = (n_articles > old_articles)
@@ -89,14 +84,14 @@ class Analyser < Processor
       end
       write_files "<td>#{outs.join( '&nbsp;')}</td>"
 
-      if (info.timestamp > 0) && (! @is_asset)
-        write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">"
+      if @is_redirect
+        n_redirect += 1
+        write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">&rArr;</th>"
+      elsif (info.timestamp > 0) && (! @is_asset)
+        write_files "<th bgcolor=\"#{(@is_error || @is_break) ? 'red' : 'lime'}\">"
         write_files "<a target=\"_blank\" href=\"#{info.timestamp}.html\">"
         write_files( @is_error ? '&cross;' : (@is_secure ? '&timesb;' : '&check;'))
         write_files "</a></th>"
-      elsif @is_redirect
-        n_redirect += 1
-        write_files "<th bgcolor=\"lime\">&rArr;</th>"
       elsif info.timestamp == 0
         write_files "<th bgcolor=\"yellow\">?</th>"
       elsif @is_asset
@@ -208,4 +203,4 @@ HEADER2
 end
 
 a = Analyser.new( ARGV[0], ARGV[1])
-a.report( ARGV[2])
+a.report

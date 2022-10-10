@@ -9,9 +9,26 @@ class Grabber < Processor
   def initialize( config, cache)
     super
     @root      = @config['root_url']
-    @traced    = {}
+    #@traced    = {}
+    @to_trace  = []
     @reachable = {}
     @delay     = 0
+  end
+
+  def add_referral( referral, url)
+    return if @reachable[url]['referrals'].size > 3
+    @reachable[url]['referrals'] << referral unless @reachable[url]['referrals'].include?( url)
+  end
+
+  def add_referrals( referrals, url)
+    return if @reachable[url]['referrals'].size > 3
+    if referrals.size > 3
+      @reachable[url]['referrals'] = referrals[0..3]
+    else
+      referrals.each do |ref|
+        add_referral( ref, url)
+      end
+    end
   end
 
   def check_files_deleted
@@ -44,6 +61,10 @@ class Grabber < Processor
     to_delete.each do |f|
       File.delete( "#{@cache}/grabbed/#{f}")
     end
+  end
+
+  def digest
+    subprocess 'digest'
   end
 
   def get_candidates( limit, explicit)
@@ -158,35 +179,40 @@ class Grabber < Processor
 
   def reached( referral, url)
     url = unify( url)
-    info = lookup( url)
 
+    unless @reachable[url]
+      @reachable[url] = {'timestamp' => 0, 'referrals' => []}
+      @to_trace << url
+    end
+
+    add_referral( referral, url)
+
+    info = lookup( url)
     if info
-      @reachable[url] = {'referrals' => info.referrals + [referral],
-                         'timestamp' => info.timestamp}
-      @reachable[url]['redirect'] = true if info.redirect?
-      @reachable[url]['secured']  = true if info.secure?
-      @reachable[url]['comment']  = info.comment if info.comment
-    else
-      @reachable[url] = {'timestamp' => 0, 'referrals' => [referral]}
+      add_referrals( info.referrals, url)
+      @reachable[url]['timestamp'] =  info.timestamp
+      @reachable[url]['redirect']  =  true if info.redirect?
+      @reachable[url]['secured']   =  true if info.secure?
+      @reachable[url]['comment']   =  info.comment if info.comment
     end
   end
 
   def save_info
-    @reachable.each_value do |info|
-      info['referrals'] = info['referrals'].uniq.select {|ref| ref && (ref.strip != '')} if info['referrals']
-    end
+    # @reachable.each_value do |info|
+    #   info['referrals'] = info['referrals'].uniq.select {|ref| ref && (ref.strip != '')} if info['referrals']
+    # end
     File.open( "#{@cache}/grabbed.yaml", 'w') do |io|
       io.print @reachable.to_yaml
     end
   end
 
-  def to_trace
-    pages do |url|
-      next if @traced[url]
-      return url if @reachable[url]
-    end
-    nil
-  end
+  # def to_trace
+  #   pages do |url|
+  #     next if @traced[url]
+  #     return url if @reachable[url]
+  #   end
+  #   nil
+  # end
 
   def trace?( url)
     return false unless @root == url[0...(@root.size)]
@@ -194,9 +220,9 @@ class Grabber < Processor
   end
 
   def trace_from_reachable
-    while url = to_trace
-      @traced[url] = true
+    while url = @to_trace.pop
       info = lookup( url)
+      next if info.nil?
       next if info.timestamp == 0
       #p ['trace_from_reachable2', url, asset?( url)]
 
@@ -209,10 +235,10 @@ class Grabber < Processor
 
       info.links do |found|
         if trace?( found)
-          if /allnews\?created/ =~ found
-            p [url, path, found]
-            raise 'Ouch'
-          end
+          # if /allnews\?created/ =~ found
+          #   p [url, path, found]
+          #   raise 'Ouch'
+          # end
           reached( url, found)
         end
       end
@@ -224,10 +250,16 @@ class Grabber < Processor
 end
 
 g = Grabber.new( ARGV[0], ARGV[1])
+puts "... Initialised #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+g.digest
+puts "... Digested    #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.initialise_reachable
 g.trace_from_reachable
+puts "... Traced out  #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.check_files_deleted
 g.get_candidates( ARGV[2].to_i, ARGV[3])
 g.grab_candidates
+puts "... Grabbed     #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.clean_cache
 g.save_info
+puts "... Saved info  #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"

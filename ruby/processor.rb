@@ -5,20 +5,19 @@ require_relative 'site'
 
 class Processor
   class PageInfo
-    def initialize( processor, cache, url, info)
+    def initialize( processor, cache, url, info, digest)
       @processor = processor
       @cache     = cache
       @url       = url
       @info      = info
+      @digest    = digest
+      @digests   = nil
     end
 
     def articles
-      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
-      if parsed
-        parsed.tree do |child|
-          if child.is_a?( Elements::Article)
-            yield child
-          end
+      if @digest
+        @digest['articles'].each do |article|
+          yield article
         end
       end
     end
@@ -28,8 +27,8 @@ class Processor
     end
 
     def broken?
-      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
-      is_error && parsed.nil?
+      return false if secure? || redirect?
+      error? && @digest.nil?
     end
 
     def comment
@@ -37,15 +36,18 @@ class Processor
     end
 
     def error?
-      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
-      is_error
+      if @digest
+        @digest['error']
+      else
+        return @processor.deref_error(@url) if redirect?
+        comment
+      end
     end
 
     def links
-      is_asset, is_error, is_redirect, is_secure, parsed = @processor.examine( @url)
-      if parsed
-        parsed.links do |found|
-          yield found
+      if @digest
+        @digest['links'].each do |link|
+          yield link
         end
       end
     end
@@ -88,6 +90,10 @@ class Processor
     end
 
     @page_data = Hash.new {|h,k| h[k] = {}}
+
+    unless File.exist?( @config['temp_dir'])
+      Dir.mkdir( @config['temp_dir'])
+    end
   end
 
   def asset?( url)
@@ -101,7 +107,7 @@ class Processor
 
   def deref_error(url)
     url, limit = deref_with_limit( url)
-    (limit == 0) || @pages[url].nil?
+    (limit == 0) # || @pages[url].nil?
   end
 
   def deref_with_limit( url)
@@ -175,7 +181,16 @@ class Processor
 
   def lookup( url)
     return nil unless @pages[url]
-    PageInfo.new( self, @cache, url, @pages[url])
+    unless @digests
+      @digests = {}
+      (0...@config['workers']).each do |i|
+        YAML.load( IO.read( @config['temp_dir'] + "/digest#{i}.yaml")).each_pair do |url, info|
+          @digests[url] = info
+        end
+      end
+      #puts "... Consumed    #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+    end
+    PageInfo.new( self, @cache, url, @pages[url], @digests[url])
   end
 
   def pages
@@ -226,6 +241,22 @@ class Processor
         @site.redirect( url, target)
       end
     end
+  end
+
+  def subprocess( verb)
+    pids = []
+    loop = @config['workers']
+    (0...loop).each do |i|
+      pids << spawn( "/Users/peter/Succubus/bin/worker.command #{verb} #{i} #{loop}")
+    end
+
+    error = false
+    pids.each do |pid|
+      Process.wait pid
+      error = true unless $?.exitstatus == 0
+    end
+
+    raise "Subprocess error" if error
   end
 
   # def suppress_child_article_indexing( url, referrals, child, suppress_indexes)

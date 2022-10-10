@@ -1,4 +1,5 @@
 #!/bin/csh
+rm -r /tmp/Succubus
 cd $0:h
 cd ..
 time ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus ~/Temp/Hugo
