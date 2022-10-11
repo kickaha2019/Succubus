@@ -534,8 +534,8 @@ class Site
     Nokogiri::HTML( IO.read( path))
   end
 
-  def preparse( url, page)
-  end
+  # def preparse( url, page)
+  # end
 
   def redirect( url, target)
   end

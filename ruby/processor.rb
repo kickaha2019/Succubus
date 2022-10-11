@@ -84,9 +84,7 @@ class Processor
 
     @pages = {}
     if File.exist?( cache + '/grabbed.yaml')
-      YAML.load( IO.read( cache + '/grabbed.yaml')).each_pair do |url, info|
-        @pages[unify(url)] = info   # Coalese URLs with and without trailing /s
-      end
+      @pages = YAML.load( IO.read( cache + '/grabbed.yaml'))
     end
 
     @page_data = Hash.new {|h,k| h[k] = {}}
@@ -204,18 +202,18 @@ class Processor
     @site.parse( url, @page_data[url]['document'])
   end
 
-  def preparse_all
+#  def preparse_all
 #    suppress_indexes = []
 
-    @pages.each_pair do |url, info|
-      if ts = info['timestamp']
-        path = "#{@cache}/grabbed/#{ts}.html"
-        if File.exist?( path)
-          @page_data[url]['document'] = @site.parse_document( path)
-          @site.preparse( url, @page_data[url]['document'])
-        end
-      end
-    end
+    # @pages.each_pair do |url, info|
+    #   if ts = info['timestamp']
+    #     path = "#{@cache}/grabbed/#{ts}.html"
+    #     if File.exist?( path)
+    #       @page_data[url]['document'] = @site.parse_document( path)
+    #       @site.preparse( url, @page_data[url]['document'])
+    #     end
+    #   end
+    # end
 
     #   _, _, _, _, parsed = examine( deref( url))  # Parsing may not have been yet
     #
@@ -232,7 +230,7 @@ class Processor
     # end
     #
     # suppress_indexes.each {|article| article.index = []}
-  end
+#  end
 
   def propagate_redirects
     @pages.each_key do |url|

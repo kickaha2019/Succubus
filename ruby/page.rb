@@ -32,6 +32,10 @@ class Page
     @url[@root_url.size..-1].split('/')
   end
 
+  def relative_url
+    @url[@root_url.size..-1]
+  end
+
   def root?
     @url == @root_url
   end

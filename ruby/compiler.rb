@@ -17,7 +17,7 @@ class Compiler < Processor
   end
 
   def compile
-    preparse_all
+    #preparse_all
     compile_site
     @generator.write_file( @config_dir + '/generated.csv',
                            @generated.join( "\n"))

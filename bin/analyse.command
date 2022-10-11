@@ -1,6 +1,7 @@
 #!/bin/csh
 rm -r /tmp/Succubus
 cd $0:h
+ruby -v
 
 time ruby ../ruby/analyser.rb /Users/peter/Succubus/bga /Users/peter/Caches/Succubus
 if ($status != 0) exit 1

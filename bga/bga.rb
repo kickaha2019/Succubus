@@ -339,6 +339,26 @@ class BGA < Site
       false
     end
 
+    on_page /bgj\/(bgj|issue)\d+/ do |page|
+      seasons = 'Summer|Autumn|Winter|Spring|January|February|March|April|May|June|July|August|September|October|November|December'
+
+      on_element 'h1', :class => 'page-title' do |place|
+        if m = /(?:#{seasons}) (\d\d\d\d)/.match( place.text)
+          year = (m[1].to_i / 5) * 5
+          page.index = ['British Go Journal', "#{year}-#{year+4}"]
+        end
+        nil
+      end
+
+      on_element 'h2' do |place|
+        if m = /(?:#{seasons}) (\d\d\d\d)/.match( place.text)
+          year = (m[1].to_i / 5) * 5
+          page.index = ['British Go Journal', "#{year}-#{year+4}"]
+        end
+        nil
+      end
+    end
+
     on_page 'junior/champs' do |page|
       on_element 'font' do |place|
         Elements::Group.new( place)
@@ -369,14 +389,14 @@ class BGA < Site
     end
 
     on_page %r{^\w*/\w*\d\d\d\d(|$)} do |page|
-      unless /^(bgj|node)$/ =~ page.relative_path[0]
+      unless /^(bgj|node|results)$/ =~ page.relative_path[0]
         page.date= Time.new( page.relative_path[1][-4..-1].to_i)
         page.mode= :post
       end
       false
     end
 
-    on_page %r{^(junior|news|results)/} do |page|
+    on_page %r{^(junior|news)/} do |page|
       if m = %r{^\w+, (\d\d)/(\d\d)/(\d\d\d\d)( |$)}.match( page.css( 'span.submitted').text.strip)
         page.date = to_date( m[3], m[2], m[1])
         page.mode= :post
@@ -395,6 +415,8 @@ class BGA < Site
           page.date = to_date( m[3], m[2], m[1])
           page.mode= :post
         end
+
+        false
       end
 
       false
@@ -405,59 +427,63 @@ class BGA < Site
       #
     end
 
-    on_page %r{^(\w*)(/|$)} do |page|
-      section = {
-          'bchamp'      => 'British Championship',
-          'bgj'         => 'British Go Journal',
-          'booklist'    => 'Book list',
-          'books'       => 'Book list',
-          'club'        => 'Clubs',
-          'clubs'       => 'Clubs',
-          'council'     => 'Council',
-          'education'   => 'Teaching',
-          'events'      => 'Events',
-          'eygc2014'    => 'European Youth Go Congress 2014',
-          'general'     => 'General',
-          'gopcres'     => 'Playing online',
-          'history'     => 'History',
-          'hof'         => 'Hall of Fame',
-          'junior'      => 'Youth',
-          'membership'  => 'Membership',
-          'news'        => 'News',
-          'newsletter'  => 'Newsletters',
-          'obits'       => 'Obituaries',
-          'organisers'  => 'Organisers',
-          'people'      => 'People',
-          'positions'   => 'Positions',
-          'reps'        => 'Reports',
-          'resources'   => 'Resources',
-          'results'     => 'Results',
-          'review'      => 'Reviews',
-          'teaching'    => 'Teaching',
-          'tournaments' => 'Events',
-          'youth'       => 'Youth'
-      }[page.relative_path[0]]
-      page.index= [section] if section
+    on_page /.*/ do |page|
+      map = {
+          /^bchamp\/(book|chrules)\//    => ['Procedures','British Championship'],
+          /^bchamp\/(history|matthew)\// => ['History','British Championship'],
+          /^bchamp\//                    => 'British Championship',
+          /^bgj\/glossary.html/          => ['Procedures', "British Go Journal"],
+          /^bgj\/guidelines.html/        => ['Procedures', "British Go Journal"],
+          /^bgj\/history\//              => ['History', "British Go Journal"],
+          /^committee\/clubs\//          => ['Clubs'],
+          /^bgj\//                       => 'British Go Journal',
+          /^booklist\//                  => 'Book list',
+          /^books\//                     => 'Book list',
+          /^club\//                      => 'Clubs',
+          /^clubs\//                     => 'Clubs',
+          /^council\//                   => 'Council',
+          /^education\//                 => 'Teaching',
+          /^events\//                    => 'Events',
+          /^eygc2014\//                  => 'European Youth Go Congress 2014',
+          /^general\//                   => 'General',
+          /^gopcres\//                   => 'Playing online',
+          /^history\//                   => 'History',
+          /^hof\//                       => 'Hall of Fame',
+          /^junior\//                    => 'Youth',
+          /^membership\//                => 'Membership',
+          /^news\//                      => 'News',
+          /^newsletter\//                => 'Newsletters',
+          /^obits\//                     => 'Obituaries',
+          /^organisers\//                => 'Organisers',
+          /^people\//                    => 'People',
+          /^positions\//                 => 'Positions',
+          /^reps\//                      => 'Reports',
+          /^resources\//                 => 'Resources',
+          /^results\//                   => 'Results',
+          /^review\//                    => 'Reviews',
+          /^teaching\//                  => 'Teaching',
+          /^tournaments\//               => 'Events',
+          /^youth\//                     => 'Youth'
+      }
+
+      map.each_pair do |re, index|
+        if re =~ page.relative_url
+          page.index = index.is_a?( Array) ? index : [index]
+          break
+        end
+      end
+
       false
     end
 
-    on_page /^bchamp\/(book|chrules)/ do |page|
-      page.index= ['Procedures','British Championship']
-      false
-    end
-
-    on_page /^bchamp\/(history|matthew)/ do |page|
-      page.index= ['History','British Championship']
+    on_page /^results\/\d\d\d\d\// do |page|
+      decade = (page.relative_path[1].to_i / 10) * 10
+      page.index = ['Results', decade.to_s, page.relative_path[1]]
       false
     end
 
     on_page /^bgj\/0/ do |page|
       page.index= []
-      false
-    end
-
-    on_page 'committee/clubs' do |page|
-      page.index= ['Clubs']
       false
     end
 
@@ -554,17 +580,17 @@ class BGA < Site
     end
   end
 
-  def preparse( url, document)
-    nodes = page_to_nodes( document)
-
-    nodes.css( 'td.views-field-title a') do |node|
-      [absolutise( url, node['href'])]
-    end.parent.parent.css( 'td.views-field-created') do |node1, href|
-      if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( node1.text)
-        @post_dates[href] = to_date( m[1], m[2], m[3])
-      end
-      false
-    end
+  # def preparse( url, document)
+  #   nodes = page_to_nodes( document)
+  #
+  #   nodes.css( 'td.views-field-title a') do |node|
+  #     [absolutise( url, node['href'])]
+  #   end.parent.parent.css( 'td.views-field-created') do |node1, href|
+  #     if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( node1.text)
+  #       @post_dates[href] = to_date( m[1], m[2], m[3])
+  #     end
+  #     false
+  #   end
 
     # nodes.css( 'td.views-field-title a') do |node|
     #   [absolutise( url, node['href'])]
@@ -574,14 +600,14 @@ class BGA < Site
     #   end
     #   false
     # end
-  end
+  # end
 
-  def redirect( url, target)
-    super
-    if @post_dates[url]
-      @post_dates[target] = @post_dates[url]
-    end
-  end
+  # def redirect( url, target)
+  #   super
+  #   if @post_dates[url]
+  #     @post_dates[target] = @post_dates[url]
+  #   end
+  # end
 
   def to_date( year, month, day)
     #p ['to_date1', year, month, day]

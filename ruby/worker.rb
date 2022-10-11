@@ -18,7 +18,7 @@ class Worker < Processor
 
     parsed.tree do |child|
       if child.is_a?( Elements::Article)
-        entry['articles'] << {'index' => child.index}
+        entry['articles'] << {'index' => child.index, 'mode' => child.mode.to_s}
         if child.date
           entry['articles'][-1]['date'] = child.date.strftime( '%Y-%m-%d')
         end
@@ -153,6 +153,7 @@ DUMP2
   def loop( verb, counter, every)
     pages do |url|
       info = @pages[url]
+      next if info['redirect']
       debug = (url == @config['debug_url'])
 
       path = @cache + "/grabbed/#{info['timestamp']}.html"

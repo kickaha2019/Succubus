@@ -16,25 +16,21 @@ class Analyser < Processor
         File.open( dir + '/index4.html', 'w'),
         File.open( dir + '/index5.html', 'w'),
         File.open( dir + '/index6.html', 'w'),
-        File.open( dir + '/index7.html', 'w')
+        File.open( dir + '/index7.html', 'w'),
+        File.open( dir + '/index8.html', 'w')
     ]
     @is_asset = false
   end
 
   def report
+    @report_index_counter = 0
     dir = @config['temp_dir']
     subprocess 'dump'
 
     open_files( dir)
     n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0, 0, 0
+    indexes = Hash.new {|h,k| h[k] = [[],[]]}
 
-    @is_asset     = true
-    @is_error     = true
-    @is_break     = true
-    @is_secure    = true
-    @has_articles = true
-    @is_redirect  = true
-    @is_grabbed   = false
     report_header
 
     pages do |url|
@@ -66,15 +62,17 @@ class Analyser < Processor
           date = article['date']
         end
 
+        indexes[article['index'].join("\t")][(article['mode'] == 'article') ? 0 : 1] << url
+
         tags = article['index'].join( ' / ')
       end
 
       @has_articles = (n_articles > old_articles)
 
-      if info.timestamp == 0
-        write_files "<tr><td>#{url}</td>"
+      if File.exist?( "#{@cache}/grabbed/#{info.timestamp}.#{ext}")
+        write_records "<tr><td><a target=\"_blank\" href=\"#{@cache}/grabbed/#{info.timestamp}.#{ext}\">#{url}</a></td>"
       else
-        write_files "<tr><td><a target=\"_blank\" href=\"#{@cache}/#{info.timestamp}.#{ext}\">#{url}</a></td>"
+        write_records "<tr><td>#{url}</td>"
       end
 
       outs = []
@@ -82,55 +80,49 @@ class Analyser < Processor
         outs << "<a target=\"_blank\" href=\"#{info.referrals[i]}\">#{i+1}</a>" if i < 3
         outs << '+' if i == 3
       end
-      write_files "<td>#{outs.join( '&nbsp;')}</td>"
+      write_records "<td>#{outs.join('&nbsp;')}</td>"
 
       if @is_redirect
         n_redirect += 1
-        write_files "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">&rArr;</th>"
+        write_records "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">&rArr;</th>"
       elsif (info.timestamp > 0) && (! @is_asset)
-        write_files "<th bgcolor=\"#{(@is_error || @is_break) ? 'red' : 'lime'}\">"
-        write_files "<a target=\"_blank\" href=\"#{info.timestamp}.html\">"
-        write_files( @is_error ? '&cross;' : (@is_secure ? '&timesb;' : '&check;'))
-        write_files "</a></th>"
+        write_records "<th bgcolor=\"#{(@is_error || @is_break) ? 'red' : 'lime'}\">"
+        write_records "<a target=\"_blank\" href=\"#{info.timestamp}.html\">"
+        write_records((@is_error || @is_break) ? '&cross;' : (@is_secure ? '&timesb;' : '&check;'))
+        write_records "</a></th>"
       elsif info.timestamp == 0
-        write_files "<th bgcolor=\"yellow\">?</th>"
+        write_records "<th bgcolor=\"yellow\">?</th>"
       elsif @is_asset
         n_asset += 1
         if @is_error || @is_break
-          write_files "<th bgcolor=\"red\">&cross;</th>"
+          write_records "<th bgcolor=\"red\">&cross;</th>"
         else
-          write_files "<th bgcolor=\"lime\">&check;</th>"
+          write_records "<th bgcolor=\"lime\">&check;</th>"
         end
       else
-        write_files "<th bgcolor=\"red\">#{@is_secure ? '&timesb;' : '&cross;'}</th>"
+        write_records "<th bgcolor=\"red\">#{@is_secure ? '&timesb;' : '&cross;'}</th>"
       end
 
-      write_files "<td>#{@has_articles ? (n_articles - old_articles) : ''}</td>"
-      write_files "<td>#{date}</td>"
-      write_files "<td>#{tags}</td>"
-      write_files "<td>#{info.comment}</td>"
+      write_records "<td>#{@has_articles ? (n_articles - old_articles) : ''}</td>"
+      write_records "<td>#{date}</td>"
+      write_records "<td>#{tags}</td>"
+      write_records "<td>#{info.comment}</td>"
 
       if info.timestamp == 0
-        write_files "<td></td>"
+        write_records "<td></td>"
       else
-        write_files "<td>#{Time.at(info.timestamp).strftime( '%Y-%m-%d')}</td>"
+        write_records "<td>#{Time.at(info.timestamp).strftime('%Y-%m-%d')}</td>"
       end
 
-      write_files "</tr>"
+      write_records "</tr>"
     end
 
-    @is_asset     = true
-    @is_error     = true
-    @is_break     = true
-    @is_secure    = true
-    @is_redirect  = true
-    @is_grabbed   = false
-    @has_articles = true
-    report_footer( n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed)
+    report_indexes( indexes)
+    report_footer( n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed, indexes.size)
     close_files
   end
 
-  def report_footer( n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed)
+  def report_footer( n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed, n_indexes)
     stats = [
         "Pages(#{n_all})",
         "Articles(#{n_articles})",
@@ -139,10 +131,11 @@ class Analyser < Processor
         "Errors(#{n_error})",
         "Redirects(#{n_redirect})",
         "Secure(#{n_secure})",
-        "New(#{n_all-n_grabbed})"
+        "New(#{n_all-n_grabbed})",
+        "Indexes(#{n_indexes})"
     ]
 
-    write_files <<FOOTER1
+    write_files( 0, 8, <<FOOTER1)
 </table></div><div class="menu"><table><tr>
 FOOTER1
 
@@ -156,13 +149,13 @@ FOOTER1
       end
     end
 
-    write_files <<FOOTER2
+    write_files( 0, 8, <<FOOTER2)
 </tr></table><div></body></html>
 FOOTER2
   end
 
   def report_header
-    write_files <<HEADER1
+    write_files( 0, 8, <<HEADER1)
 <html>
 <head>
 <style>
@@ -176,7 +169,7 @@ table {border-collapse: collapse}
 <body>
 HEADER1
 
-    write_files <<HEADER2
+    write_files( 0, 7, <<HEADER2)
 <div class="pages"><table><tr>
 <th>Page</th>
 <th>Refs</th>
@@ -188,9 +181,60 @@ HEADER1
 <th>Timestamp</th>
 </tr>
 HEADER2
+
+    write_files( 8, 8, <<HEADER3)
+<div class="pages"><table><tr>
+<th>Index</th>
+<th>Articles</th>
+<th>Posts</th>
+</tr>
+HEADER3
   end
 
-  def write_files( text)
+  def report_index( urls)
+    return '' if urls.empty?
+    @report_index_counter += 1
+    File.open( @config['temp_dir'] + "/index_s#{@report_index_counter}.html", 'w') do |io|
+      io.print <<INDEX_HEADER
+<html>
+<head>
+<style>
+body {display: flex; align-items: center;}
+table {border-collapse: collapse}
+td, th {border: 1px solid black; font-size: 20px; padding: 5px}
+</style>
+</head>
+<body><table><tr><th>URL</th></tr>
+INDEX_HEADER
+
+      urls.each do |url|
+        io.print <<"INDEX_LINE"
+<tr><td><a target="_blank" href="#{url}">#{url}</a></td></tr>
+INDEX_LINE
+      end
+
+      io.print "</table></body></html>"
+    end
+
+    "<a href=\"index_s#{@report_index_counter}.html\">#{urls.size}</a>"
+  end
+
+  def report_indexes( indexes)
+    indexes.keys.sort.each do |key|
+      stats = indexes[key]
+      write_files( 8, 8, <<"INDEX")
+<tr><td>#{key.split("\t").join(' / ')}</td><td>#{report_index(stats[0])}</td><td>#{report_index(stats[1])}</td></tr>
+INDEX
+    end
+  end
+
+  def write_files( from, to, text)
+    (from..to).each do |i|
+      @files[i].print text
+    end
+  end
+
+  def write_records(text)
     @files[0].print text
     @files[1].print text if @has_articles
     @files[2].print text if @is_asset
