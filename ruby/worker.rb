@@ -13,15 +13,28 @@ class Worker < Processor
     end
   end
 
+  def compile( url, parsed, debug)
+    n = 0
+    parsed.tree do |child|
+      if child.is_a?( Elements::Article)
+        if @generator.article( url, child, @output_dir + @generation[url]['output'][n])
+          raise "Error compiling #{url}: #{child.title}"
+        end
+        n += 1
+      end
+    end
+  end
+
   def digest( url, parsed, debug)
     entry = @digested[url] = {'articles' => [], 'links' => []}
 
     parsed.tree do |child|
       if child.is_a?( Elements::Article)
-        entry['articles'] << {'index' => child.index, 'mode' => child.mode.to_s}
+        entry['articles'] << (article = {'index' => child.index, 'mode' => child.mode.to_s})
         if child.date
-          entry['articles'][-1]['date'] = child.date.strftime( '%Y-%m-%d')
+          article['date'] = child.date.strftime( '%Y-%m-%d')
         end
+        article['title'] = child.title
       end
     end
 
@@ -169,11 +182,25 @@ DUMP2
   end
 
   def process( verb, counter, every)
+    setup( verb)
     loop( verb, counter, every)
     teardown( verb, counter)
   end
 
+  def setup( verb)
+    if verb == 'compile'
+      @output_dir = @config['output_dir']
+      @generation = YAML.load( IO.read( @config_dir + '/generation.yaml'))
+      require_relative( 'generators/' + @config['generator'])
+      @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( @config_dir, @config, @generation)
+    end
+  end
+
   def step( verb, url, info, parsed, debug)
+    if verb == 'compile'
+      compile( url, parsed, debug)
+    end
+
     if verb == 'digest'
       digest( url, parsed, debug)
     end

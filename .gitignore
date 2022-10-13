@@ -4,3 +4,4 @@ bga/golden_files
 generated.csv
 menu.tsv
 bug
+generation.yaml

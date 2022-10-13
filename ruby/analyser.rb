@@ -58,13 +58,13 @@ class Analyser < Processor
       info.articles do |article|
         n_articles += 1
 
-        if article['date']
-          date = article['date']
+        if article.date
+          date = article.date
         end
 
-        indexes[article['index'].join("\t")][(article['mode'] == 'article') ? 0 : 1] << url
+        indexes[article.index.join("\t")][(article.mode == :article) ? 0 : 1] << url
 
-        tags = article['index'].join( ' / ')
+        tags = article.index.join( ' / ')
       end
 
       @has_articles = (n_articles > old_articles)
@@ -83,7 +83,6 @@ class Analyser < Processor
       write_records "<td>#{outs.join('&nbsp;')}</td>"
 
       if @is_redirect
-        n_redirect += 1
         write_records "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">&rArr;</th>"
       elsif (info.timestamp > 0) && (! @is_asset)
         write_records "<th bgcolor=\"#{(@is_error || @is_break) ? 'red' : 'lime'}\">"
@@ -93,7 +92,6 @@ class Analyser < Processor
       elsif info.timestamp == 0
         write_records "<th bgcolor=\"yellow\">?</th>"
       elsif @is_asset
-        n_asset += 1
         if @is_error || @is_break
           write_records "<th bgcolor=\"red\">&cross;</th>"
         else

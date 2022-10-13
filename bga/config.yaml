@@ -8,6 +8,7 @@ include_urls:
 login_redirect_url:   https://britgo.org/user/login
 class:  BGA
 generator:  Hugo
+output_dir:  /Users/peter/Temp/Hugo
 hugo:
   config:
     baseURL:      https://xxx.yyy/

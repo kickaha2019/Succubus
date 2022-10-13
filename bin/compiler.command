@@ -1,8 +1,7 @@
 #!/bin/csh
-rm -r /tmp/Succubus
 cd $0:h
 cd ..
-time ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus ~/Temp/Hugo
+time ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus
 if ($status != 0) exit 1
 cd ~/Temp/Hugo_public
 find . -name '*.html' -exec rm {} \;

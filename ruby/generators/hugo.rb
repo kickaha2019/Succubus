@@ -108,41 +108,34 @@ module Generators
       end
     end
 
-    def initialize( config_dir, config, output_dir)
+    def initialize( config_dir, config, generation)
       @config_dir    = config_dir
       @config        = config
-      @output_dir    = output_dir
+      @generation    = generation
       @taxonomies    = {}
-      @written       = {}
       @generated     = {}
       @article_error = false
       @any_errors    = false
       @article_url   = nil
       @path2article  = {}
       @enc2names     = {}
+      @written       = {}
+      @output_dir    = config['output_dir']
 
       # Redirects
       @redirects = {}
 
-      # Articles organised by index and URL and menu
-      @index2articles  = Hash.new {|h,k| h[k] = {}}
-      @url2articles    = {}
+      # Menu structure
       @menu            = [[], {}]
     end
 
-    def article( cached, url, article)
+    def article( url, article, output)
       @article_url   = url
       @article_error = false
 
-      if article.root
-        path = @output_dir + '/content/_index.md'
-      else
-        path = @output_dir + '/content' + output_path(url).sub(/.html$/, '.md')
-      end
       front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
                        'mode'     => article.mode.to_s,
                        'origin'   => url,
-                       'cache'    => cached,
                        'section'  => slug(article.index)}
       comment       = []
 
@@ -157,49 +150,40 @@ module Generators
       if text && (text != '')
         front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
       end
-      markdown = article.generate( self)
 
-      write_file( path, "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
-      comment = []
-      comment << 'Raw' if raw?( markdown)
-      comment << 'Root' if root_url?( markdown)
-      return path, comment.join(' ')
+      markdown = article.generate( self)
+      front_matter['raw'] = true if raw?( markdown)
+
+      write_file( output, "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
+      @article_error
     end
 
     def article_layout( article, front_matter)
       if article.mode == :home
         front_matter['layout'] = 'home'
-        generate_posts_page
-        @index2articles.keys.sort.each do |section|
-          generate_section_page( section)
-        end
       end
     end
 
-    def asset_copy( cached, url)
-      path = @output_dir + '/content/' + url[(@config['root_url'].size)..-1].downcase
-      @generated[path] = true
-      # if /2005\/thameshotel/ =~ path
-      #   p ['asset_copy1', cached, url, path]
-      # end
+    def copy_asset( source, url)
+      relpath = url[(@config['root_url'].size-1)..-1].downcase
+      path = @output_dir + relpath
+
       unless File.exist?( path)
         create_dir( File.dirname( path))
-        unless system( "cp #{cached} #{path}")
-          raise "Error copying  #{cached} to #{path}"
+        unless system( "cp #{source} #{path}")
+          raise "Error copying  #{source} to #{path}"
         end
       end
+
+      @written[path] = true
+      relpath
     end
 
     def blockquote( md)
       strip(md).collect {|line| line.adorn( '< ')}
     end
 
-    def clean_old_files
-      clean_old_files1( @output_dir + '/content')
-      ensure_index_md( @output_dir + '/content')
-    end
-
-    def clean_old_files1( dir)
+    def clean_old_files( dir)
       empty = true
 
       Dir.entries( dir).each do |f|
@@ -208,27 +192,19 @@ module Generators
         raise "Bad path #{path}" if /[ \?\*]/ =~ path
 
         if File.directory?( path)
-          if clean_old_files1( path)
-            # @generated.each_pair do |k,v|
-            #   p ['clean_old_files', k, v] if /66-qualifiers/ =~ k
-            # end
+          if clean_old_files( path)
             puts "... Cleaning #{path}"
-            #raise 'Dev'
-            #File.delete( path)
             unless system( "rm -r #{path}")
               raise "Error removing #{path}"
             end
           else
             empty = false
           end
-        elsif @generated[path]
+        elsif @written[path]
           empty = false
         else
           puts "... Cleaning #{path}"
           File.delete( path)
-          # unless system( "rm -r #{path}")
-          #   raise "Error removing #{path}"
-          # end
         end
       end
 
@@ -237,7 +213,7 @@ module Generators
 
     def copy_template( template_path, dest_path)
       data = IO.read( @config_dir + '/' + template_path)
-      write_file( @output_dir + '/' + dest_path, data)
+      write_file( @output_dir + '/content/' + dest_path, data)
     end
 
     def create_dir( dir)
@@ -295,19 +271,18 @@ module Generators
       write_file( path, "#{front_matter.to_yaml}\n---\n")
     end
 
-    def generate_section_page( section)
-      path          = @output_dir + '/content/sections/' + section + '/_index.md'
+    def generate_section_page( keys)
+      path          = @output_dir + '/content/sections/' + slug(keys) + '/_index.md'
       parents       = [{'url'     => '/index.html',
                         'title'   => 'Home'}]
 
-      first_article = @url2articles[@index2articles[section].keys[0]]
       front_matter  = {'layout'   => 'section',
-                       'title'    => first_article.index.join(' / '),
+                       'title'    => keys.join( ' / '),
                        'parents'  => parents,
-                       'section'  => section}
+                       'section'  => slug(keys)}
 
-      first_article.index.each_index do |i|
-        front_matter["index#{i}"] = slug(first_article.index[0..i])
+      keys.each_index do |i|
+        front_matter["index#{i}"] = slug(keys[0..i])
       end
 
       write_file( path, "#{front_matter.to_yaml}\n---\n")
@@ -327,7 +302,7 @@ module Generators
 
     def link( text, href)
       return [] if text.empty? || text[0].empty?
-      if loc = localise href
+      if loc = localise( href)
         [Stanza.new("[#{text[0].text}](#{loc})")]
       else
         [Stanza.new( "*#{loc}*")]
@@ -359,56 +334,32 @@ module Generators
     end
 
     def localise(url)
-      # if /pairs19a-s.jpg/ =~ url
-      #   p ['localise?1', url, @config['root_url']]
-      # end
-      url0, url = url, url.strip.sub( /^http:/, 'https:')
-      root_url = @config['root_url'].sub( /^http:/, 'https:')
+      return url unless @generation[url]
+      info = @generation[url]
 
-      if /^\// =~ url
-        url = root_url + url[1..-1]
-      elsif /^https:/ =~ url
-      elsif m = /(^.*\/)[^\/]*\.html$/.match( @article_url)
-        url = m[1].sub( /^http:/, 'https:') + url
-      else
-        url = @article_url.sub( /^http:/, 'https:') + '/' + url
+      if info['redirect']
+        url  = info['redirect']
+        info = @generation[url]
       end
 
-      # if /pairs19a-s.jpg/ =~ url
-      #   p ['localise?2', url, @article_url]
-      # end
+      output = info ? info['output'] : nil
 
-      return url0 unless url[0...(root_url.size)] == root_url
-
-      # Redirected?
-      limit = 100
-      while @redirects[url] && (limit > 0)
-        url = @redirects[url]
-        limit -= 1
+      if output.is_a?( Array)
+        output = output[0]
       end
 
-      raise "Too many redirects for #{url0}" if limit == 0
-      output_path( url)
-    end
-
-    def menu_depth( menu)
-      depth = 0
-      menu[1].each_value do |menu1|
-        d = menu_depth( menu1) + 1
-        depth = d if d > depth
-      end
-      depth
+      output
     end
 
     def menu_generate( keys, menu, list, depth=0)
       if ! keys.empty?
+        generate_section_page( keys)
         ident         = slug( keys)
-        article_urls  = @index2articles[ident].keys
 
-        if article_urls.empty?
+        if menu[0].empty?
           url = ''
-        elsif article_urls.size == 1
-          url = output_path( article_urls[0])
+        elsif menu[0].size == 1
+          url = @generation[menu[0][0]]
         else
           url = "/sections/#{ident}/index.html"
         end
@@ -423,27 +374,6 @@ module Generators
 
       menu[1].each_pair do |key, menu1|
         menu_generate( keys + [key], menu1, list, depth+1)
-      end
-    end
-
-    def menu_print( keys, menu, depth, io)
-      (0...depth).each do |i|
-        io.print "#{(i < keys.size) ? keys[i] : ''}\t"
-      end
-
-      articles, posts = 0, 0
-      menu[0].each do |article|
-        if article.mode == :article
-          articles += 1
-        else
-          posts += 1
-        end
-      end
-
-      io.puts "#{(articles > 0) ? articles.to_s : ''}\t#{(posts > 0) ? posts.to_s : ''}"
-
-      menu[1].keys.sort.each do |key|
-        menu_print( keys + [key], menu[1][key], depth, io)
       end
     end
 
@@ -482,22 +412,20 @@ module Generators
       true
     end
 
-    def output_path( url)
+    def output_path( url, article, unique)
       url = url.split('#')[0].sub( /^http:/, 'https:')
-      if article = @url2articles[url]
-        return '/index.html' if article.root
-        section = slug(article.index)
+      return '/index.html' if article.root?
 
-        '/' +
-        article.index.collect {|i| slug(i)}.join('/') +
-        "/#{@index2articles[section][article.url]}-#{slug(article.title)}" +
-        '/index.html'
-
-      elsif m = %r{^[^/]*//[^/]*(/.*)$}.match( url)
-        m[1]
+      if article.index.empty?
+        section = 'none'
       else
-        raise "output_path: #{url}"
+        section = slug(article.index, '/')
       end
+
+      '/' +
+      section +
+      "/#{slug(article.title)}#{unique}" +
+      '/index.html'
     end
 
     def paragraph( md)
@@ -530,10 +458,7 @@ module Generators
     end
 
     def register_article( url, article)
-      #url = url.sub( /^http:/, 'https:')
-      @url2articles[url] = article
       section = slug(article.index)
-      @index2articles[section][url] = (1 + @index2articles[section].size)
 
       menu, index = @menu, article.index
       while ! index.empty?
@@ -542,7 +467,7 @@ module Generators
         index = index[1..-1]
       end
 
-      menu[0] << article
+      menu[0] << url
     end
 
     def root_url?( markdown)
@@ -552,14 +477,12 @@ module Generators
       false
     end
 
-    def site_begin
+    def site
       unless system( "rsync -r --delete #{@config_dir}/layouts/ #{@output_dir}/layouts/")
-        raise "Error copying layouts"
+        raise "Error copying layouts from #{@config_dir}/layouts/ to #{@output_dir}/layouts/"
       end
-      copy_template( 'index.css', 'content/index.css')
-    end
+      copy_template( 'index.css','index.css')
 
-    def site_end
       site_config = @config['hugo']['config']
       site_config['menu'] = {'main' => []}
       menu_generate( [], @menu, site_config['menu']['main'])
@@ -567,20 +490,14 @@ module Generators
       toml = @output_dir + '/config.toml'
       File.delete( toml) if File.exist?( toml)
 
-      depth = menu_depth( @menu)
-      File.open( @config_dir + '/menu.tsv', 'w') do |io|
-        (0...depth).each do |i|
-          io.print "Menu #{i+1}\t"
-        end
-        io.puts "Articles\tPosts"
-
-        menu_print( [], @menu, depth, io)
-      end
+      generate_posts_page
+      clean_old_files( "#{@output_dir}/content")
+      ensure_index_md( @output_dir)
     end
 
-    def slug( text)
+    def slug( text, separ = '-')
       if text.is_a?( Array)
-        text.collect {|t| slug(t)}.join('-')
+        text.collect {|t| slug(t)}.join( separ)
       else
         text.gsub( /[^a-z0-9]/i, '_').downcase
       end
@@ -661,7 +578,10 @@ module Generators
     def write_file( path, data)
       error( path + ': already written') if @generated[path]
       @generated[path] = true
+      @written[path]   = true
+
       create_dir( File.dirname( path))
+
       unless File.exist?( path) && (IO.read( path).strip == data.strip)
         puts "... Writing #{path}"
         File.open( path, 'w') {|io| io.print data}

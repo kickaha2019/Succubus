@@ -4,6 +4,32 @@ require 'pry'
 require_relative 'site'
 
 class Processor
+  class ArticleInfo
+    def initialize( info)
+      @info      = info
+    end
+
+    def date
+      @info['date']
+    end
+
+    def index
+      @info['index']
+    end
+
+    def mode
+      @info['mode'].to_sym
+    end
+
+    def root?
+      mode == :home
+    end
+
+    def title
+      @info['title']
+    end
+  end
+
   class PageInfo
     def initialize( processor, cache, url, info, digest)
       @processor = processor
@@ -17,7 +43,7 @@ class Processor
     def articles
       if @digest
         @digest['articles'].each do |article|
-          yield article
+          yield( ArticleInfo.new(article))
         end
       end
     end
