@@ -5,8 +5,12 @@ require_relative 'site'
 
 class Processor
   class ArticleInfo
-    def initialize( info)
-      @info      = info
+    attr_reader :url, :order
+
+    def initialize( url, order, info)
+      @url   = url
+      @order = order
+      @info  = info
     end
 
     def date
@@ -42,8 +46,8 @@ class Processor
 
     def articles
       if @digest
-        @digest['articles'].each do |article|
-          yield( ArticleInfo.new(article))
+        @digest['articles'].each_index do |i|
+          yield( ArticleInfo.new( @url, i, @digest['articles'][i]))
         end
       end
     end
@@ -149,58 +153,6 @@ class Processor
       end
     end
     return url, limit
-  end
-
-  def examine( url, debug = false)
-    info = @pages[url]
-    unless info
-      return false, true, false, false, nil
-    end
-    ts   = info['timestamp']
-
-    if ts == 0
-      return asset?(url),
-             (info['comment'] && (! info['redirect'])),
-             info['redirect'],
-             info['secured']
-             nil
-    end
-
-    if info['redirect']
-      return asset?( url), deref_error(url), true, info['secured'], nil
-    end
-
-    if asset?( url)
-      return asset?( url), info['comment'], false, info['secured'], nil
-    end
-
-    if @page_data[url]['parsed']
-      return false, @page_data[url]['error'], false, info['secured'], @page_data[url]['parsed']
-    end
-
-    unless File.exist?( @cache + "/grabbed/#{ts}.html")
-      puts "examine1: #{url}" if debug
-      return false, true, false, info['secured'], nil
-    end
-
-    begin
-      parsed = @page_data[url]['parsed'] = parse( url, info)
-
-      error = parsed.content?
-      parsed.tree do |child|
-        child_error, child_msg = child.error?
-        if child_error
-          p ['examine3', child.index, child.class.to_s, child_msg] if debug
-          error = true
-        end
-      end
-
-      @page_data[url]['error'] = error
-      return false, error, false, info['secured'], parsed
-    rescue
-      puts "*** File: #{info['timestamp']}.html"
-      raise
-    end
   end
 
   def lookup( url)

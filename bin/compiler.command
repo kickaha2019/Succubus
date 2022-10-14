@@ -3,8 +3,11 @@ cd $0:h
 cd ..
 time ruby ruby/compiler.rb ./bga /Users/peter/Caches/Succubus
 if ($status != 0) exit 1
-cd ~/Temp/Hugo_public
-find . -name '*.html' -exec rm {} \;
+
+cd ~/Temp
+rm -r Hugo_public
+mkdir Hugo_public
+
 cd ~/Temp/Hugo
 hugo --quiet 
 if ($status != 0) exit 1

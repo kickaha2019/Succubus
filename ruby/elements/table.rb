@@ -29,7 +29,7 @@ module Elements
           return nil unless header == child.header?
           md = child.generate_children( generator)
           return nil unless generator.textual?( md)
-          cells << md.join(' ')
+          cells << md
         elsif child.content?
           return nil
         end

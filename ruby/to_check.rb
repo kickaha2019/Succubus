@@ -45,7 +45,7 @@ HEADER
             comment = "diff #{page['compiled']} #{golden}"
           end
         else
-          p [got]
+          p ['to_check', got]
           colour = 'red'
           comment = "Compiled file missing"
         end

@@ -108,25 +108,21 @@ module Generators
       end
     end
 
-    def initialize( config_dir, config, generation)
+    def initialize( config_dir, config)
       @config_dir    = config_dir
       @config        = config
-      @generation    = generation
+      @generation    = {}
+      @written       = {}
       @taxonomies    = {}
-      @generated     = {}
       @article_error = false
       @any_errors    = false
       @article_url   = nil
       @path2article  = {}
       @enc2names     = {}
-      @written       = {}
       @output_dir    = config['output_dir']
 
-      # Redirects
-      @redirects = {}
-
       # Menu structure
-      @menu            = [[], {}]
+      @menu          = [[], {}]
     end
 
     def article( url, article, output)
@@ -154,7 +150,8 @@ module Generators
       markdown = article.generate( self)
       front_matter['raw'] = true if raw?( markdown)
 
-      write_file( output, "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
+      write_file( @output_dir + '/content' + output,
+                  "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
       @article_error
     end
 
@@ -162,21 +159,6 @@ module Generators
       if article.mode == :home
         front_matter['layout'] = 'home'
       end
-    end
-
-    def copy_asset( source, url)
-      relpath = url[(@config['root_url'].size-1)..-1].downcase
-      path = @output_dir + relpath
-
-      unless File.exist?( path)
-        create_dir( File.dirname( path))
-        unless system( "cp #{source} #{path}")
-          raise "Error copying  #{source} to #{path}"
-        end
-      end
-
-      @written[path] = true
-      relpath
     end
 
     def blockquote( md)
@@ -211,9 +193,25 @@ module Generators
       empty
     end
 
+    def copy_asset( source, url)
+      relpath = url[(@config['root_url'].size-1)..-1].downcase
+      path = @output_dir + '/content' + relpath
+
+      unless File.exist?( path)
+        create_dir( File.dirname( path))
+        unless system( "cp #{source} #{path}")
+          raise "Error copying  #{source} to #{path}"
+        end
+      end
+
+      relpath
+    end
+
     def copy_template( template_path, dest_path)
       data = IO.read( @config_dir + '/' + template_path)
-      write_file( @output_dir + '/content/' + dest_path, data)
+      path = @output_dir + '/content/' + dest_path
+      write_file( path, data)
+      @written[path] = true
     end
 
     def create_dir( dir)
@@ -238,11 +236,12 @@ module Generators
     end
 
     def ensure_index_md( dir)
+      @written[dir + '/_index.md'] = true
       unless File.exist?( dir + '/index.md') || File.exist?( dir + '/_index.md')
         write_file( dir + '/_index.md', "---\nlayout: default\ntitle: Dummy\n---\n")
       end
 
-      Dir.entries( dir) do |f|
+      Dir.entries( dir).each do |f|
         next if /^\./ =~ f
         path = dir + '/' + f
         ensure_index_md( path) if File.directory?( path)
@@ -262,24 +261,28 @@ module Generators
     end
 
     def generate_posts_page
-      path          = @output_dir + '/content/index-posts/_index.md'
-      parents       = [{'url'    => '/index.html', 'title' => 'Home'}]
-      front_matter  = {'layout'  => 'home_posts',
-                       'toRoot'  => '../',
-                       'title'   => 'All posts',
-                       'parents' => parents}
+      path           = @output_dir + '/content/index-posts/_index.md'
+      create_dir( File.dirname( path))
+      @written[path] = true
+      parents        = [{'url'    => '/index.html', 'title' => 'Home'}]
+      front_matter   = {'layout'  => 'home_posts',
+                        'toRoot'  => '../',
+                        'title'   => 'All posts',
+                        'parents' => parents}
       write_file( path, "#{front_matter.to_yaml}\n---\n")
     end
 
     def generate_section_page( keys)
-      path          = @output_dir + '/content/sections/' + slug(keys) + '/_index.md'
-      parents       = [{'url'     => '/index.html',
-                        'title'   => 'Home'}]
+      path           = @output_dir + '/content/sections/' + slug(keys) + '/_index.md'
+      create_dir( File.dirname( path))
+      @written[path] = true
+      parents        = [{'url'     => '/index.html',
+                         'title'   => 'Home'}]
 
-      front_matter  = {'layout'   => 'section',
-                       'title'    => keys.join( ' / '),
-                       'parents'  => parents,
-                       'section'  => slug(keys)}
+      front_matter   = {'layout'   => 'section',
+                        'title'    => keys.join( ' / '),
+                        'parents'  => parents,
+                        'section'  => slug(keys)}
 
       keys.each_index do |i|
         front_matter["index#{i}"] = slug(keys[0..i])
@@ -333,7 +336,7 @@ module Generators
       end
     end
 
-    def localise(url)
+    def localise(url, index=0)
       return url unless @generation[url]
       info = @generation[url]
 
@@ -345,10 +348,10 @@ module Generators
       output = info ? info['output'] : nil
 
       if output.is_a?( Array)
-        output = output[0]
+        output = output[index]
       end
 
-      output
+      output ? output.gsub( /_index\.md$/, 'index.md').gsub( /\.md$/, '.html') : nil
     end
 
     def menu_generate( keys, menu, list, depth=0)
@@ -359,7 +362,7 @@ module Generators
         if menu[0].empty?
           url = ''
         elsif menu[0].size == 1
-          url = @generation[menu[0][0]]
+          url = localise( menu[0][0].url, menu[0][0].order)
         else
           url = "/sections/#{ident}/index.html"
         end
@@ -386,7 +389,7 @@ module Generators
         end
         if merged[0] && (m = merged[-1].merge(item))
           if m.is_a?( TrueClass)
-            p [markdown, merged, item]
+            p ['merge', markdown, merged, item]
           end
           merged[-1] = m
         else
@@ -414,7 +417,7 @@ module Generators
 
     def output_path( url, article, unique)
       url = url.split('#')[0].sub( /^http:/, 'https:')
-      return '/index.html' if article.root?
+      return '/_index.md' if article.root?
 
       if article.index.empty?
         section = 'none'
@@ -422,10 +425,19 @@ module Generators
         section = slug(article.index, '/')
       end
 
-      '/' +
-      section +
-      "/#{slug(article.title)}#{unique}" +
-      '/index.html'
+      title = slug(article.title)
+      if title == ''
+        title = 'none'
+      end
+
+      path = '/' +
+             section +
+             "/#{title}#{unique}" +
+             '/index.md'
+
+      create_dir( File.dirname( @output_dir + '/content' + path))
+
+      path
     end
 
     def paragraph( md)
@@ -453,11 +465,24 @@ module Generators
       false
     end
 
-    def redirect( from, to)
-      @redirects[from] = to
+    def record_generation( generation)
+      @generation = generation
+      @written    = {}
+
+      @generation.each_value do |info|
+        if output = info['output']
+          if output.is_a?( Array)
+            output.each do |out|
+              @written[ @output_dir + '/content' + out] = true
+            end
+          else
+            @written[ @output_dir + '/content' + output] = true
+          end
+        end
+      end
     end
 
-    def register_article( url, article)
+    def register_article( article)
       section = slug(article.index)
 
       menu, index = @menu, article.index
@@ -467,7 +492,7 @@ module Generators
         index = index[1..-1]
       end
 
-      menu[0] << url
+      menu[0] << article
     end
 
     def root_url?( markdown)
@@ -481,7 +506,6 @@ module Generators
       unless system( "rsync -r --delete #{@config_dir}/layouts/ #{@output_dir}/layouts/")
         raise "Error copying layouts from #{@config_dir}/layouts/ to #{@output_dir}/layouts/"
       end
-      copy_template( 'index.css','index.css')
 
       site_config = @config['hugo']['config']
       site_config['menu'] = {'main' => []}
@@ -491,8 +515,9 @@ module Generators
       File.delete( toml) if File.exist?( toml)
 
       generate_posts_page
+      ensure_index_md( @output_dir + '/content')
+      copy_template( 'index.css','index.css')
       clean_old_files( "#{@output_dir}/content")
-      ensure_index_md( @output_dir)
     end
 
     def slug( text, separ = '-')
@@ -562,7 +587,7 @@ module Generators
     end
 
     def table_row( row)
-      AdornedStanza.new( '|' + row.collect {|cell| cell.gsub( '|', '\\|')}.join('|') + "|")
+      AdornedStanza.new( '|' + row.collect {|cell| merge(cell)[0].output.gsub( '|', '\\|')}.join('|') + "|")
     end
 
     def text( str)
@@ -576,13 +601,8 @@ module Generators
     end
 
     def write_file( path, data)
-      error( path + ': already written') if @generated[path]
-      @generated[path] = true
-      @written[path]   = true
-
-      create_dir( File.dirname( path))
-
-      unless File.exist?( path) && (IO.read( path).strip == data.strip)
+      unless File.exist?( path) && (IO.read( path) == data)
+#        p ['write_file2', path, File.exist?( path), IO.read( path), data]
         puts "... Writing #{path}"
         File.open( path, 'w') {|io| io.print data}
       end

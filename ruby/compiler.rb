@@ -5,7 +5,7 @@ class Compiler < Processor
     super( config, cache)
     @output_dir = @config['output_dir']
     require_relative( 'generators/' + @config['generator'])
-    @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, {})
+    @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config)
     @generation = {}
     @gen_paths  = {}
   end
@@ -14,6 +14,7 @@ class Compiler < Processor
     subprocess( 'digest')
     copy_assets
     prepare_generation
+    @generator.record_generation( @generation)
     subprocess( 'compile')
     @generator.site
   end
@@ -34,6 +35,7 @@ class Compiler < Processor
   def prepare_generation
     pages do |url|
       info = lookup( url)
+      next if info.asset? || info.error? || (info.timestamp == 0)
 
       if info.redirect?
         @generation[url] = {'redirect' => deref(url)}
@@ -41,8 +43,8 @@ class Compiler < Processor
         outputs = []
         @generation[url] = {'output' => outputs}
         info.articles do |article|
-          @generator.register_article( url, article)
-          outputs << prepare_output( url, article)
+          @generator.register_article( article)
+          outputs << prepare_output( article)
         end
 
         info.links do |found|
@@ -58,10 +60,10 @@ class Compiler < Processor
     end
   end
 
-  def prepare_output( url, article)
+  def prepare_output( article)
     unique = 1
     while true do
-      output = @generator.output_path( url, article, (unique == 1) ? '' : "-#{unique}")
+      output = @generator.output_path( article.url, article, (unique == 1) ? '' : "-#{unique}")
       if @gen_paths[output]
         unique += 1
       else

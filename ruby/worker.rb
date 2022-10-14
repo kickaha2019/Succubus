@@ -17,7 +17,7 @@ class Worker < Processor
     n = 0
     parsed.tree do |child|
       if child.is_a?( Elements::Article)
-        if @generator.article( url, child, @output_dir + @generation[url]['output'][n])
+        if @generator.article( url, child, @generation[url]['output'][n])
           raise "Error compiling #{url}: #{child.title}"
         end
         n += 1
@@ -192,7 +192,8 @@ DUMP2
       @output_dir = @config['output_dir']
       @generation = YAML.load( IO.read( @config_dir + '/generation.yaml'))
       require_relative( 'generators/' + @config['generator'])
-      @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( @config_dir, @config, @generation)
+      @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( @config_dir, @config)
+      @generator.record_generation( @generation)
     end
   end
 
