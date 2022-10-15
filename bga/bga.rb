@@ -444,7 +444,7 @@ class BGA < Site
           /^council\//                   => 'Council',
           /^education\//                 => 'Teaching',
           /^events\//                    => 'Events',
-          /^eygc2014\//                  => 'European Youth Go Congress 2014',
+          /^eygc2014\//                  => 'EYGC 2014',
           /^general\//                   => 'General',
           /^gopcres\//                   => 'Playing online',
           /^history\//                   => 'History',

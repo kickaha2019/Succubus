@@ -50,9 +50,15 @@ dt {font-weight: bold}
 
 a img {max-height: 100px; object-fit: contain}
 
-.menu {display: flex; flex-direction: column; width: 180px; max-width: 180px; overflow-clip: false}
-.is_active, .is_active a {color: red}
-.menu0 {display: flex; flex-direction: row}
-.menu1 .menu2 {display: none}
-.menu0:hover menu1 {display: flex; flex-direction: row}
-.menu1:hover menu2 {display: flex; flex-direction: row}
+.menu0 {display: flex; flex-direction: column; width: 200px; max-width: 200px;
+        font-size: 20px}
+.menu0 a {font-size: 20px}
+.menu1, .menu2 {display: none; padding: 5px}
+.menu1 {background: #DDDDDD; z-index: 1}
+.menu2 {background: #BBBBBB; z-index: 2}
+
+.is_active, .is_active > a {color: red}
+.menuitem0, .menuitem1 {position: relative; white-space: nowrap}
+
+.menuitem0:hover .menu1 {display: flex; flex-direction: column; position: absolute; left: 100px; top: 0px}
+.menuitem1:hover .menu2 {display: flex; flex-direction: column; position: absolute; left: 100px; top: 0px}
