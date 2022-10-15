@@ -2,12 +2,13 @@ require 'yaml'
 
 dir = ARGV[0]
 compiled = {}
-IO.readlines( dir + '/generated.csv')[1..-1].each do |line|
-  line = line.split( "\t")
-  compiled[line[0]] = line[1]
+YAML.load( IO.read( dir + '/generation.yaml')).each_pair do |url, info|
+  next unless info['output'].is_a?( Array)
+  next if info['output'].empty?
+  compiled[url] = ARGV[1] + info['output'][0].gsub( /_index\.md$/, 'index.md').gsub( /\.md$/, '.html')
 end
 
-File.open( ARGV[1], 'w') do |io|
+File.open( ARGV[2], 'w') do |io|
   io.puts <<"HEADER"
 <html><head>
 <style>
@@ -31,18 +32,12 @@ HEADER
     golden  = dir + '/golden_files/' + page['golden']
     got     = compiled[page['original']]
 
-    got = got.sub( /\.md$/, '.html').sub( /_index\.html$/, 'index.html')
-    unless /\/index\.html$/ =~ got
-      got = got.sub( /\.html$/, '/index.html')
-    end
-    got = got.sub( 'Hugo/content', 'Hugo_public') # Perhaps use config setting?
-
     if got
       if File.exist?( golden)
         if File.exist?( got)
           unless IO.read( golden) == IO.read( got)
             colour = 'red'
-            comment = "diff #{page['compiled']} #{golden}"
+            comment = "diff #{got} #{golden}"
           end
         else
           p ['to_check', got]

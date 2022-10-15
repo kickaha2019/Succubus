@@ -2,9 +2,10 @@ require 'yaml'
 
 dir = ARGV[0]
 compiled = {}
-IO.readlines( dir + '/generated.csv')[1..-1].each do |line|
-  line = line.split( "\t")
-  compiled[line[0]] = line[1]
+YAML.load( IO.read( dir + '/generation.yaml')).each_pair do |url, info|
+  next unless info['output'].is_a?( Array)
+  next if info['output'].empty?
+  compiled[url] = ARGV[1] + info['output'][0].gsub( /_index\.md$/, 'index.md').gsub( /\.md$/, '.html')
 end
 
 YAML.load( IO.read( dir + '/to_check.yaml'))['pages'].each do |page|
