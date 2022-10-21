@@ -87,6 +87,10 @@ class BGA < Site
       Elements::Styling.new( place, [:block])
     end
 
+    on_element 'div', :class => 'cent' do |place|
+      place.children
+    end
+
     on_element 'div', :class => 'content' do |place|
       fabricate_description_lists( place)
     end
@@ -292,12 +296,23 @@ class BGA < Site
           /-entries\.html$/,
           /-form\.html$/,
 
+          # Unloved and broken
+          /\/book\/export/,
+          /\/clubs\/index/,
+          /\/clubs\/list/,
+          /\/clubs\/_request/,
+          /\/tournaments\/current/,
+
           # Forms
           'https://britgo.org/form/transfer-your-membership',
           'https://britgo.org/user/login',
           'https://britgo.org/tournaments/britishopen/entryform',
           'https://britgo.org/user/password',
           'https://britgo.org/eygc2014/enterbgc',
+
+          # Maps
+          /\/clubs\/map/,
+          /\/clubs\/region/,
 
           # Applets
           'https://britgo.org/capturego/play',
@@ -396,6 +411,12 @@ class BGA < Site
       false
     end
 
+    on_page %r{^events/firstmsfestival} do |page|
+      page.date= Time.new( 2011, 11, 17)
+      page.mode= :post
+      false
+    end
+
     on_page %r{^(junior|news)/} do |page|
       if m = %r{^\w+, (\d\d)/(\d\d)/(\d\d\d\d)( |$)}.match( page.css( 'span.submitted').text.strip)
         page.date = to_date( m[3], m[2], m[1])
@@ -429,41 +450,66 @@ class BGA < Site
 
     on_page /.*/ do |page|
       map = {
-          /^bchamp\/(book|chrules)\//    => ['Procedures','British Championship'],
-          /^bchamp\/(history|matthew)\// => ['History','British Championship'],
-          /^bchamp\//                    => 'British Championship',
-          /^bgj\/glossary.html/          => ['Procedures', "British Go Journal"],
-          /^bgj\/guidelines.html/        => ['Procedures', "British Go Journal"],
-          /^bgj\/history\//              => ['History', "British Go Journal"],
-          /^committee\/clubs\//          => ['Clubs'],
-          /^bgj\//                       => 'British Go Journal',
-          /^booklist\//                  => 'Book list',
-          /^books\//                     => 'Book list',
-          /^club\//                      => 'Clubs',
-          /^clubs\//                     => 'Clubs',
-          /^council\//                   => 'Council',
-          /^education\//                 => 'Teaching',
-          /^events\//                    => 'Events',
-          /^eygc2014\//                  => 'EYGC 2014',
-          /^general\//                   => 'General',
-          /^gopcres\//                   => 'Playing online',
-          /^history\//                   => 'History',
-          /^hof\//                       => 'Hall of Fame',
-          /^junior\//                    => 'Youth',
-          /^membership\//                => 'Membership',
-          /^news\//                      => 'News',
-          /^newsletter\//                => 'Newsletters',
-          /^obits\//                     => 'Obituaries',
-          /^organisers\//                => 'Organisers',
-          /^people\//                    => 'People',
-          /^positions\//                 => 'Positions',
-          /^reps\//                      => 'Reports',
-          /^resources\//                 => 'Resources',
-          /^results\//                   => 'Results',
-          /^review\//                    => 'Reviews',
-          /^teaching\//                  => 'Teaching',
-          /^tournaments\//               => 'Events',
-          /^youth\//                     => 'Youth'
+          /\?page=\d/                      => [],
+          /^bchamp\/(book|chrules)\//      => ['Procedures','British Championship'],
+          /^bchamp\/(history|matthew)\//   => ['History','British Championship'],
+          /^bchamp\/\d\d\d\d/              => ['Events','British Championship'],
+          /^bchamp\/qualifiers\d\d\d\d/    => ['Events','British Championship'],
+          /^bchamp\//                      => 'British Championship',
+          /^bgj\/glossary.html/            => ['Procedures', "British Go Journal"],
+          /^bgj\/guidelines.html/          => ['Procedures', "British Go Journal"],
+          /^bgj\/history\//                => ['History', "British Go Journal"],
+          /^bgj\/index\/alph/              => [],
+          /^bgj\/index\/auth/              => [],
+          /^bgj\/index\/chron/             => [],
+          /^bgj\/index\/subj/              => [],
+          /^bgj\//                         => 'British Go Journal',
+          /^book\/londonopen/              => ['Procedures', "London Open"],
+          /^booklist\//                    => 'Book list',
+          /^books\//                       => 'Book list',
+          /^club(|s)\/[a-c]/i              => ['Clubs', 'A-C'],
+          /^club(|s)\/[d-l]/i              => ['Clubs', 'D-L'],
+          /^club(|s)\/[m-s]/i              => ['Clubs', 'M-S'],
+          /^club(|s)\/[t-z]/i              => ['Clubs', 'T-Z'],
+          /^committee\/clubs\//            => ['Clubs'],
+          /^committee\//                   => 'Council',
+          /^council\//                     => 'Council',
+          /^education\//                   => 'Teaching',
+          /^ejournal\/\d/                  => [],
+          /^ejournal\/index/               => 'Newsletters',
+          /^events\/euroteams/             => 'Tournaments',
+          /^events\/goweek/                => 'Tournaments',
+          /^events\/wmsg/                  => ['Events','World Mind Sports'],
+          /^events\//                      => 'Events',
+          /^eygc2014/                      => ['Events','EYGC2014'],
+          /^general\//                     => 'General',
+          /^gopcres\//                     => 'Playing online',
+          /^history\//                     => 'History',
+          /^hof\//                         => 'Hall of Fame',
+          /^junior\//                      => 'Youth',
+          /^learn/                         => 'Teaching',
+          /^membership\//                  => 'Membership',
+          /^news\//                        => 'News',
+          /^newsletter\//                  => 'Newsletters',
+          /^node/                          => [],
+          /^obits\//                       => 'Obituaries',
+          /^organisers\//                  => 'Organisers',
+          /^pairgo\/photos\d\d\d\d/        => 'Events',
+          /^people\//                      => 'People',
+          /^policy/                        => 'Procedures',
+          /^positions\//                   => 'Positions',
+          /^reps\//                        => 'Reports',
+          /^resources\//                   => 'Resources',
+          /^results\//                     => 'Results',
+          /^review\//                      => 'Reviews',
+          /^rules/                         => ['Procedures','Rules'],
+          /^teaching\//                    => 'Teaching',
+          /^tournaments\/history/          => ['History','Tournaments'],
+          /^tournaments\/logc\/.*\d\d\d\d/ => ['Events','London'],
+          /^tournaments.*\d\d\d\d/         => ['Events'],
+          /^tournaments\//                 => 'Tournaments',
+          /^wmsg/                          => ['Events','World Mind Sports'],
+          /^youth/                         => 'Youth'
       }
 
       map.each_pair do |re, index|

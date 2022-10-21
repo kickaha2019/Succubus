@@ -54,7 +54,7 @@ module Generators
 
       def output
         t = @text.strip
-        (/^[:\-#=>\d`\|]/ =~ t) ? ('\\' + t) : t
+        (/^[:\-#=>`\|]/ =~ t) ? ('\\' + t) : t
       end
 
       def style( styling)
@@ -308,7 +308,7 @@ module Generators
       if loc = localise( href)
         [Stanza.new("[#{text[0].text}](#{loc})")]
       else
-        [Stanza.new( "*#{loc}*")]
+        [Stanza.new( "*#{text[0].text}*")]
       end
     end
 

@@ -44,7 +44,8 @@ class Place
   end
 
   def text
-    @children.inject( @element.text) {|text, child| text + ' ' + child.text}
+    #@children.inject( @element.text) {|text, child| text + ' ' + child.text}
+    @element.text
   end
 
   def title

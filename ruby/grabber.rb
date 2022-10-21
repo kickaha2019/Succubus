@@ -17,7 +17,7 @@ class Grabber < Processor
 
   def add_referral( referral, url)
     return if @reachable[url]['referrals'].size > 3
-    @reachable[url]['referrals'] << referral unless @reachable[url]['referrals'].include?( url)
+    @reachable[url]['referrals'] << referral unless @reachable[url]['referrals'].include?( referral)
   end
 
   def add_referrals( referrals, url)
