@@ -14,6 +14,42 @@ class BGA < Site
     end
   end
 
+  def collect_news_posts( page, place)
+    result = Elements::Ignore.new( place)
+    nodes = Nodes.new( [[place.element]])
+    nodes.css( 'tbody tr td.views-field-title a') do |element|
+      [element['href'], element.text]
+    end.parent.parent.css( 'td.views-field-created') do |element, href, title|
+      if m = /^(\d*)-(\d*)-(\d*)$/.match( element.text.strip)
+        if t = to_date( m[1], m[2], m[3])
+          result.advise( ['News'], absolutise( page.url, href), title, t)
+        end
+      else
+        p [title, element.text]
+        raise 'collect_news_posts2'
+      end
+    end
+    result
+  end
+
+  def collect_results_posts( page, place)
+    result = Elements::Ignore.new( place)
+    nodes = Nodes.new( [[place.element]])
+    nodes.css( 'tbody tr td.views-field-title a') do |element|
+      [element['href'], element.text]
+    end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |element, href, title|
+      if m = /(^|\D)(\d*) (\w*) (\d*)$/.match( element.text.strip)
+        if t = to_date( m[4], m[3], m[2])
+          result.advise( ['Events'], absolutise( page.url, href), title, t)
+        end
+      else
+        p [title, element.text]
+        raise 'collect_results_posts2'
+      end
+    end
+    result
+  end
+
   def define_rules
     on_element 'a', :class => 'visually-hidden' do |place|
       Elements::Ignore.new( place)
@@ -381,9 +417,17 @@ class BGA < Site
       false
     end
 
-    on_page /^(allnews|results_xxxx)($|\?)/ do |page|
+    on_page /^allnews($|\?)/ do |page|
       on_element 'body', :grokked => false do |place|
-        Elements::Ignore.new( place)
+        collect_news_posts( page, place) # Elements::Ignore.new( place)
+      end
+
+      true
+    end
+
+    on_page /^results_xxxx($|\?)/ do |page|
+      on_element 'body', :grokked => false do |place|
+        collect_results_posts( page, place) # Elements::Ignore.new( place)
       end
 
       true
@@ -404,7 +448,7 @@ class BGA < Site
     end
 
     on_page %r{^\w*/\w*\d\d\d\d(|$)} do |page|
-      unless /^(bgj|node|results)$/ =~ page.relative_path[0]
+      unless /^(bgj|node|results|comment|review)$/ =~ page.relative_path[0]
         page.date= Time.new( page.relative_path[1][-4..-1].to_i)
         page.mode= :post
       end
@@ -476,7 +520,8 @@ class BGA < Site
           /^council\//                     => 'Council',
           /^education\//                   => 'Teaching',
           /^ejournal\/\d/                  => [],
-          /^ejournal\/index/               => 'Newsletters',
+          /^ejournal\/index/               => ['History','Newsletters'],
+          /^events\/euroteams\d\d\d\d/     => 'Events',
           /^events\/euroteams/             => 'Tournaments',
           /^events\/goweek/                => 'Tournaments',
           /^events\/wmsg/                  => ['Events','World Mind Sports'],
@@ -484,11 +529,13 @@ class BGA < Site
           /^eygc2014/                      => ['Events','EYGC2014'],
           /^general\//                     => 'General',
           /^gopcres\//                     => 'Playing online',
+          /^history\/.*\d\d\d\d.*/         => ['History','By year'],
           /^history\//                     => 'History',
           /^hof\//                         => 'Hall of Fame',
           /^junior\//                      => 'Youth',
           /^learn/                         => 'Teaching',
           /^membership\//                  => 'Membership',
+          /^news\/enews/                   => ['History','News'],
           /^news\//                        => 'News',
           /^newsletter\//                  => 'Newsletters',
           /^node/                          => [],

@@ -9,6 +9,22 @@ module Elements
       @contents =  place.children
       @element  =  place.element
       @debug    =  @element['debug']
+      @advise   = []
+    end
+
+    def advise( index, url, title, date)
+      @advise << {index:index, url:url, title:title, date:date}
+    end
+
+    def advises
+      @advise.each do |row|
+        yield row
+      end
+      children do |child|
+        child.advises do |row|
+          yield row
+        end
+      end
     end
 
     def article?

@@ -50,6 +50,14 @@ class Worker < Processor
         entry['error'] = true
       end
     end
+
+    parsed.advises do |advice|
+      article = {'index' => advice[:index],
+                 'title' => advice[:title],
+                 'date'  => advice[:date].strftime( '%Y-%m-%d'),
+                 'mode'  => 'post'}
+      @digested['advise:' + advice[:url]] = article
+    end
   end
 
   def dump( struct, filename, debug=false)

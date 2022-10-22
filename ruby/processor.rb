@@ -157,15 +157,37 @@ class Processor
 
   def lookup( url)
     return nil unless @pages[url]
+
     unless @digests
       @digests = {}
+      digested = []
       (0...@config['workers']).each do |i|
-        YAML.load( IO.read( @config['temp_dir'] + "/digest#{i}.yaml")).each_pair do |url, info|
-          @digests[url] = info
+        digested << YAML.load( IO.read( @config['temp_dir'] + "/digest#{i}.yaml"))
+      end
+
+      digested.each do |digest|
+        digest.each_pair do |url, info|
+          @digests[url] = info unless /^advise:/ =~ url
+        end
+      end
+
+      digested.each do |digest|
+        digest.each_pair do |url, advice|
+          next unless /^advise:/ =~ url
+          if info = @digests[url[7..-1]]
+            if info['articles'].size == 1
+              article = info['articles'][0]
+              article['index'] = advice['index'] if article['index'].empty?
+              article['title'] = advice['title']
+              article['date']  = advice['date']
+              article['mode']  = advice['mode']
+            end
+          end
         end
       end
       #puts "... Consumed    #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
     end
+
     PageInfo.new( self, @cache, url, @pages[url], @digests[url])
   end
 

@@ -190,7 +190,8 @@ class Site
       if place['href']
         Elements::Anchor.new(place, place.absolutise(place['href']), place['title'])
       else
-        Elements::Text.new( place, place.text)
+        place.children
+#        Elements::Text.new( place, place.text)
       end
     end
 
