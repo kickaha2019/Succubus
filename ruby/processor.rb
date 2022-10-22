@@ -143,7 +143,7 @@ class Processor
     while limit > 0
       if info = @pages[url]
         if info['redirect']
-          url   =  unify(info['comment'])
+          url   =  info['comment']
           limit -= 1
         else
           break
@@ -180,36 +180,6 @@ class Processor
     @site.parse( url, @page_data[url]['document'])
   end
 
-#  def preparse_all
-#    suppress_indexes = []
-
-    # @pages.each_pair do |url, info|
-    #   if ts = info['timestamp']
-    #     path = "#{@cache}/grabbed/#{ts}.html"
-    #     if File.exist?( path)
-    #       @page_data[url]['document'] = @site.parse_document( path)
-    #       @site.preparse( url, @page_data[url]['document'])
-    #     end
-    #   end
-    # end
-
-    #   _, _, _, _, parsed = examine( deref( url))  # Parsing may not have been yet
-    #
-    #   if parsed
-    #     parsed.tree do |child|
-    #       if child.is_a?( Elements::Article)
-    #         if /bgj\/01901/ =~ url
-    #           p ['preparse_all2', url, info['referrals']]
-    #         end
-    #         suppress_child_article_indexing( url, info['referrals'], child, suppress_indexes)
-    #       end
-    #     end
-    #   end
-    # end
-    #
-    # suppress_indexes.each {|article| article.index = []}
-#  end
-
   def propagate_redirects
     @pages.each_key do |url|
       target = deref(url)
@@ -235,39 +205,13 @@ class Processor
     raise "Subprocess error" if error
   end
 
-  # def suppress_child_article_indexing( url, referrals, child, suppress_indexes)
-  #   return if child.index.empty?
-  #
-  #   referrals.each do |referral|
-  #     unless @pages[unify( referral)]
-  #       p ['suppress_child_article_indexing', url, referral, unify(referral)]
-  #     end
-  #     _, _, _, _, parsed = examine( unify( referral))
-  #     if parsed
-  #       parsed.tree do |parent|
-  #         if parent.is_a?( Elements::Article)
-  #           suppress = true
-  #           child.index.each_index do |i|
-  #             suppress = false unless child.index[i] == parent.index[i]
-  #           end
-  #
-  #           if suppress
-  #             suppress_indexes << child
-  #             return
-  #           end
-  #         end
-  #       end
-  #     end
+  # def unify( url)
+  #   return url if @pages[url]
+  #   if /\/$/ =~ url
+  #     return url[0..-2] if @pages[url[0..-2]]
+  #   else
+  #     return( url + '/') if @pages[url + '/']
   #   end
+  #   url
   # end
-
-  def unify( url)
-    return url if @pages[url]
-    if /\/$/ =~ url
-      return url[0..-2] if @pages[url[0..-2]]
-    else
-      return( url + '/') if @pages[url + '/']
-    end
-    url
-  end
 end

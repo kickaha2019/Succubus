@@ -16,20 +16,17 @@ class Grabber < Processor
   end
 
   def add_referral( referral, url)
-    return if @reachable[url]['referrals'].size > 3
-    @reachable[url]['referrals'] << referral unless @reachable[url]['referrals'].include?( referral)
+    return unless referral
+    refs = @reachable[url]['referrals']
+    return if refs.size > 3
+    refs << referral unless (refs.include?( referral) || (referral == url))
   end
 
-  def add_referrals( referrals, url)
-    return if @reachable[url]['referrals'].size > 3
-    if referrals.size > 3
-      @reachable[url]['referrals'] = referrals[0..3]
-    else
-      referrals.each do |ref|
-        add_referral( ref, url)
-      end
-    end
-  end
+  # def add_referrals( referrals, url)
+  #   referrals.each do |ref|
+  #     add_referral( ref, url)
+  #   end
+  # end
 
   def check_files_deleted
     @reachable.each_pair do |url, page|
@@ -113,18 +110,18 @@ class Grabber < Processor
         end
 
       elsif response.is_a?( Net::HTTPRedirection)
-        handled = false
-        if unify(response['Location']) == url
-          response2 = http_get( response['Location'])
-          if response2.is_a?( Net::HTTPOK)
-            File.open( "#{@cache}/grabbed/#{ts}.html", 'wb') do |io|
-              io.write response2.body
-            end
-            handled = true
-          end
-        end
+        # handled = false
+        # if unify(response['Location']) == url
+        #   response2 = http_get( response['Location'])
+        #   if response2.is_a?( Net::HTTPOK)
+        #     File.open( "#{@cache}/grabbed/#{ts}.html", 'wb') do |io|
+        #       io.write response2.body
+        #     end
+        #     handled = true
+        #   end
+        # end
 
-        unless handled
+#        unless handled
           url = response['Location']
           if login_redirect?( url)
             info['secured'] = true
@@ -132,7 +129,7 @@ class Grabber < Processor
             info['comment']  = url
             info['redirect'] = true
           end
-        end
+#        end
 
       else
         info['comment'] = "#{response.class.name}: #{response.code}"
@@ -178,7 +175,7 @@ class Grabber < Processor
   end
 
   def reached( referral, url)
-    url = unify( url)
+    #url = unify( url)
 
     unless @reachable[url]
       @reachable[url] = {'timestamp' => 0, 'referrals' => []}
@@ -189,7 +186,7 @@ class Grabber < Processor
 
     info = lookup( url)
     if info
-      add_referrals( info.referrals, url)
+      #add_referrals( info.referrals, url)
       @reachable[url]['timestamp'] =  info.timestamp
       @reachable[url]['redirect']  =  true if info.redirect?
       @reachable[url]['secured']   =  true if info.secure?

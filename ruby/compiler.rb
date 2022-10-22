@@ -47,11 +47,11 @@ class Compiler < Processor
           outputs << prepare_output( article)
         end
 
-        info.links do |found|
-          if found != unify(found)
-            @generation[found] = {'redirect' => deref(unify(found))}
-          end
-        end
+        # info.links do |found|
+        #   if found != unify(found)
+        #     @generation[found] = {'redirect' => deref(unify(found))}
+        #   end
+        # end
       end
     end
 
