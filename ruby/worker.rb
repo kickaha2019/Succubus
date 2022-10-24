@@ -174,7 +174,7 @@ DUMP2
   def loop( verb, counter, every)
     pages do |url|
       info = @pages[url]
-      next if info['redirect']
+      next if info['redirect'] || asset?(url)
       debug = (url == @config['debug_url'])
 
       path = @cache + "/grabbed/#{info['timestamp']}.html"

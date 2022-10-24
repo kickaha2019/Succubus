@@ -328,9 +328,9 @@ class BGA < Site
       end
 
       ignores = [
-          # Temporary pages for tournaments
+          # Forms for tournaments membership etc
           /-entries\.html$/,
-          /-form\.html$/,
+          /-form(\.html|)$/,
 
           # Unloved and broken
           /\/book\/export/,

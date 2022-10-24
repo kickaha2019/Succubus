@@ -4,11 +4,9 @@
     {{ partial "head" . }}
   </head>
   <body class="{{ .Layout }}">
-    {{ partial "navbar" . }}
+    {{ partial "body_top" . }}
 
     <main>
-        {{ partial "menu" . }}
-
         <div class="medium_width">
           <h2>Articles</h2>
           {{ range where (where .Site.AllPages "Params.mode" "article") "Params.section" .Params.section }}

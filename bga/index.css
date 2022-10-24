@@ -1,13 +1,13 @@
 body {background: #DDDDDD; margin: 0px}
 
-nav {font-size: 30px;
-     background-image: linear-gradient(#d0d361,#fac703);
-     min-height: 60px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
+.logo {font-size: 30px;
+       background-image: linear-gradient(#d0d361,#fac703);
+       min-height: 60px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
 }
-nav span {color: red; font-style: italic}
+.logo span {color: red; font-style: italic}
 
 main {display: flex;
       flex-wrap: wrap;
@@ -21,7 +21,7 @@ main>div {margin: 20px;
           background: white;
 }
 
-title {font-weight: bold; display: flex; font-size: 25px; min-height: 20px;
+.logo1 {font-weight: bold; display: flex; font-size: 25px;           min-height: 20px;
        align-items: center; justify-content: center}
 
 .page_width {max-width: 75%; min-width: 600px}
@@ -50,15 +50,39 @@ dt {font-weight: bold}
 
 a img {max-height: 100px; object-fit: contain}
 
-.menu0 {display: flex; flex-direction: column; width: 200px; max-width: 200px;
-        font-size: 20px}
-.menu0 a {font-size: 20px}
-.menu1, .menu2 {display: none; padding: 5px}
+.wide_menu .menu0 {display: flex;
+                   flex-direction: row;
+                   width: 200px;
+                   max-width: 200px;
+                   font-size: 20px}
+.wide_menu .menu0 a {font-size: 20px}
+.wide_menu .menu1, .menu2 {display: none; padding: 5px}
 .menu1 {background: #DDDDDD; z-index: 1}
 .menu2 {background: #BBBBBB; z-index: 2}
 
 .is_active, .is_active > a {color: red}
-.menuitem0, .menuitem1 {position: relative; white-space: nowrap}
+.wide_menu .menuitem0, .wide_menu .menuitem1 {
+  position: relative; white-space: nowrap}
 
-.menuitem0:hover .menu1 {display: flex; flex-direction: column; position: absolute; left: 100px; top: 0px}
-.menuitem1:hover .menu2 {display: flex; flex-direction: column; position: absolute; left: 100px; top: 0px}
+.wide_menu .menuitem0:hover .menu1 {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    left: 100px;
+    top: 0px}
+.wide_menu .menuitem1:hover .menu2 {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    left: 100px;
+    top: 0px}
+
+.narrow_menu {display: block}
+.narrow_menu menu0, .narrow_menu menu1 {display: none}
+.wide_menu {display: none}
+.contract {display: none}
+
+@media all and (min-width: 768px) {
+  .narrow_menu {display: none}
+  .wide_menu {display: flex}
+}

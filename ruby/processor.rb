@@ -115,6 +115,19 @@ class Processor
     @pages = {}
     if File.exist?( cache + '/grabbed.yaml')
       @pages = YAML.load( IO.read( cache + '/grabbed.yaml'))
+      timestamps = {}
+      errors     = false
+      @pages.each_pair do |url, info|
+        if (ts = info['timestamp']) > 0
+          if timestamps[ts]
+            errors = true
+            puts "*** Same timestamp: #{url} and #{timestamps[ts]}"
+          else
+            timestamps[ts] = url
+          end
+        end
+      end
+      raise "Duplicate timestamps" if errors
     end
 
     @page_data = Hash.new {|h,k| h[k] = {}}

@@ -150,8 +150,12 @@ module Generators
       markdown = article.generate( self)
       front_matter['raw'] = true if raw?( markdown)
 
-      write_file( @output_dir + '/content' + output,
-                  "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
+      begin
+        write_file( @output_dir + '/content' + output,
+                    "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
+      rescue Exception => bang
+        error( bang.message)
+      end
       @article_error
     end
 

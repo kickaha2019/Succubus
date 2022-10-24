@@ -4,11 +4,9 @@
     {{ partial "head" . }}
   </head>
   <body class="{{ .Layout }}">
-    {{ partial "navbar" . }}
+    {{ partial "body_top" . }}
 
     <main>
-        {{ partial "menu" . }}
-
         <div class="big_width">
         {{ .Content }}
         </div>
