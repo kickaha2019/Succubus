@@ -52,24 +52,31 @@ a img {max-height: 100px; object-fit: contain}
 
 .wide_menu .menu0 {display: flex;
                    flex-direction: row;
-                   width: 200px;
-                   max-width: 200px;
-                   font-size: 20px}
+                   flex-wrap: wrap;
+                   justify-content: center;
+                   font-size: 20px;
+                   padding-left: 75px;
+                   padding-right: 75px}
 .wide_menu .menu0 a {font-size: 20px}
-.wide_menu .menu1, .menu2 {display: none; padding: 5px}
-.menu1 {background: #DDDDDD; z-index: 1}
-.menu2 {background: #BBBBBB; z-index: 2}
+.wide_menu .menu1, .menu2 {display: none; padding-left: 5px; padding-right: 5px}
+.menu0 {background: #EFEFEF}
+.menu1 {background: #E8E8E8; z-index: 1}
+.menu2 {background: #DFDFDF; z-index: 2}
 
 .is_active, .is_active > a {color: red}
 .wide_menu .menuitem0, .wide_menu .menuitem1 {
-  position: relative; white-space: nowrap}
+  position: relative;
+  white-space: nowrap;
+  margin-left: 10px;
+  margin-right: 10px;
+}
 
 .wide_menu .menuitem0:hover .menu1 {
     display: flex;
     flex-direction: column;
     position: absolute;
-    left: 100px;
-    top: 0px}
+    left: 0px;
+    top: 25px}
 .wide_menu .menuitem1:hover .menu2 {
     display: flex;
     flex-direction: column;
@@ -77,10 +84,15 @@ a img {max-height: 100px; object-fit: contain}
     left: 100px;
     top: 0px}
 
-.narrow_menu {display: block}
-.narrow_menu menu0, .narrow_menu menu1 {display: none}
+.narrow_menu {display: block; font-size: 16px; background: #EFEFEF}
+.narrow_menu a {font-size: 16px}
+.narrow_menu .menu0, .narrow_menu .menu1 {display: none}
+.narrow_menu .menu0 {background: #E8E8E8}
+.narrow_menu .menu1 {background: #DFDFDF}
+.narrow_menu .menu2 {background: #D8D8D8}
 .wide_menu {display: none}
-.contract {display: none}
+.contract {display: none; text-decoration: none}
+.expand {text-decoration: none}
 
 @media all and (min-width: 768px) {
   .narrow_menu {display: none}

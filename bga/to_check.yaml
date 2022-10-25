@@ -4,10 +4,6 @@ pages:
   title:    Home page
   features: Unordered list RAW headings
   golden:   home.html
-- original: https://britgo.org/clubs/map
-  title:    Club Map page
-  features: Coronavirus header complex map
-  golden:   club_map.html
 - original: https://britgo.org/tournaments
   title:    Events Calendar
   features: Broken

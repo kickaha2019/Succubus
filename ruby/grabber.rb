@@ -86,8 +86,11 @@ class Grabber < Processor
 
   def grab_candidates
     @candidates.each do |url|
+      sleep @delay
+      @delay = 30
       puts "... Grabbing #{url}"
       ts = Time.now.to_i
+
       referers = @reachable[url]['referrals']
       info     = @reachable[url] = {'timestamp' => ts,
                                     'referrals' => referers}
@@ -138,8 +141,6 @@ class Grabber < Processor
   end
 
   def http_get( url, headers = {})
-    sleep @delay
-    @delay = 30
     uri = URI.parse( url)
 
     request = Net::HTTP::Get.new(uri.request_uri)

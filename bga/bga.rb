@@ -571,7 +571,7 @@ class BGA < Site
 
     on_page /^results\/\d\d\d\d\// do |page|
       decade = (page.relative_path[1].to_i / 10) * 10
-      page.index = ['Results', decade.to_s, page.relative_path[1]]
+      page.index = ['Results', decade.to_s + ' - ' + (decade+1).to_s, page.relative_path[1]]
       false
     end
 

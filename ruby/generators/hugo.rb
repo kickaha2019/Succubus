@@ -521,6 +521,7 @@ module Generators
       generate_posts_page
       ensure_index_md( @output_dir + '/content')
       copy_template( 'index.css','index.css')
+      copy_template( 'index.js','index.js')
       clean_old_files( "#{@output_dir}/content")
     end
 

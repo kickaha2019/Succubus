@@ -1,51 +1,53 @@
 <div class="narrow_menu">
-  <span class="menu">Menu</span>
-  <a class="expand" name="expand" onclick="expand(event);">+</a>
-  <a class="contract" name="contract" onclick="contract(event);">-</a>
-  
-  <div name="menu" class="menu0">
-    {{ if .Params.index0 }}
-      <div class="menuitem0"><a href="/index.html">Home</a></div>
-    {{ else }}
-      <div class="menuitem0 is_active">Home</div>
-    {{ end }}
+  <div class="menu">
+    <span>Menu</span>
+    <a class="expand" href="#" onclick="expand(event);">+</a>
+    <a class="contract" href="#" onclick="contract(event);">-</a>
+    <div class="menu0">
 
-    {{ $currentPage := . }}
-    {{ range .Site.Menus.main }}
-      <div class="menuitem0 {{ if eq $currentPage.Params.index0 .Identifier }}is_active{{ end }}">
-      {{ if eq .URL "" }}
-        {{ .Name }}
+      {{ if .Params.index0 }}
+        <div class="menuitem0"><a href="/index.html">Home</a></div>
       {{ else }}
-        <a href="{{ .URL }}">{{ .Name }}</a>
+        <div class="menuitem0 is_active">Home</div>
       {{ end }}
 
-      {{ if .HasChildren }}
-        <a class="expand" name="expand" onclick="expand(event);">+</a>
-        <a class="contract" name="contract" onclick="contract(event);">-</a>
-        <div name="menu" class="menu1">
-        {{ range .Children }}
-          <div class="menuitem1 {{ if eq $currentPage.Params.index1 .Identifier }}is_active{{ end }}">
-          {{ if eq .URL "" }}
-            {{ .Name }}
-          {{ else }}
-            <a href="{{ .URL }}">{{ .Name }}</a>
-          {{ end }}
+      {{ $currentPage := . }}
+      {{ range .Site.Menus.main }}
+        <div class="menuitem0 {{ if eq $currentPage.Params.index0 .Identifier }}is_active{{ end }}">
+        {{ if eq .URL "" }}
+          {{ .Name }}
+        {{ else }}
+          <a href="{{ .URL }}">{{ .Name }}</a>
+        {{ end }}
 
-          {{ if .HasChildren }}
-            <a class="expand" name="expand" onclick="expand(event);">+</a>
-            <a class="contract" name="contract" onclick="contract(event);">-</a>
-            <div name="menu" class="menu2">
-            {{ range .Children }}
-              <div class="menuitem2 {{ if eq $currentPage.Params.index2 .Identifier }}is_active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a></div>
+        {{ if .HasChildren }}
+          <a class="expand" href="#" onclick="expand(event);">+</a>
+          <a class="contract" href="#" onclick="contract(event);">-</a>
+          <div name="menu" class="menu1">
+          {{ range .Children }}
+            <div class="menuitem1 {{ if eq $currentPage.Params.index1 .Identifier }}is_active{{ end }}">
+            {{ if eq .URL "" }}
+              {{ .Name }}
+            {{ else }}
+              <a href="{{ .URL }}">{{ .Name }}</a>
+            {{ end }}
+
+            {{ if .HasChildren }}
+              <a class="expand" href="#" onclick="expand(event);">+</a>
+              <a class="contract" href="#" onclick="contract(event);">-</a>
+              <div name="menu" class="menu2">
+              {{ range .Children }}
+                <div class="menuitem2 {{ if eq $currentPage.Params.index2 .Identifier }}is_active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a></div>
+              {{ end }}
+              </div>
             {{ end }}
             </div>
           {{ end }}
           </div>
         {{ end }}
+
         </div>
       {{ end }}
-
-      </div>
-    {{ end }}
+    </div>
   </div>
 </div>
