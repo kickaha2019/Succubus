@@ -56,33 +56,54 @@ a img {max-height: 100px; object-fit: contain}
                    justify-content: center;
                    font-size: 20px;
                    padding-left: 75px;
-                   padding-right: 75px}
+                   padding-right: 75px;
+                   padding-top: 10px;
+                   padding-bottom: 10px;
+}
 .wide_menu .menu0 a {font-size: 20px}
-.wide_menu .menu1, .menu2 {display: none; padding-left: 5px; padding-right: 5px}
+
 .menu0 {background: #EFEFEF}
-.menu1 {background: #E8E8E8; z-index: 1}
-.menu2 {background: #DFDFDF; z-index: 2}
+.menu1 {background: #ffce0f; z-index: 1}
+.menu2 {background: #ffdd0f; z-index: 2}
 
 .is_active, .is_active > a {color: red}
-.wide_menu .menuitem0, .wide_menu .menuitem1 {
+
+.wide_menu .menuitem0 {
+  margin: 2px;
+  background: #ffb30e;
+}
+
+.wide_menu .menuitem0, .wide_menu .menuitem1, .wide_menu .menuitem2 {
   position: relative;
   white-space: nowrap;
-  margin-left: 10px;
-  margin-right: 10px;
+  border: 1px black solid;
+  width: 180px;
+  text-align: center;
+}
+
+.wide_menu .menu1 {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    left: -1px;
+    top: 20px
 }
 
 .wide_menu .menuitem0:hover .menu1 {
     display: flex;
-    flex-direction: column;
-    position: absolute;
-    left: 0px;
-    top: 25px}
-.wide_menu .menuitem1:hover .menu2 {
-    display: flex;
+}
+
+.wide_menu .menu2 {
+    display: none;
     flex-direction: column;
     position: absolute;
     left: 100px;
-    top: 0px}
+    top: 0px
+}
+
+.wide_menu .menuitem1:hover .menu2 {
+    display: flex;
+}
 
 .narrow_menu {display: block; font-size: 16px; background: #EFEFEF}
 .narrow_menu a {font-size: 16px}
