@@ -187,11 +187,11 @@ class Processor
       digested.each do |digest|
         digest.each_pair do |url, advice|
           next unless /^advise:/ =~ url
-          if info = @digests[url[7..-1]]
+          if info = @digests[deref(url[7..-1])]
             if info['articles'].size == 1
               article = info['articles'][0]
-              article['index'] = advice['index'] if article['index'].empty?
-              article['title'] = advice['title']
+              article['index'] = advice['index'] if advice['index'] && article['index'].empty?
+              article['title'] = advice['title'] if advice['title']
               article['date']  = advice['date']
               article['mode']  = advice['mode']
             end

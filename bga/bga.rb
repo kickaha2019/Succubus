@@ -2,7 +2,6 @@ class BGA < Site
   def initialize( config)
     super
     taxonomy 'Section', 'Sections'
-    @post_dates = {}
   end
 
   def absolutise( page_url, url)
@@ -40,7 +39,7 @@ class BGA < Site
     end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |element, href, title|
       if m = /(^|\D)(\d*) (\w*) (\d*)$/.match( element.text.strip)
         if t = to_date( m[4], m[3], m[2])
-          result.advise( ['Events'], absolutise( page.url, href), title, t)
+          result.advise( ['Events','General'], absolutise( page.url, href), title, t)
         end
       else
         p [title, element.text]
@@ -49,6 +48,24 @@ class BGA < Site
     end
     result
   end
+
+  # def collect_taxonomy_posts( page, place)
+  #   debug = /taxonomy\/term\/28\?page=12/ =~ page.url
+  #   result = Elements::Ignore.new( place)
+  #   nodes = Nodes.new( [[place.element]])
+  #   nodes.css( 'div.views-row h2 a') do |element|
+  #     p ['DEBUG100', element['href'], element.text] if debug
+  #     [element['href'], element.text.strip]
+  #   end.parent.parent.css( 'div.field__item') do |element, href, title|
+  #     if m = /, (\d*) (\w*) (\d\d\d\d)$/.match( element.text.strip)
+  #       if t = to_date( m[3], m[2], m[1])
+  #         p ['DEBUG200', t] if debug
+  #         result.advise( nil, absolutise( page.url, href), title, t)
+  #       end
+  #     end
+  #   end
+  #   result
+  # end
 
   def define_rules
     on_element 'a', :class => 'visually-hidden' do |place|
@@ -313,18 +330,12 @@ class BGA < Site
     on_page /.*/ do |page|
       page.title= page.css( '.page-title').text.strip
       page.mode=  :article
-      page.index= ['General']
 
       if m = /Newsletter.*\s(\w*) (\d\d\d\d)$/.match( page.title)
         if d = to_date( m[2], m[1], 1)
           page.date= d
           page.mode= :post
         end
-      end
-
-      if date = @post_dates[page.url]
-        page.date= date
-        page.mode= :post
       end
 
       ignores = [
@@ -447,10 +458,22 @@ class BGA < Site
       false
     end
 
-    on_page %r{^\w*/\w*\d\d\d\d(|$)} do |page|
+    on_page %r{(^|\D)\d\d\d\d(\D|$)} do |page|
+      unless /^(bchamp\/chrules|bgj|node|results|comment|reps|review)(\/|$)/ =~ page.relative_url
+        m = /(^|\D)(\d\d\d\d)(\D|$)/.match( page.relative_url)
+        page.date=  Time.new( m[2].to_i)
+        page.mode=  :post
+        page.index= ['News'] unless ! page.index.empty?
+      end
+      false
+    end
+
+    on_page /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d\d$/i do |page|
       unless /^(bgj|node|results|comment|review)$/ =~ page.relative_path[0]
-        page.date= Time.new( page.relative_path[1][-4..-1].to_i)
-        page.mode= :post
+        if t = to_date( page.relative_path[-1][-2..-1], page.relative_path[-1][-5..-3], 1)
+          page.date= t
+          page.mode= :post
+        end
       end
       false
     end
@@ -495,20 +518,21 @@ class BGA < Site
     on_page /.*/ do |page|
       map = {
           /\?page=\d/                      => [],
-          /^bchamp\/(book|chrules)\//      => ['Procedures','British Championship'],
-          /^bchamp\/(history|matthew)\//   => ['History','British Championship'],
+          /^bchamp\/(book|chrules)/        => ['Admin','British Championship'],
+          /^bchamp\/(history|matthew)/     => ['History','British Championship'],
           /^bchamp\/\d\d\d\d/              => ['Events','British Championship'],
           /^bchamp\/qualifiers\d\d\d\d/    => ['Events','British Championship'],
-          /^bchamp\//                      => 'British Championship',
-          /^bgj\/glossary.html/            => ['Procedures', "British Go Journal"],
-          /^bgj\/guidelines.html/          => ['Procedures', "British Go Journal"],
+          /^bchamp\/qualifying\.html$/     => ['Admin', "Qualifying"],
+          /^bchamp\//                      => ['Tournaments','A-B'],
+          /^bgj\/glossary.html/            => ['Admin', "British Go Journal"],
+          /^bgj\/guidelines.html/          => ['Admin', "British Go Journal"],
           /^bgj\/history\//                => ['History', "British Go Journal"],
           /^bgj\/index\/alph/              => [],
           /^bgj\/index\/auth/              => [],
           /^bgj\/index\/chron/             => [],
           /^bgj\/index\/subj/              => [],
-          /^bgj\//                         => 'British Go Journal',
-          /^book\/londonopen/              => ['Procedures', "London Open"],
+          /^bgj\//                         => ['British Go Journal','General'],
+          /^book\/londonopen/              => ['Admin', "London Open"],
           /^booklist\//                    => 'Book list',
           /^books\//                       => 'Book list',
           /^club(|s)\/[a-c]/i              => ['Clubs', 'A-C'],
@@ -516,23 +540,26 @@ class BGA < Site
           /^club(|s)\/[m-s]/i              => ['Clubs', 'M-S'],
           /^club(|s)\/[t-z]/i              => ['Clubs', 'T-Z'],
           /^committee\/clubs\//            => ['Clubs'],
-          /^committee\//                   => 'Council',
-          /^council\//                     => 'Council',
+          /^committee\//                   => ['Admin','Council'],
+          /^council\//                     => ['Admin','Council'],
           /^education\//                   => 'Teaching',
           /^ejournal\/\d/                  => [],
           /^ejournal\/index/               => ['History','Newsletters'],
-          /^events\/euroteams\d\d\d\d/     => 'Events',
-          /^events\/euroteams/             => 'Tournaments',
-          /^events\/goweek/                => 'Tournaments',
+          /^events\/euroteams\d\d\d\d/     => ['Events','Euroteams'],
+          /^events\/euroteams/             => ['Tournaments','C-E'],
+          /^events\/goweek/                => ['Tournaments','F-L'],
           /^events\/wmsg/                  => ['Events','World Mind Sports'],
-          /^events\//                      => 'Events',
+          /^events\//                      => ['Events','General'],
           /^eygc2014/                      => ['Events','EYGC2014'],
           /^general\//                     => 'General',
-          /^gopcres\//                     => 'Playing online',
+          /^gopcres\//                     => 'General',
           /^history\/.*\d\d\d\d.*/         => ['History','By year'],
-          /^history\//                     => 'History',
-          /^hof\//                         => 'Hall of Fame',
+          /^history\//                     => ['History','General'],
+          /^hof\//                         => ['History','Hall of Fame'],
+          /^junior\/events\/.*\d\d\d\d/    => ['Events','Junior'],
+          /^junior\/.*\d\d\d\d/            => ['Results','Junior'],
           /^junior\//                      => 'Youth',
+          /^learngoweek2014/               => ['Events','General'],
           /^learn/                         => 'Teaching',
           /^membership\//                  => 'Membership',
           /^news\/enews/                   => ['History','News'],
@@ -540,22 +567,30 @@ class BGA < Site
           /^newsletter\//                  => 'Newsletters',
           /^node/                          => [],
           /^obits\//                       => 'Obituaries',
-          /^organisers\//                  => 'Organisers',
-          /^pairgo\/photos\d\d\d\d/        => 'Events',
+          /^organisers\//                  => ['Admin','Organisers'],
+          /^pairgo\/photos\d\d\d\d/        => ['Events','PairGo'],
           /^people\//                      => 'People',
-          /^policy/                        => 'Procedures',
-          /^positions\//                   => 'Positions',
-          /^reps\//                        => 'Reports',
-          /^resources\//                   => 'Resources',
-          /^results\//                     => 'Results',
+          /^policy/                        => ['Admin','Policies'],
+          /^positions\//                   => ['Admin','Positions'],
+          /^reps\/e/i                      => ['Tournaments','C-E'],
+          /^reps\/w/i                      => ['Tournaments','T-Z'],
+          /^reps\//                        => ['Tournaments','F-L'],
+          /^resources\//                   => ['Admin','Resources'],
           /^review\//                      => 'Reviews',
-          /^rules/                         => ['Procedures','Rules'],
+          /^rules/                         => ['Admin','Rules'],
           /^teaching\//                    => 'Teaching',
           /^tournaments\/history/          => ['History','Tournaments'],
           /^tournaments\/logc\/.*\d\d\d\d/ => ['Events','London'],
-          /^tournaments.*\d\d\d\d/         => ['Events'],
-          /^tournaments\//                 => 'Tournaments',
+          /^tournaments.*\d\d\d\d/         => ['Events','General'],
+          /^tournaments\/[a-b]/i           => ['Tournaments','A-B'],
+          /^tournaments\/[c-e]/i           => ['Tournaments','C-E'],
+          /^tournaments\/[f-l]/i           => ['Tournaments','F-L'],
+          /^tournaments\/[m-n]/i           => ['Tournaments','M-N'],
+          /^tournaments\/[o-s]/i           => ['Tournaments','O-S'],
+          /^tournaments\/[t-z]/i           => ['Tournaments','T-Z'],
           /^wmsg/                          => ['Events','World Mind Sports'],
+          /^youthnews\/current/            => 'Youth',
+          /^youthnews/                     => 'News',
           /^youth/                         => 'Youth'
       }
 
@@ -570,13 +605,33 @@ class BGA < Site
     end
 
     on_page /^results\/\d\d\d\d\// do |page|
-      decade = (page.relative_path[1].to_i / 10) * 10
-      page.index = ['Results', decade.to_s + ' - ' + (decade+1).to_s, page.relative_path[1]]
+      year   = page.relative_path[1].to_i
+      decade = (year / 10) * 10
+
+      on_element 'div', :class => 'field__item' do |place|
+        if m = /, (\d*) (\w*) (\d\d\d\d)$/.match( place.text.strip)
+          if t = to_date( m[3], m[2], m[1])
+            page.date  = t
+            page.index = ['Results', decade.to_s + ' - ' + (decade+9).to_s]
+            page.mode  = :post
+          end
+        end
+        nil
+      end
+
       false
     end
 
     on_page /^bgj\/0/ do |page|
       page.index= []
+      false
+    end
+
+    on_page /^(wmsg|events\/wmsg)/ do |page|
+      if page.mode == :article
+        page.mode = :post
+        page.date = Time.new( 2008)
+      end
       false
     end
 
@@ -673,35 +728,6 @@ class BGA < Site
     end
   end
 
-  # def preparse( url, document)
-  #   nodes = page_to_nodes( document)
-  #
-  #   nodes.css( 'td.views-field-title a') do |node|
-  #     [absolutise( url, node['href'])]
-  #   end.parent.parent.css( 'td.views-field-created') do |node1, href|
-  #     if m = /(\d\d\d\d)-(\d\d)-(\d\d)/.match( node1.text)
-  #       @post_dates[href] = to_date( m[1], m[2], m[3])
-  #     end
-  #     false
-  #   end
-
-    # nodes.css( 'td.views-field-title a') do |node|
-    #   [absolutise( url, node['href'])]
-    # end.parent.parent.css( 'td.views-field-field-tournament-daterange') do |node1, href|
-    #   if m = /(\d+) (\w*) (\d\d\d\d)/.match( node1.text)
-    #     @post_dates[href] = to_date( m[3], m[2], m[1])
-    #   end
-    #   false
-    # end
-  # end
-
-  # def redirect( url, target)
-  #   super
-  #   if @post_dates[url]
-  #     @post_dates[target] = @post_dates[url]
-  #   end
-  # end
-
   def to_date( year, month, day)
     #p ['to_date1', year, month, day]
     year = year.to_i
@@ -719,9 +745,9 @@ class BGA < Site
       month = month.to_i
       return nil if (month < 1) || (month > 12)
     else
-      months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-      return nil unless months.include?( month[0..2])
-      month = months.index( month[0..2]) + 1
+      months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+      return nil unless months.include?( month[0..2].downcase)
+      month = months.index( month[0..2].downcase) + 1
     end
     #p ['to_date2', year, month, day]
     Time.new( year, month, day)

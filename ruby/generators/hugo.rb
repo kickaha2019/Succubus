@@ -276,14 +276,14 @@ module Generators
       write_file( path, "#{front_matter.to_yaml}\n---\n")
     end
 
-    def generate_section_page( keys)
+    def generate_section_page( keys, all_posts)
       path           = @output_dir + '/content/sections/' + slug(keys) + '/_index.md'
       create_dir( File.dirname( path))
       @written[path] = true
       parents        = [{'url'     => '/index.html',
                          'title'   => 'Home'}]
 
-      front_matter   = {'layout'   => 'section',
+      front_matter   = {'layout'   => all_posts ? 'section_posts' : 'section_articles',
                         'title'    => keys.join( ' / '),
                         'parents'  => parents,
                         'section'  => slug(keys)}
@@ -360,7 +360,11 @@ module Generators
 
     def menu_generate( keys, menu, list, depth=0)
       if ! keys.empty?
-        generate_section_page( keys)
+        all_posts = true
+        menu[0].each do |article|
+          all_posts = false if article.mode == :post
+        end
+        generate_section_page( keys, all_posts)
         ident         = slug( keys)
 
         if menu[0].empty?

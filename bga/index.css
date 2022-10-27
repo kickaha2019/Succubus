@@ -9,16 +9,15 @@ body {background: #DDDDDD; margin: 0px}
 }
 .logo span {color: red; font-style: italic}
 
-main {display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      justify-content: center;
+main {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column-reverse;
 }
 
-main>div {margin: 20px;
-          padding: 20px;
-          border-radius: 10px;
-          background: white;
+main>div {
+    margin: 5px;
+    background: white;
 }
 
 .logo1 {font-weight: bold; display: flex; font-size: 25px;           min-height: 20px;
@@ -116,6 +115,18 @@ a img {max-height: 100px; object-fit: contain}
 .expand {text-decoration: none}
 
 @media all and (min-width: 768px) {
-  .narrow_menu {display: none}
-  .wide_menu {display: flex}
+    main {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    main>div {
+        margin: 20px;
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .narrow_menu {display: none}
+    .wide_menu {display: flex}
 }

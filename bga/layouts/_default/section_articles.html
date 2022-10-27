@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en_GB">
+  <head>
+    {{ partial "head" . }}
+  </head>
+  <body class="{{ .Layout }}">
+    {{ partial "body_top" . }}
+
+    <main>
+        <div class="medium_width">
+          <h2>Articles</h2>
+          {{ range where "Params.section" .Params.section }}
+            <article>
+                <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            </article>
+          {{ end }}
+        </div>
+    </main>
+
+    {{ partial "footer" . }}
+  </body>
+</html>

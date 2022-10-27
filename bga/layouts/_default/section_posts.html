@@ -8,14 +8,8 @@
 
     <main>
         <div class="medium_width">
-          <h2>Articles</h2>
-          {{ range where (where .Site.AllPages "Params.mode" "article") "Params.section" .Params.section }}
-            <article>
-                <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-            </article>
-          {{ end }}
-
-          {{ $posts := where (where .Site.AllPages "Params.mode" "post") "Params.section" .Params.section }}
+          <h2>Posts</h2>
+          {{ $posts := where "Params.section" .Params.section }}
           {{ if ( gt ( len $posts ) 0 ) }}
             {{ $paginator := .Paginate $posts.ByDate.Reverse }}
             {{ partial "pagination" $paginator }}
