@@ -31,16 +31,6 @@
             {{ else }}
               <a href="{{ .URL }}">{{ .Name }}</a>
             {{ end }}
-
-            {{ if .HasChildren }}
-              <a class="expand" href="#" onclick="expand(event);">+</a>
-              <a class="contract" href="#" onclick="contract(event);">-</a>
-              <div name="menu" class="menu2">
-              {{ range .Children }}
-                <div class="menuitem2 {{ if eq $currentPage.Params.index2 .Identifier }}is_active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a></div>
-              {{ end }}
-              </div>
-            {{ end }}
             </div>
           {{ end }}
           </div>

@@ -20,6 +20,7 @@ class Page
   end
 
   def index=( names)
+    raise 'Index too deep' if names.size > 2
     @index = names
   end
 

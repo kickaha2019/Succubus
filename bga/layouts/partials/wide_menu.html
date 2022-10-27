@@ -16,25 +16,17 @@
       {{ end }}
 
       {{ if .HasChildren }}
-        <div class="menu1">
+        <table class="menu1">
         {{ range .Children }}
-          <div class="menuitem1 {{ if eq $currentPage.Params.index1 .Identifier }}is_active{{ end }}">
+          <tr><td class="menuitem1 {{ if eq $currentPage.Params.index1 .Identifier }}is_active{{ end }}">
           {{ if eq .URL "" }}
             {{ .Name }}
           {{ else }}
             <a href="{{ .URL }}">{{ .Name }}</a>
           {{ end }}
-
-          {{ if .HasChildren }}
-            <div class="menu2">
-            {{ range .Children }}
-              <div class="menuitem2 {{ if eq $currentPage.Params.index2 .Identifier }}is_active{{ end }}"><a href="{{ .URL }}">{{ .Name }}</a></div>
-            {{ end }}
-            </div>
-          {{ end }}
-          </div>
+          </td></tr>
         {{ end }}
-        </div>
+        </table>
       {{ end }}
 
       </div>

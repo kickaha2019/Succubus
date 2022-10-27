@@ -286,7 +286,7 @@ module Generators
       front_matter   = {'layout'   => all_posts ? 'section_posts' : 'section_articles',
                         'title'    => keys.join( ' / '),
                         'parents'  => parents,
-                        'section'  => slug(keys)}
+                        'sektion'  => slug(keys)}
 
       keys.each_index do |i|
         front_matter["index#{i}"] = slug(keys[0..i])
@@ -362,7 +362,7 @@ module Generators
       if ! keys.empty?
         all_posts = true
         menu[0].each do |article|
-          all_posts = false if article.mode == :post
+          all_posts = false if article.mode != :post
         end
         generate_section_page( keys, all_posts)
         ident         = slug( keys)

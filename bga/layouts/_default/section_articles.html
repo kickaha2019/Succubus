@@ -9,7 +9,7 @@
     <main>
         <div class="medium_width">
           <h2>Articles</h2>
-          {{ range where "Params.section" .Params.section }}
+          {{ range (where .Site.AllPages.ByTitle "Params.section" .Params.sektion) }}
             <article>
                 <a href="{{ .RelPermalink }}">{{ .Title }}</a>
             </article>

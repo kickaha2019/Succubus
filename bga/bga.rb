@@ -280,9 +280,9 @@ class BGA < Site
       Elements::Ignore.new( place)
     end
 
-    on_element 'img', :class => 'floatright' do |place|
-      Elements::Ignore.new( place)
-    end
+    # on_element 'img', :class => 'floatright' do |place|
+    #   Elements::Ignore.new( place)
+    # end
 
     on_element 'li', :class => 'comment-forbidden' do |place|
       Elements::Ignore.new( place)

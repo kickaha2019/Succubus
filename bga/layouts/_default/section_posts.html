@@ -9,7 +9,7 @@
     <main>
         <div class="medium_width">
           <h2>Posts</h2>
-          {{ $posts := where "Params.section" .Params.section }}
+          {{ $posts := where .Site.AllPages "Params.section" .Params.sektion }}
           {{ if ( gt ( len $posts ) 0 ) }}
             {{ $paginator := .Paginate $posts.ByDate.Reverse }}
             {{ partial "pagination" $paginator }}
