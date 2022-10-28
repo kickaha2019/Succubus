@@ -200,7 +200,7 @@ DUMP2
       @output_dir = @config['output_dir']
       @generation = YAML.load( IO.read( @config_dir + '/generation.yaml'))
       require_relative( 'generators/' + @config['generator'])
-      @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( @config_dir, @config)
+      @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( @config_dir, @config, @site)
       @generator.record_generation( @generation)
     end
   end

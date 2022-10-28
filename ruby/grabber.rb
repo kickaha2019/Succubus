@@ -181,18 +181,18 @@ class Grabber < Processor
     unless @reachable[url]
       @reachable[url] = {'timestamp' => 0, 'referrals' => []}
       @to_trace << url
+
+      info = lookup( url)
+      if info
+        #add_referrals( info.referrals, url)
+        @reachable[url]['timestamp'] =  info.timestamp
+        @reachable[url]['redirect']  =  true if info.redirect?
+        @reachable[url]['secured']   =  true if info.secure?
+        @reachable[url]['comment']   =  info.comment if info.comment
+      end
     end
 
     add_referral( referral, url)
-
-    info = lookup( url)
-    if info
-      #add_referrals( info.referrals, url)
-      @reachable[url]['timestamp'] =  info.timestamp
-      @reachable[url]['redirect']  =  true if info.redirect?
-      @reachable[url]['secured']   =  true if info.secure?
-      @reachable[url]['comment']   =  info.comment if info.comment
-    end
   end
 
   def save_info

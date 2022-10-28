@@ -5,7 +5,7 @@ class Compiler < Processor
     super( config, cache)
     @output_dir = @config['output_dir']
     require_relative( 'generators/' + @config['generator'])
-    @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config)
+    @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, @site)
     @generation = {}
     @gen_paths  = {}
   end

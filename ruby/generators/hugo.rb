@@ -108,7 +108,7 @@ module Generators
       end
     end
 
-    def initialize( config_dir, config)
+    def initialize( config_dir, config, site)
       @config_dir    = config_dir
       @config        = config
       @generation    = {}
@@ -120,6 +120,7 @@ module Generators
       @path2article  = {}
       @enc2names     = {}
       @output_dir    = config['output_dir']
+      @site          = site
 
       # Menu structure
       @menu          = [[], {}]
@@ -454,12 +455,12 @@ module Generators
 
     def raw( html)
       html = html.gsub( /href\s*=\s*"[^"]*"/) do |ref|
-        ref1 = localise(ref.split('"')[1])
+        ref1 = localise( @site.absolutise( @article_url, ref.split('"')[1]))
         "href=\"#{ref1}\""
       end
 
       html = html.gsub( /src\s*=\s*"[^"]*"/) do |ref|
-        ref1 = localise(ref.split('"')[1])
+        ref1 = localise( @site.absolutise( @article_url, ref.split('"')[1]))
         "src=\"#{ref1}\""
       end
 
