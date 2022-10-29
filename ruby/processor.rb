@@ -44,6 +44,14 @@ class Processor
       @digests   = nil
     end
 
+    def article( index)
+      if @digest
+        ArticleInfo.new( @url, index, @digest['articles'][index])
+      else
+        raise "Bad article index"
+      end
+    end
+
     def articles
       if @digest
         @digest['articles'].each_index do |i|
@@ -168,6 +176,47 @@ class Processor
     return url, limit
   end
 
+  def index_alfa_ranges
+    alfa_sections = Hash.new {|h,k| h[k] = Hash.new {|h1,k1| h1[k1] = []}}
+
+    @digests.each_value do |info|
+      info['articles'].each do |article|
+        if article['index'][1] == '*'
+          letter = (/^[a-z]/i =~ article['title']) ? article['title'][0..0].upcase : '#'
+          alfa_sections[article['index'][0]][letter] << article
+        end
+      end
+    end
+
+    alfa_sections.each_pair do |section, groups|
+#      p ['index_alfa_ranges1', section, groups.keys, groups.values.inject(0) {|r,v| r + v.size}]
+      from  = 'A'
+      infos = groups.key?( 'A') ? groups.delete('A') : []
+
+      letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      (1...(letters.size)).each do |i|
+        key = letters[i..i]
+        infos1 = groups.key?( key) ? groups.delete(key) : []
+        if (! infos1.empty?) && ((infos.size + infos1.size) > 20)
+          last = letters[(i-1)..(i-1)]
+          groups[ (from == last) ? from : "#{from}-#{last}"] = infos
+          from, infos = key, infos1
+        else
+          infos += infos1
+        end
+      end
+
+      groups[ (from =='Z') ? from : "#{from}-Z"] = infos
+#      p ['index_alfa_ranges2', section, groups.keys, groups.values.inject(0) {|r,v| r + v.size}]
+
+      groups.each_pair do |range,articles|
+        articles.each do |article|
+          article['index'] = [section, range]
+        end
+      end
+    end
+  end
+
   def lookup( url)
     return nil unless @pages[url]
 
@@ -198,6 +247,8 @@ class Processor
           end
         end
       end
+
+      index_alfa_ranges
       #puts "... Consumed    #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
     end
 

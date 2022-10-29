@@ -15,8 +15,11 @@ class Worker < Processor
 
   def compile( url, parsed, debug)
     n = 0
+    info = lookup( url)
+
     parsed.tree do |child|
       if child.is_a?( Elements::Article)
+        child.index = info.article(n).index
         if @generator.article( url, child, @generation[url]['output'][n])
           raise "Error compiling #{url}: #{child.title}"
         end
