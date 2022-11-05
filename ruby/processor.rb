@@ -1,7 +1,7 @@
 require 'yaml'
 require 'pry'
 
-require_relative 'site'
+require_relative 'config'
 
 class Processor
   class ArticleInfo
@@ -69,6 +69,10 @@ class Processor
       error? && @digest.nil?
     end
 
+    def changed
+      @info['changed'] ? @info['changed'] : 0
+    end
+
     def comment
       @info['comment']
     end
@@ -108,17 +112,16 @@ class Processor
   end
 
   def initialize( config, cache)
-    @config     = YAML.load( IO.read( config + '/config.yaml'))
-    @config_dir = config
+    @config = config # YAML.load( IO.read( config + '/config.yaml'))
 
-    Dir.entries( config).each do |f|
-      if /\.rb$/ =~ f
-        require( config + '/' + f)
-      end
-    end
+    # Dir.entries( config).each do |f|
+    #   if /\.rb$/ =~ f
+    #     require( config + '/' + f)
+    #   end
+    # end
 
     @cache = cache
-    @site  = Kernel.const_get( @config['class']).new( @config)
+    @site  = @config.site # Kernel.const_get( @config['class']).new( @config)
 
     @pages = {}
     if File.exist?( cache + '/grabbed.yaml')
@@ -140,8 +143,8 @@ class Processor
 
     @page_data = Hash.new {|h,k| h[k] = {}}
 
-    unless File.exist?( @config['temp_dir'])
-      Dir.mkdir( @config['temp_dir'])
+    unless File.exist?( @config.temp_dir)
+      Dir.mkdir( @config.temp_dir)
     end
   end
 
@@ -223,8 +226,8 @@ class Processor
     unless @digests
       @digests = {}
       digested = []
-      (0...@config['workers']).each do |i|
-        digested << YAML.load( IO.read( @config['temp_dir'] + "/digest#{i}.yaml"))
+      (0...@config.n_workers).each do |i|
+        digested << YAML.load( IO.read( @config.temp_dir + "/digest#{i}.yaml"))
       end
 
       digested.each do |digest|
@@ -277,7 +280,7 @@ class Processor
 
   def subprocess( verb)
     pids = []
-    loop = @config['workers']
+    loop = @config.n_workers
     (0...loop).each do |i|
       pids << spawn( "/Users/peter/Succubus/bin/worker.command #{verb} #{i} #{loop}")
     end

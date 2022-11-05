@@ -3,10 +3,11 @@ require 'yaml'
 require_relative 'processor'
 
 class Worker < Processor
-  def initialize( config, cache)
-    super
+  def initialize( config_dir, cache)
+    @config   = Config.new( config_dir)
+    super( @config, cache)
     @digested = {}
-    @dir      = @config['temp_dir']
+    @dir      = @config.temp_dir
 
     unless File.exist?( @dir)
       Dir.mkdir( @dir)
@@ -178,7 +179,7 @@ DUMP2
     pages do |url|
       info = @pages[url]
       next if info['redirect'] || asset?(url)
-      debug = (url == @config['debug_url'])
+      debug = @config.debug_url?( url)
 
       path = @cache + "/grabbed/#{info['timestamp']}.html"
       next unless File.exist?( path)
@@ -200,10 +201,9 @@ DUMP2
 
   def setup( verb)
     if verb == 'compile'
-      @output_dir = @config['output_dir']
-      @generation = YAML.load( IO.read( @config_dir + '/generation.yaml'))
-      require_relative( 'generators/' + @config['generator'])
-      @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( @config_dir, @config, @site)
+      @output_dir = @config.output_dir
+      @generation = YAML.load( IO.read( @config.dir + '/generation.yaml'))
+      @generator  = @config.generator
       @generator.record_generation( @generation)
     end
   end

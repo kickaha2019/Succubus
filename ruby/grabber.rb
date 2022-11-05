@@ -5,10 +5,12 @@ require 'yaml'
 
 require_relative 'processor'
 
-class Grabber < Processor
-  def initialize( config, cache)
-    super
-    @root      = @config['root_url']
+class Grabber
+  def initialize( config_dir, cache)
+    @config    = Config.new( config_dir)
+    @cache     = cache
+    @processor = Processor.new( @config, cache)
+    @root      = @config.root_url
     #@traced    = {}
     @to_trace  = []
     @reachable = {}
@@ -35,7 +37,7 @@ class Grabber < Processor
       next if page['comment']
 
       ext = 'html'
-      if asset?( url)
+      if @config.site.asset?( url)
         ext = url.split('.')[-1]
       end
       unless File.exist?( @cache + "/grabbed/#{page['timestamp']}.#{ext}")
@@ -61,7 +63,7 @@ class Grabber < Processor
   end
 
   def digest
-    subprocess 'digest'
+    @processor.subprocess 'digest'
   end
 
   def get_candidates( limit, explicit)
@@ -69,19 +71,27 @@ class Grabber < Processor
       @candidates = [explicit]
       return
     end
-    @candidates = []
+
+    must, recent, poss = [], [], []
+    months3 = Time.now.to_i - 90 * 24 * 60 * 60
 
     @reachable.each_pair do |url, info|
-      if asset? url
+      if @config.site.asset? url
         if info['timestamp'] == 0
-          @candidates << url
+          must << url
         end
+      elsif info['timestamp'] == 0
+        must << url
+      elsif info['changed'] > months3
+        recent << url
       else
-        @candidates << url unless info['secured']
+        poss << url
       end
     end
 
-    @candidates = @candidates.sort_by {|url| @reachable[url]['timestamp']}[0...limit]
+    @candidates = (must +
+                   recent.sort_by {|url| @reachable[url]['timestamp']} +
+                   poss.sort_by {|url| @reachable[url]['timestamp']})[0...limit]
   end
 
   def grab_candidates
@@ -91,9 +101,12 @@ class Grabber < Processor
       puts "... Grabbing #{url}"
       ts = Time.now.to_i
 
+      old_path = "#{@cache}/grabbed/#{@reachable[url]['timestamp']}.html"
       referers = @reachable[url]['referrals']
+      changed  = @reachable[url]['changed']
       info     = @reachable[url] = {'timestamp' => ts,
-                                    'referrals' => referers}
+                                    'referrals' => referers,
+                                    'changed'   => changed}
 
       begin
         URI.parse( url)
@@ -105,11 +118,19 @@ class Grabber < Processor
       response = http_get( url)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
-        if asset?( url)
+        if @config.site.asset?( url)
           ext = url.split('.')[-1]
         end
         File.open( "#{@cache}/grabbed/#{ts}.#{ext}", 'wb') do |io|
           io.write response.body
+        end
+
+        if (ext == 'html')
+          if File.exist?( old_path)
+            if response.body != IO.read( old_path)
+              info['changed'] = ts
+            end
+          end
         end
 
       elsif response.is_a?( Net::HTTPRedirection)
@@ -126,7 +147,7 @@ class Grabber < Processor
 
 #        unless handled
           url = response['Location']
-          if login_redirect?( url)
+          if @config.login_redirect?( url)
             info['secured'] = true
           else
             info['comment']  = url
@@ -162,33 +183,26 @@ class Grabber < Processor
 
   def initialise_reachable
     reached( nil, @root)
-    if @config['include_urls']
-      @config['include_urls'].each do |url|
-        reached( nil, url)
-      end
+    @config.include_urls do |url|
+      reached( nil, url)
     end
-  end
-
-  def login_redirect?( url)
-    lru = @config['login_redirect_url']
-    return false if lru.nil?
-    (lru + '?') == url[0..(lru.size)]
   end
 
   def reached( referral, url)
     #url = unify( url)
 
     unless @reachable[url]
-      @reachable[url] = {'timestamp' => 0, 'referrals' => []}
+      @reachable[url] = {'timestamp' => 0, 'referrals' => [], 'changed' => 0}
       @to_trace << url
 
-      info = lookup( url)
+      info = @processor.lookup( url)
       if info
         #add_referrals( info.referrals, url)
-        @reachable[url]['timestamp'] =  info.timestamp
-        @reachable[url]['redirect']  =  true if info.redirect?
-        @reachable[url]['secured']   =  true if info.secure?
-        @reachable[url]['comment']   =  info.comment if info.comment
+        @reachable[url]['timestamp'] = info.timestamp
+        @reachable[url]['redirect']  = true if info.redirect?
+        @reachable[url]['secured']   = true if info.secure?
+        @reachable[url]['comment']   = info.comment if info.comment
+        @reachable[url]['changed']   = info.changed
       end
     end
 
@@ -213,13 +227,13 @@ class Grabber < Processor
   # end
 
   def trace?( url)
-    return false unless @root == url[0...(@root.size)]
+    return false unless @config.in_site( url) # @root == url[0...(@root.size)]
     true
   end
 
   def trace_from_reachable
     while url = @to_trace.pop
-      info = lookup( url)
+      info = @processor.lookup( url)
       next if info.nil?
       next if info.timestamp == 0
       #p ['trace_from_reachable2', url, asset?( url)]
