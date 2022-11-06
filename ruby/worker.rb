@@ -43,6 +43,7 @@ class Worker < Processor
     end
 
     parsed.links do |found|
+      p ['digest1', found] if debug
       entry['links'] << found
     end
 

@@ -137,6 +137,7 @@ class Site
   end
 
   def absolutise( page_url, url)
+    return url if /^#/ =~ url
     url      = url.strip.gsub( '%20', ' ').gsub( '\\', '/')
     url      = url.gsub( /.\/\//) do |match|
       (match == '://' ? match : match[0..1])
@@ -188,7 +189,7 @@ class Site
   def define_rules
     on_element 'a' do  |place|
       if place['href']
-        Elements::Anchor.new(place, place.absolutise(place['href']), place['title'])
+        Elements::Anchor.new( place, place.absolutise(place['href']), place['title'])
       else
         place.children
 #        Elements::Text.new( place, place.text)

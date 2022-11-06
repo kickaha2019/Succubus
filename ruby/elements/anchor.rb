@@ -19,7 +19,6 @@ module Elements
     end
 
     def generate( generator)
-      return [] if /^#/ =~ @href
       text = generate_children( generator)
       p ['Anchor::generate', @href, text] if debug?
       return [] if text.empty?
@@ -32,7 +31,7 @@ module Elements
 
     def links
       super {|link| yield link}
-      yield @href
+      yield @href unless /^#/ =~ @href
     end
 
     def title

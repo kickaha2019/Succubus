@@ -2,7 +2,13 @@ require 'yaml'
 
 require_relative 'processor'
 
-class Analyser < Processor
+class Analyser
+  def initialize( config_dir, cache)
+    @config    = Config.new( config_dir)
+    @cache     = cache
+    @processor = Processor.new( @config, cache)
+  end
+
   def close_files
     @files.each {|io| io.close}
   end
@@ -24,8 +30,8 @@ class Analyser < Processor
 
   def report
     @report_index_counter = 0
-    dir = @config['temp_dir']
-    subprocess 'dump'
+    dir = @config.temp_dir
+    @processor.subprocess 'dump'
 
     open_files( dir)
     n_all, n_articles, n_break, n_error, n_secure, n_redirect, n_asset, n_grabbed = 0, 0, 0, 0, 0, 0, 0, 0
@@ -33,9 +39,9 @@ class Analyser < Processor
 
     report_header
 
-    pages do |url|
-      debug = (url == @config['debug_url'])
-      info = lookup(url)
+    @processor.pages do |url|
+      debug = @config.debug_url? url
+      info = @processor.lookup(url)
 
       @is_asset    = info.asset?
       @is_break    = info.broken?
@@ -192,7 +198,7 @@ HEADER3
   def report_index( urls)
     return '' if urls.empty?
     @report_index_counter += 1
-    File.open( @config['temp_dir'] + "/index_s#{@report_index_counter}.html", 'w') do |io|
+    File.open( @config.temp_dir + "/index_s#{@report_index_counter}.html", 'w') do |io|
       io.print <<INDEX_HEADER
 <html>
 <head>

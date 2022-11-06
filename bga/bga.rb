@@ -6,7 +6,9 @@ class BGA < Site
 
   def absolutise( page_url, url)
     url = super
-    if local? url
+    if /^#/ =~ url
+      url
+    elsif local? url
       page_param_only( url.split('#')[0])
     else
       url
