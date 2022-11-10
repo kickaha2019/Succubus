@@ -14,31 +14,31 @@ class Worker < Processor
     end
   end
 
-  def compile( url, parsed, debug)
-    n = 0
-    info = lookup( url)
-
+  def compile( url, info, parsed, debug)
+    articles = []
     parsed.tree do |child|
-      if child.is_a?( Elements::Article)
-        child.index = info.article(n).index
-        if @generator.article( url, child, @generation[url]['output'][n])
-          raise "Error compiling #{url}: #{child.title}"
-        end
-        n += 1
-      end
+      articles << child if child.is_a?( Elements::Article)
+    end
+
+    child.index = info.index
+    if @generator.page( url, info, articles, @generation[url]['output'])
+      raise "Error compiling #{url}"
     end
   end
 
   def digest( url, parsed, debug)
-    entry = @digested[url] = {'articles' => [], 'links' => []}
+    entry = @digested[url] = {'articles' => 0,
+                              'links'    => [],
+                              'index'    => parsed.index,
+                              'title'    => parsed.title,
+                              'mode'     => parsed.mode}
+    if parsed.date
+      entry['date'] = parsed.date.strftime( '%Y-%m-%d')
+    end
 
     parsed.tree do |child|
       if child.is_a?( Elements::Article)
-        entry['articles'] << (article = {'index' => child.index, 'mode' => child.mode.to_s})
-        if child.date
-          article['date'] = child.date.strftime( '%Y-%m-%d')
-        end
-        article['title'] = child.title
+        entry['articles'] += 1
       end
     end
 
@@ -57,11 +57,11 @@ class Worker < Processor
     end
 
     parsed.advises do |advice|
-      article = {'index' => advice[:index],
-                 'title' => advice[:title],
-                 'date'  => advice[:date].strftime( '%Y-%m-%d'),
-                 'mode'  => 'post'}
-      @digested['advise:' + advice[:url]] = article
+      page = {'index' => advice[:index],
+              'title' => advice[:title],
+              'date'  => advice[:date].strftime( '%Y-%m-%d'),
+              'mode'  => 'post'}
+      @digested['advise:' + advice[:url]] = page
     end
   end
 
@@ -211,7 +211,7 @@ DUMP2
 
   def step( verb, url, info, parsed, debug)
     if verb == 'compile'
-      compile( url, parsed, debug)
+      compile( url, info, parsed, debug)
     end
 
     if verb == 'digest'

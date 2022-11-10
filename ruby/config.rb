@@ -17,7 +17,9 @@ class Config
       end
     end
 
-    @site = Kernel.const_get( @config['class']).new( @config)
+    @site      = Kernel.const_get( @config['class']).new( self)
+    require_relative( 'generators/' + @config['generator'])
+    @generator = Kernel.const_get( 'Generators::' + @config['generator']).new( self, @site)
   end
 
   def debug_url?( url)
@@ -29,8 +31,11 @@ class Config
   end
 
   def generator
-    require_relative( 'generators/' + @config['generator'])
-    Kernel.const_get( 'Generators::' + @config['generator']).new( @dir, @config, @site)
+    @generator
+  end
+
+  def hugo_config
+    @config['hugo']['config']
   end
 
   def include_urls
@@ -41,6 +46,10 @@ class Config
 
   def in_site( url)
     root_url == url[0...(root_url.size)]
+  end
+
+  def leech_assets?
+    @config['leech_assets']
   end
 
   def login_redirect?( url)

@@ -16,7 +16,7 @@ class BGA < Site
   end
 
   def collect_news_posts( page, place)
-    result = Elements::Ignore.new( place)
+    result = Elements::Body.new( place, true)
     nodes = Nodes.new( [[place.element]])
     nodes.css( 'tbody tr td.views-field-title a') do |element|
       [element['href'], element.text]
@@ -34,7 +34,7 @@ class BGA < Site
   end
 
   def collect_results_posts( page, place)
-    result = Elements::Ignore.new( place)
+    result = Elements::Body.new( place, true)
     nodes = Nodes.new( [[place.element]])
     nodes.css( 'tbody tr td.views-field-title a') do |element|
       [element['href'], element.text]
@@ -88,19 +88,11 @@ class BGA < Site
 
     on_element 'article' do  |place|
       if place.content?
-        Elements::Article.new( place).set_title( place.title).set_date( place.date)
+        Elements::Article.new( place)
       else
         Elements::Ignore.new( place)
       end
     end
-
-    # on_element 'article', :class => 'section-2' do  |place|
-    #   Elements::Article.new( place).set_title( place.title).set_date( place.date)
-    # end
-    #
-    # on_element 'article', :class => 'section-3' do  |place|
-    #   Elements::Article.new( place).set_title( place.title).set_date( place.date)
-    # end
 
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
@@ -129,9 +121,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'block-system-main-block' do |place|
-      Elements::Article.new( place).set_title( place.title).set_date( place.date)
-      #     place.date ? place.date : get_latest_date( place)
-      # )
+      Elements::Article.new( place)
     end
 
     on_element 'div', :class => 'block-page-title-block' do |place|
@@ -374,6 +364,7 @@ class BGA < Site
           'https://britgo.org/bgj/06320.html',
           'https://britgo.org/softwarereviews',
           'https://britgo.org/tournaments/history11.html',
+          'https://britgo.org/tournaments/history10.html',
 
           # Index pages
           'https://britgo.org/junior/youthgonews'
@@ -390,7 +381,7 @@ class BGA < Site
 
       if ignored
         on_element 'body', :grokked => false do |place|
-          Elements::Ignore.new( place)
+          Elements::Body.new( place, true)
         end
       end
 
@@ -449,7 +440,7 @@ class BGA < Site
 
     on_page %r{^(taxonomy/)} do |page|
       on_element 'body', :grokked => false do |place|
-        Elements::Ignore.new( place)
+        Elements::Body.new( place, true)
       end
       false
     end

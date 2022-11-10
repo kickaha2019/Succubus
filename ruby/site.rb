@@ -8,6 +8,7 @@ require_relative 'elements/anchor'
 require_relative 'elements/article'
 require_relative 'elements/blockquote'
 require_relative 'elements/break'
+require_relative 'elements/body'
 require_relative 'elements/caption'
 require_relative 'elements/cell'
 require_relative 'elements/debug'
@@ -38,7 +39,7 @@ class Site
     end
 
     def applies?( element, children)
-      if (! @args.has_key?( :grokked)) || @args[:grokked]
+      if (! @args.has_key?(:grokked)) || @args[:grokked]
         children.each do |child|
           return false unless child.grokked?
         end
@@ -143,7 +144,7 @@ class Site
       (match == '://' ? match : match[0..1])
     end
 
-    root_url = @config['root_url']
+    root_url = @config.root_url
     dir_url  = page_url.split('?')[0]
 
     if /^\?/ =~ url
@@ -210,6 +211,10 @@ class Site
 
     on_element 'blockquote' do  |place|
       Elements::Blockquote.new( place)
+    end
+
+    on_element 'body', :grokked => false do  |place|
+      Elements::Body.new( place)
     end
 
     on_element 'br' do  |place|
@@ -451,7 +456,7 @@ class Site
 
   def local?( url)
     return true unless /^\w*:/ =~ url
-    root_url = @config['root_url']
+    root_url = @config.root_url
     return false unless url.size > root_url.size
     url[0...root_url.size] == root_url
   end
@@ -478,9 +483,9 @@ class Site
 
   def parse( url, html_doc)
     Elements::Unknown.reset_next_id
-    page = Page.new( self, @config['root_url'], @taxonomy, url, html_doc)
+    page = Page.new( self, @config.root_url, @taxonomy, url, html_doc)
 
-    relative_url = url[@config['root_url'].size..-1]
+    relative_url = url[@config.root_url.size..-1]
 
     @page_initialised, @page_element_rules = false, Hash.new {|h,k| h[k] = []}
     @page_rules.each do |rule|

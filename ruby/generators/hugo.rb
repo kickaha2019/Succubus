@@ -108,8 +108,7 @@ module Generators
       end
     end
 
-    def initialize( config_dir, config, site)
-      @config_dir    = config_dir
+    def initialize( config, site)
       @config        = config
       @generation    = {}
       @written       = {}
@@ -119,51 +118,11 @@ module Generators
       @article_url   = nil
       @path2article  = {}
       @enc2names     = {}
-      @output_dir    = config['output_dir']
+      @output_dir    = config.output_dir
       @site          = site
 
       # Menu structure
       @menu          = [[], {}]
-    end
-
-    def article( url, article, output)
-      @article_url   = url
-      @article_error = false
-
-      front_matter  = {'layout'   => (article.mode == :post) ? 'post' : 'article',
-                       'mode'     => article.mode.to_s,
-                       'origin'   => url,
-                       'section'  => slug(article.index)}
-      comment       = []
-
-      article.index.each_index do |i|
-        front_matter["index#{i}"] = slug(article.index[0..i])
-      end
-
-      article_layout( article, front_matter)
-      front_matter['date']  = article.date.strftime( '%Y-%m-%d') if article.date
-      front_matter['title'] = article.title if article.title
-      text = article.description
-      if text && (text != '')
-        front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
-      end
-
-      markdown = article.generate( self)
-      front_matter['raw'] = true if raw?( markdown)
-
-      begin
-        write_file( @output_dir + '/content' + output,
-                    "#{front_matter.to_yaml}\n---\n#{strip(markdown).collect {|m| m.output}.join("\n")}")
-      rescue Exception => bang
-        error( bang.message)
-      end
-      @article_error
-    end
-
-    def article_layout( article, front_matter)
-      if article.mode == :home
-        front_matter['layout'] = 'home'
-      end
     end
 
     def blockquote( md)
@@ -199,7 +158,7 @@ module Generators
     end
 
     def copy_asset( source, url)
-      relpath = url[(@config['root_url'].size-1)..-1].downcase
+      relpath = url[(@config.root_url.size-1)..-1].downcase
       path = @output_dir + '/content' + relpath
 
       unless File.exist?( path)
@@ -213,7 +172,7 @@ module Generators
     end
 
     def copy_template( template_path, dest_path)
-      data = IO.read( @config_dir + '/' + template_path)
+      data = IO.read( @config.dir + '/' + template_path)
       path = @output_dir + '/content/' + dest_path
       write_file( path, data)
       @written[path] = true
@@ -449,6 +408,53 @@ module Generators
       path
     end
 
+    def page( url, info, articles, output)
+      @article_url   = url
+      @article_error = false
+      front_matter = page_front_matter( info)
+
+      markdown = []
+      articles.each_index do |i|
+        article = articles[i]
+        markdown << Stanza.new( "{{% article \"article#{i+1}\" %}}")
+        markdown << article.generate( self)
+        markdown << Stanza.new( '{{% /article %}}')
+      end
+
+      begin
+        write_file( @output_dir + '/content' + output,
+                    "#{front_matter.to_yaml}\n---\n#{strip(markdown.flatten).collect {|m| m.output}.join("\n")}")
+      rescue Exception => bang
+        error( bang.message)
+      end
+      @article_error
+    end
+
+    def page_front_matter( page)
+      front_matter  = {'layout'   => (info.mode == :post) ? 'post' : 'article',
+                       'mode'     => info.mode.to_s,
+                       'origin'   => url,
+                       'section'  => slug(info.index)}
+
+      page.index.each_index do |i|
+        front_matter["index#{i}"] = slug(article.index[0..i])
+      end
+
+      if page.mode == :home
+        front_matter['layout'] = 'home'
+      end
+
+      front_matter['date']  = info.date.strftime( '%Y-%m-%d') if info.date
+      front_matter['title'] = info.title if info.title
+
+      text = page.description
+      if text && (text != '')
+        front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
+      end
+
+      front_matter
+    end
+
     def paragraph( md)
       newline + strip(md) + newline
     end
@@ -491,32 +497,32 @@ module Generators
       end
     end
 
-    def register_article( article)
-      section = slug(article.index)
+    def register_page( page)
+      section = slug( page.index)
 
-      menu, index = @menu, article.index
+      menu, index = @menu, page.index
       while ! index.empty?
         menu[1][index[0]] = [[], {}] unless menu[1][index[0]]
         menu  = menu[1][index[0]]
         index = index[1..-1]
       end
 
-      menu[0] << article
+      menu[0] << page
     end
 
     def root_url?( markdown)
       markdown.each do |line|
-        return true if line.include?( @config['root_url'])
+        return true if line.include?( @config.root_url)
       end
       false
     end
 
     def site
-      unless system( "rsync -r --delete #{@config_dir}/layouts/ #{@output_dir}/layouts/")
-        raise "Error copying layouts from #{@config_dir}/layouts/ to #{@output_dir}/layouts/"
+      unless system( "rsync -r --delete #{@config.dir}/layouts/ #{@output_dir}/layouts/")
+        raise "Error copying layouts from #{@config.dir}/layouts/ to #{@output_dir}/layouts/"
       end
 
-      site_config = @config['hugo']['config']
+      site_config = @config.hugo_config
       site_config['menu'] = {'main' => []}
       menu_generate( [], @menu, site_config['menu']['main'])
       write_file( @output_dir + '/config.yaml', site_config.to_yaml)

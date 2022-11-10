@@ -61,16 +61,15 @@ class Analyser
       ext  = @is_asset ? url.split('.')[-1] : 'html'
 
       old_articles, date, tags = n_articles, '', ''
-      info.articles do |article|
-        n_articles += 1
+      n_articles += info.articles
 
-        if article.date
-          date = article.date
-        end
+      if info.date
+        date = info.date
+      end
 
-        indexes[article.index.join("\t")][(article.mode == :article) ? 0 : 1] << url
-
-        tags = article.index.join( ' / ')
+      if info.indexed?
+        indexes[info.index.join("\t")][(info.mode == :article) ? 0 : 1] << url
+        tags = info.index.join( ' / ')
       end
 
       @has_articles = (n_articles > old_articles)
@@ -92,9 +91,10 @@ class Analyser
         write_records "<th bgcolor=\"#{@is_error ? 'red' : 'lime'}\">&rArr;</th>"
       elsif (info.timestamp > 0) && (! @is_asset)
         write_records "<th bgcolor=\"#{(@is_error || @is_break) ? 'red' : 'lime'}\">"
-        write_records "<a target=\"_blank\" href=\"#{info.timestamp}.html\">"
+        write_records "<a target=\"_blank\" href=\"#{info.timestamp}.html\">" unless @is_break
         write_records((@is_error || @is_break) ? '&cross;' : (@is_secure ? '&timesb;' : '&check;'))
-        write_records "</a></th>"
+        write_records "</a>" unless @is_break
+        write_records "</th>"
       elsif info.timestamp == 0
         write_records "<th bgcolor=\"yellow\">?</th>"
       elsif @is_asset

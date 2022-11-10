@@ -1,27 +1,28 @@
 require_relative 'processor'
 
-class Compiler < Processor
-  def initialize( config, cache)
-    super( config, cache)
-    @output_dir = @config['output_dir']
-    require_relative( 'generators/' + @config['generator'])
-    @generator  = Kernel.const_get( 'Generators::' + @config['generator']).new( config, @config, @site)
+class Compiler
+  def initialize( config_dir, cache)
+    @config     = Config.new( config_dir)
+    @cache      = cache
+    @processor  = Processor.new( @config, cache)
+    @output_dir = @config.output_dir
+    @generator  = @config.generator
     @generation = {}
     @gen_paths  = {}
   end
 
   def compile
-    subprocess( 'digest')
-    copy_assets
+    @processor.subprocess( 'digest')
+    copy_assets unless @config.leech_assets?
     prepare_generation
     @generator.record_generation( @generation)
-    subprocess( 'compile')
+    @processor.subprocess( 'compile')
     @generator.site
   end
 
   def copy_assets
-    pages do |url|
-      info = lookup(url)
+    @processor.pages do |url|
+      info = @processor.lookup(url)
       next if info.error? || info.redirect? || (info.timestamp == 0)
 
       if info.asset?
@@ -33,37 +34,27 @@ class Compiler < Processor
   end
 
   def prepare_generation
-    pages do |url|
-      info = lookup( url)
+    @processor.pages do |url|
+      info = @processor.lookup( url)
       next if info.asset? || info.error? || (info.timestamp == 0)
 
       if info.redirect?
-        @generation[url] = {'redirect' => deref(url)}
-      else
-        outputs = []
-        @generation[url] = {'output' => outputs}
-        info.articles do |article|
-          @generator.register_article( article)
-          outputs << prepare_output( article)
-        end
-
-        # info.links do |found|
-        #   if found != unify(found)
-        #     @generation[found] = {'redirect' => deref(unify(found))}
-        #   end
-        # end
+        @generation[url] = {'redirect' => @processor.deref(url)}
+      elsif info.articles?
+        @generator.register_page( info)
+        @generation[url] = {'output' => prepare_output( info)}
       end
     end
 
-    File.open( @config_dir + '/generation.yaml', 'w') do |io|
+    File.open( @config.dir + '/generation.yaml', 'w') do |io|
       io.print @generation.to_yaml
     end
   end
 
-  def prepare_output( article)
+  def prepare_output( page)
     unique = 1
     while true do
-      output = @generator.output_path( article.url, article, (unique == 1) ? '' : "-#{unique}")
+      output = @generator.output_path( page.url, page, (unique == 1) ? '' : "-#{unique}")
       if @gen_paths[output]
         unique += 1
       else

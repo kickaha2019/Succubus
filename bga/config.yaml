@@ -3,6 +3,7 @@ root_url: https://britgo.org/
 temp_dir: /tmp/Succubus
 workers:  10
 debug_url: xxx
+leech_assets: true
 include_urls:
 - https://britgo.org/membersarea
 login_redirect_url:   https://britgo.org/user/login

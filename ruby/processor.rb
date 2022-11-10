@@ -4,36 +4,6 @@ require 'pry'
 require_relative 'config'
 
 class Processor
-  class ArticleInfo
-    attr_reader :url, :order
-
-    def initialize( url, order, info)
-      @url   = url
-      @order = order
-      @info  = info
-    end
-
-    def date
-      @info['date']
-    end
-
-    def index
-      @info['index']
-    end
-
-    def mode
-      @info['mode'].to_sym
-    end
-
-    def root?
-      mode == :home
-    end
-
-    def title
-      @info['title']
-    end
-  end
-
   class PageInfo
     def initialize( processor, cache, url, info, digest)
       @processor = processor
@@ -44,20 +14,12 @@ class Processor
       @digests   = nil
     end
 
-    def article( index)
-      if @digest
-        ArticleInfo.new( @url, index, @digest['articles'][index])
-      else
-        raise "Bad article index"
-      end
+    def articles
+      @digest ? @digest['articles'] : 0
     end
 
-    def articles
-      if @digest
-        @digest['articles'].each_index do |i|
-          yield( ArticleInfo.new( @url, i, @digest['articles'][i]))
-        end
-      end
+    def articles?
+      articles > 0
     end
 
     def asset?
@@ -77,6 +39,10 @@ class Processor
       @info['comment']
     end
 
+    def date
+      @digest ? @digest['date'] : nil
+    end
+
     def error?
       if @digest
         @digest['error']
@@ -84,6 +50,14 @@ class Processor
         return @processor.deref_error(@url) if redirect?
         comment
       end
+    end
+
+    def index
+      @digest ? @digest['index'] : nil
+    end
+
+    def indexed?
+      index && (! index.empty?)
     end
 
     def links
@@ -94,6 +68,10 @@ class Processor
       end
     end
 
+    def mode
+      @digest ? @digest['mode'].to_sym : nil
+    end
+
     def redirect?
       @info['redirect']
     end
@@ -102,12 +80,20 @@ class Processor
       @info['referrals']
     end
 
+    def root?
+      mode == :home
+    end
+
     def secure?
       @info['secured']
     end
 
     def timestamp
       @info['timestamp']
+    end
+
+    def title
+      @digest ? @digest['title'] : nil
     end
   end
 
@@ -183,11 +169,9 @@ class Processor
     alfa_sections = Hash.new {|h,k| h[k] = Hash.new {|h1,k1| h1[k1] = []}}
 
     @digests.each_value do |info|
-      info['articles'].each do |article|
-        if article['index'][1] == '*'
-          letter = (/^[a-z]/i =~ article['title']) ? article['title'][0..0].upcase : '#'
-          alfa_sections[article['index'][0]][letter] << article
-        end
+      if info['index'][1] == '*'
+        letter = (/^[a-z]/i =~ info['title']) ? info['title'][0..0].upcase : '#'
+        alfa_sections[info['index'][0]][letter] << info
       end
     end
 
@@ -212,9 +196,9 @@ class Processor
       groups[ (from =='Z') ? from : "#{from}-Z"] = infos
 #      p ['index_alfa_ranges2', section, groups.keys, groups.values.inject(0) {|r,v| r + v.size}]
 
-      groups.each_pair do |range,articles|
-        articles.each do |article|
-          article['index'] = [section, range]
+      groups.each_pair do |range,pages|
+        pages.each do |page|
+          page['index'] = [section, range]
         end
       end
     end
@@ -240,13 +224,10 @@ class Processor
         digest.each_pair do |url, advice|
           next unless /^advise:/ =~ url
           if info = @digests[deref(url[7..-1])]
-            if info['articles'].size == 1
-              article = info['articles'][0]
-              article['index'] = advice['index'] if advice['index'] && article['index'].empty?
-              article['title'] = advice['title'] if advice['title']
-              article['date']  = advice['date']
-              article['mode']  = advice['mode']
-            end
+            info['index'] = advice['index'] if advice['index'] && info['index'].empty?
+            info['title'] = advice['title'] if advice['title']
+            info['date']  = advice['date']
+            info['mode']  = advice['mode']
           end
         end
       end
