@@ -2,11 +2,11 @@ require_relative 'unknown'
 
 module Elements
   class Ignore < Unknown
-    def content?
-      false
+    def children
     end
 
-    def children
+    def content?
+      false
     end
 
     def generate( generator)

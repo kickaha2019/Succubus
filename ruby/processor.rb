@@ -5,6 +5,8 @@ require_relative 'config'
 
 class Processor
   class PageInfo
+    attr_reader :url
+
     def initialize( processor, cache, url, info, digest)
       @processor = processor
       @cache     = cache

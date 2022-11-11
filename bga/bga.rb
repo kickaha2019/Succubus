@@ -94,6 +94,10 @@ class BGA < Site
       end
     end
 
+    on_element 'bold' do  |place|
+      Elements::Styling.new( place, [:bold])
+    end
+
     on_element 'button' do |place|
       if m = /^parent.location='(.*)'$/.match( place['onclick'])
         Elements::Anchor.new(place, place.absolutise(m[1]), nil)
@@ -102,10 +106,6 @@ class BGA < Site
       else
         nil
       end
-    end
-
-    on_element 'bold' do  |place|
-      Elements::Styling.new( place, [:bold])
     end
 
     on_element 'div', :class => '' do |place|
@@ -518,6 +518,7 @@ class BGA < Site
           /^bchamp\/qualifiers\d\d\d\d/    => ['Events','British Championship'],
           /^bchamp\/qualifying\.html$/     => ['Admin', "Qualifying"],
           /^bchamp\//                      => ['Tournaments','*'],
+          /^bgj\/0/                        => [],
           /^bgj\/glossary.html/            => ['Admin', "British Go Journal"],
           /^bgj\/guidelines.html/          => ['Admin', "British Go Journal"],
           /^bgj\/history\//                => ['History', "British Go Journal"],
@@ -606,8 +607,11 @@ class BGA < Site
       false
     end
 
-    on_page /^bgj\/0/ do |page|
-      page.index= []
+    on_page 'tournaments' do |page|
+      on_element 'div', :class => 'region-sidebar-second' do |place|
+        Elements::Article.new( place)
+      end
+
       false
     end
 

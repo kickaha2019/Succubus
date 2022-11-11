@@ -300,7 +300,7 @@ module Generators
       end
     end
 
-    def localise(url, index=0)
+    def localise(url)
       return url unless @generation[url]
       info = @generation[url]
 
@@ -330,7 +330,7 @@ module Generators
         if menu[0].empty?
           url = ''
         elsif menu[0].size == 1
-          url = localise( menu[0][0].url, menu[0][0].order)
+          url = localise( menu[0][0].url)
         else
           url = "/sections/#{ident}/index.html"
         end
@@ -408,10 +408,10 @@ module Generators
       path
     end
 
-    def page( url, info, articles, output)
+    def page( url, info, parsed, articles, output)
       @article_url   = url
       @article_error = false
-      front_matter = page_front_matter( info)
+      front_matter = page_front_matter( url, parsed)
 
       markdown = []
       articles.each_index do |i|
@@ -430,22 +430,22 @@ module Generators
       @article_error
     end
 
-    def page_front_matter( page)
-      front_matter  = {'layout'   => (info.mode == :post) ? 'post' : 'article',
-                       'mode'     => info.mode.to_s,
+    def page_front_matter( url, page)
+      front_matter  = {'layout'   => (page.mode == :post) ? 'post' : 'article',
+                       'mode'     => page.mode.to_s,
                        'origin'   => url,
-                       'section'  => slug(info.index)}
+                       'section'  => slug(page.index)}
 
       page.index.each_index do |i|
-        front_matter["index#{i}"] = slug(article.index[0..i])
+        front_matter["index#{i}"] = slug(page.index[0..i])
       end
 
       if page.mode == :home
         front_matter['layout'] = 'home'
       end
 
-      front_matter['date']  = info.date.strftime( '%Y-%m-%d') if info.date
-      front_matter['title'] = info.title if info.title
+      front_matter['date']  = page.date.strftime( '%Y-%m-%d') if page.date
+      front_matter['title'] = page.title if page.title
 
       text = page.description
       if text && (text != '')

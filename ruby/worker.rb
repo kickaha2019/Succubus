@@ -20,8 +20,7 @@ class Worker < Processor
       articles << child if child.is_a?( Elements::Article)
     end
 
-    child.index = info.index
-    if @generator.page( url, info, articles, @generation[url]['output'])
+    if @generator.page( url, info, parsed, articles, @generation[url]['output'])
       raise "Error compiling #{url}"
     end
   end
@@ -211,7 +210,7 @@ DUMP2
 
   def step( verb, url, info, parsed, debug)
     if verb == 'compile'
-      compile( url, info, parsed, debug)
+      compile( url, info, parsed, debug) if @generation[url]
     end
 
     if verb == 'digest'

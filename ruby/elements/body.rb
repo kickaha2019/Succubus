@@ -17,6 +17,14 @@ module Elements
       @ignore      = ignore
     end
 
+    def children
+      super unless @ignore
+    end
+
+    def content?
+      @ignore ? false : super
+    end
+
     def description
       @description
     end
@@ -32,7 +40,7 @@ module Elements
     end
 
     def grokked?
-      @ignore
+      @ignore ? true : super
     end
 
     def index=( index)
@@ -58,7 +66,11 @@ module Elements
     end
 
     def tooltip
-      "Body: Title: #{@title} Date: #{@date} Mode: #{@mode} Index: #{@index.join( ' ')}"
+      if @ignore
+        "Body: Ignored"
+      else
+        "Body: Title: #{@title} Date: #{@date} Mode: #{@mode} Index: #{@index.join( ' ')}"
+      end
     end
 
     # def tree
