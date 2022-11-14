@@ -7,10 +7,8 @@
   <body class="{{ .Layout }}">
     {{ partial "body_top" . }}
 
-    <main>
-        <div class="page_width">
-        {{ .Content }}
-        </div>
+    <main class="page_width">
+      {{ .Content }}
     </main>
 
     {{ partial "footer" . }}

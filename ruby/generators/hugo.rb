@@ -414,11 +414,10 @@ module Generators
       front_matter = page_front_matter( url, parsed)
 
       markdown = []
-      articles.each_index do |i|
-        article = articles[i]
-        markdown << Stanza.new( "{{% article \"article#{i+1}\" %}}")
+      articles.each do |article|
+        markdown << AdornedStanza.new( "{{% article \"#{article.style}\" %}}")
         markdown << article.generate( self)
-        markdown << Stanza.new( '{{% /article %}}')
+        markdown << AdornedStanza.new( '{{% /article %}}')
       end
 
       begin
@@ -469,6 +468,8 @@ module Generators
         ref1 = localise( @site.absolutise( @article_url, ref.split('"')[1]))
         "src=\"#{ref1}\""
       end
+
+      html = html.split("\n").collect {|line| line.strip}.join( "\n")
 
       [RawStanza.new( html)]
     end

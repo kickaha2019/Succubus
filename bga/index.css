@@ -1,4 +1,5 @@
-body {background: #DDDDDD; margin: 0px}
+body {background: #DDDDDD; margin: 0px; display: flex; align-items: center;
+      justify-content: center; flex-direction: column}
 
 .logo {font-size: 30px;
        background-image: linear-gradient(#d0d361,#fac703);
@@ -15,7 +16,7 @@ main {
     flex-direction: column-reverse;
 }
 
-main>div {
+main>div, article {
     margin: 5px;
     background: white;
 }
@@ -23,9 +24,11 @@ main>div {
 .logo1 {font-weight: bold; display: flex; font-size: 25px;           min-height: 20px;
        align-items: center; justify-content: center}
 
-.page_width {max-width: 75%; min-width: 600px}
+.page_width {max-width: 95%; min-width: 600px}
 
-.big_width {max-width: 600px; min-width: 400px}
+article.article {max-width: 600px; min-width: 400px}
+
+article.sidebar {width: 400px; background: lightcyan}
 
 .medium_width {width: 400px}
 
@@ -110,7 +113,7 @@ a img {max-height: 100px; object-fit: contain}
         justify-content: center;
     }
 
-    main>div {
+    main>div, article {
         margin: 20px;
         padding: 20px;
         border-radius: 10px;

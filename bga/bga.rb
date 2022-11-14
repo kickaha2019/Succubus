@@ -88,7 +88,7 @@ class BGA < Site
 
     on_element 'article' do  |place|
       if place.content?
-        Elements::Article.new( place)
+        Elements::Article.new( place, 'article')
       else
         Elements::Ignore.new( place)
       end
@@ -121,7 +121,7 @@ class BGA < Site
     end
 
     on_element 'div', :class => 'block-system-main-block' do |place|
-      Elements::Article.new( place)
+      Elements::Article.new( place, 'article')
     end
 
     on_element 'div', :class => 'block-page-title-block' do |place|
@@ -608,8 +608,16 @@ class BGA < Site
     end
 
     on_page 'tournaments' do |page|
+      on_element 'div', :class => 'region-sidebar-first' do |place|
+        Elements::Ignore.new( place)
+      end
+
       on_element 'div', :class => 'region-sidebar-second' do |place|
-        Elements::Article.new( place)
+        Elements::Article.new( place, 'sidebar')
+      end
+
+      on_element 'div', :class => 'sidebar', :grokked => false do |place|
+        place.children
       end
 
       false

@@ -2,13 +2,20 @@ require_relative 'unknown'
 
 module Elements
   class Article < Unknown
+    attr_reader :style
+
+    def initialize( place, style)
+      super( place)
+      @style = style
+    end
+
     def article?
       true
     end
 
-    def compile( generator)
-      generator.article_markdown( generate( generator))
-    end
+    # def compile( generator)
+    #   generator.article_markdown( generate( generator), @style)
+    # end
 
     def content?
       false
