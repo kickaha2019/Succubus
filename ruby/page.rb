@@ -1,6 +1,6 @@
 class Page
   attr_reader :url, :document, :index, :root_url
-  attr_accessor :date, :mode, :title, :description
+  attr_accessor :date, :mode, :title
 
   def initialize( site, root_url, taxonomy, url, document)
     @site        = site
@@ -8,7 +8,6 @@ class Page
     @taxonomy    = taxonomy
     @url         = url
     @document    = document
-    @description = nil
     @title       = nil
     @date        = nil
     @index       = []

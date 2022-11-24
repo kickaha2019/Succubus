@@ -6,6 +6,10 @@ module Elements
       true
     end
 
+    def description( generator)
+      ''
+    end
+
     def header?
       @contents.each do |child|
         if child.is_a?( Elements::Cell)

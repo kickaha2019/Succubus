@@ -7,8 +7,8 @@ body {background: #DDDDDD; margin: 0px; display: flex; align-items: center;
        display: flex;
        align-items: center;
        justify-content: center;
+       width: 100%;
 }
-.logo span {color: red; font-style: italic}
 
 main {
     display: flex;
@@ -16,13 +16,20 @@ main {
     flex-direction: column-reverse;
 }
 
-main>div, article {
+main>div, main>article {
     margin: 5px;
     background: white;
+    padding: 5px;
+    width: 100%;
 }
 
-.logo1 {font-weight: bold; display: flex; font-size: 25px;           min-height: 20px;
-       align-items: center; justify-content: center}
+div>article {
+    padding-bottom: 5px;
+}
+
+.logo1 {font-weight: bold; display: flex; font-size: 25px;
+        min-height: 20px;
+        align-items: center; justify-content: center}
 
 .page_width {max-width: 95%; min-width: 600px}
 
@@ -51,6 +58,8 @@ article.sidebar {width: 400px; background: lightcyan}
 dt {font-weight: bold}
 
 a img {max-height: 100px; object-fit: contain}
+
+img.description_image {max-height: 48px; object-fit: contain; float: left}
 
 .wide_menu .menu0 {display: flex;
                    width: 100%;
@@ -97,26 +106,39 @@ a img {max-height: 100px; object-fit: contain}
     display: block;
 }
 
-.narrow_menu {display: block; font-size: 16px; background: #EFEFEF}
+.narrow_menu {display: block; font-size: 16px; background: #ffb30e; border: 2px solid #EFEFEF; width: 100%}
 .narrow_menu a {font-size: 16px}
-.narrow_menu .menu0, .narrow_menu .menu1 {display: none}
-.narrow_menu .menu0 {background: #E8E8E8}
-.narrow_menu .menu1 {background: #DFDFDF}
+.narrow_menu .menu0, .narrow_menu .menu1 {display: none; width: 100%}
+.narrow_menu .menu0 {background: #eea20d}
+.narrow_menu .menu1 {background: #ddb10c}
+
+.narrow_menu .menuitem0 {text-indent: 20px}
+.narrow_menu .menuitem1 {text-indent: 40px}
+
+.narrow_image {display: inline}
+.wide_image {display: none}
 .wide_menu {display: none}
 .contract {display: none; text-decoration: none}
 .expand {text-decoration: none}
 
 @media all and (min-width: 768px) {
+    .narrow_image {display: none}
+    .wide_image {display: inline}
+
     main {
         flex-direction: row;
         align-items: flex-start;
         justify-content: center;
     }
 
-    main>div, article {
+    main>div, main>article {
         margin: 20px;
         padding: 20px;
         border-radius: 10px;
+    }
+
+    div>article {
+        padding-bottom: 10px;
     }
 
     .narrow_menu {display: none}

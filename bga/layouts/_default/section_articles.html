@@ -12,6 +12,14 @@
           {{ range (where .Site.AllPages.ByTitle "Params.section" .Params.sektion) }}
             <article>
                 <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+                {{ if .Params.description }}
+                    {{ if .Params.description_image }}
+                    <img class="description_image"
+                         src="{{ .Params.description_image.path }}"
+                         alt="{{ .Params.description_image.title }}">
+                    {{ end }}
+                  <p> {{ .Params.description | markdownify }} </p>
+                {{ end }}
             </article>
           {{ end }}
         </div>

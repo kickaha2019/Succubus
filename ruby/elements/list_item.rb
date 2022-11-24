@@ -6,6 +6,10 @@ module Elements
       true
     end
 
+    def description( generator)
+      ''
+    end
+
     def generate( generator)
       generator.raw( raw)
     end

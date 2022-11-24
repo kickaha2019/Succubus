@@ -15,6 +15,14 @@ module Elements
       super + ': ' + @type.to_s
     end
 
+    def description( generator)
+      ''
+    end
+
+    def description_image( generator)
+      nil
+    end
+
     def generate( generator)
       list = []
       @contents.each do |child|

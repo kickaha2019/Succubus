@@ -15,6 +15,15 @@ module Elements
       end
     end
 
+    def description( generator)
+      md = generate_children( generator)
+      if generator.textual?( md)
+        generator.style( @types, md).join( ' ')
+      else
+        super
+      end
+    end
+
     def generate( generator)
       md = generate_children( generator)
       if generator.textual?( md)

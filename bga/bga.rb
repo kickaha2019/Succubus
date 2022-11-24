@@ -358,13 +358,15 @@ class BGA < Site
 
           # HTML errors and oddities
           'https://britgo.org/bakabanrev',
-          'https://britgo.org/reviews/mygofriend',
           'https://britgo.org/bgj/06014.html',
           'https://britgo.org/bgj/06026.html',
           'https://britgo.org/bgj/06320.html',
+          'https://britgo.org/reviews/mygofriend',
           'https://britgo.org/softwarereviews',
-          'https://britgo.org/tournaments/history11.html',
+          'https://britgo.org/tournaments/history08.html',
+          'https://britgo.org/tournaments/history09.html',
           'https://britgo.org/tournaments/history10.html',
+          'https://britgo.org/tournaments/history11.html',
 
           # Index pages
           'https://britgo.org/junior/youthgonews'

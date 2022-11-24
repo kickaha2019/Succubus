@@ -411,7 +411,7 @@ module Generators
     def page( url, info, parsed, articles, output)
       @article_url   = url
       @article_error = false
-      front_matter = page_front_matter( url, parsed)
+      front_matter = page_front_matter( url, parsed, articles)
 
       markdown = []
       articles.each do |article|
@@ -429,7 +429,7 @@ module Generators
       @article_error
     end
 
-    def page_front_matter( url, page)
+    def page_front_matter( url, page, articles)
       front_matter  = {'layout'   => (page.mode == :post) ? 'post' : 'article',
                        'mode'     => page.mode.to_s,
                        'origin'   => url,
@@ -446,9 +446,18 @@ module Generators
       front_matter['date']  = page.date.strftime( '%Y-%m-%d') if page.date
       front_matter['title'] = page.title if page.title
 
-      text = page.description
-      if text && (text != '')
-        front_matter['description'] = (text.size < 30) ? text : text[0..28].gsub( / [^ ]+$/, ' ...')
+      if articles[0]
+        desc = articles[0].description( self)
+        desc = desc.gsub( /\s+/, ' ').sub( /^ /, '')
+        desc = (desc.size < 100) ? desc : desc[0..98].gsub( / [^ ]+$/, ' ...')
+        if (desc.size > 1) && page.title && (page.title.size < desc.size)
+          front_matter['description'] = desc
+        end
+
+        image = articles[0].description_image( self)
+        if image
+          front_matter['description_image'] = image
+        end
       end
 
       front_matter

@@ -14,15 +14,9 @@
       {{ $currentPage := . }}
       {{ range .Site.Menus.main }}
         <div class="menuitem0 {{ if eq $currentPage.Params.index0 .Identifier }}is_active{{ end }}">
-        {{ if eq .URL "" }}
-          {{ .Name }}
-        {{ else }}
-          <a href="{{ .URL }}">{{ .Name }}</a>
-        {{ end }}
-
         {{ if .HasChildren }}
-          <a class="expand" href="#" onclick="expand(event);">+</a>
-          <a class="contract" href="#" onclick="contract(event);">-</a>
+          <a class="expand" href="#" onclick="expand(event);">{{ .Name }} +</a>
+          <a class="contract" href="#" onclick="contract(event);">{{ .Name }} -</a>
           <div name="menu" class="menu1">
           {{ range .Children }}
             <div class="menuitem1 {{ if eq $currentPage.Params.index1 .Identifier }}is_active{{ end }}">
@@ -34,6 +28,8 @@
             </div>
           {{ end }}
           </div>
+        {{ else }}
+          <a href="{{ .URL }}">{{ .Name }}</a>
         {{ end }}
 
         </div>

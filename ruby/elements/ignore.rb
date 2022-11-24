@@ -9,6 +9,14 @@ module Elements
       false
     end
 
+    def description( generator)
+      ''
+    end
+
+    def description_image( generator)
+      nil
+    end
+
     def generate( generator)
       []
     end

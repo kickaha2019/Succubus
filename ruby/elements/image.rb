@@ -18,6 +18,14 @@ module Elements
       super + ': ' + @path
     end
 
+    def description_image( generator)
+      if im = generator.localise( @path)
+        {'path' => im, 'title' => @title}
+      else
+        nil
+      end
+    end
+
     def generate( generator)
       generator.image( @path, @title)
     end

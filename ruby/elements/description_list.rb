@@ -6,6 +6,14 @@ module Elements
       true
     end
 
+    def description( generator)
+      ''
+    end
+
+    def description_image( generator)
+      nil
+    end
+
     def generate( generator)
       list = []
       @contents.each do |child|

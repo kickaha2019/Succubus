@@ -62,6 +62,19 @@ module Elements
       end
     end
 
+    def description( generator)
+      @contents.collect {|child| child.description( generator)}.join( ' ')
+    end
+
+    def description_image( generator)
+      @contents.each do |child|
+        if im = child.description_image( generator)
+          return im
+        end
+      end
+      nil
+    end
+
     def error?
       false
     end

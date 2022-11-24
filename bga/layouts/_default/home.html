@@ -14,7 +14,14 @@
           {{ range first 10 (where .Site.AllPages "Params.mode" "post").ByDate.Reverse }}
             <article>
                 <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-                <p> {{ .Params.description }} </p>
+                {{ if .Params.description }}
+                    {{ if .Params.description_image }}
+                        <img class="description_image"
+                             src="{{ .Params.description_image.path }}"
+                             alt="{{ .Params.description_image.title }}">
+                    {{ end }}
+                    <p> {{ .Params.description | markdownify }} </p>
+                {{ end }}
             </article>
           {{ end }}
 

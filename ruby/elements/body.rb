@@ -8,7 +8,6 @@ module Elements
       super( place)
       @title       = place.page.title
       @date        = place.page.date
-      @description = place.page.description
       @mode        = place.page.mode
       @index       = place.page.index
       @root        = place.page.root?
@@ -23,10 +22,6 @@ module Elements
 
     def content?
       @ignore ? false : super
-    end
-
-    def description
-      @description
     end
 
     def error?

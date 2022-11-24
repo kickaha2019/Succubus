@@ -15,6 +15,10 @@ module Elements
       super + ': ' + @text
     end
 
+    def description( generator)
+      @text
+    end
+
     def error?
       false
     end
