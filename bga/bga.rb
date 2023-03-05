@@ -363,6 +363,7 @@ class BGA < Site
           'https://britgo.org/bgj/06320.html',
           'https://britgo.org/reviews/mygofriend',
           'https://britgo.org/softwarereviews',
+          'https://britgo.org/tournaments/history07.html',
           'https://britgo.org/tournaments/history08.html',
           'https://britgo.org/tournaments/history09.html',
           'https://britgo.org/tournaments/history10.html',

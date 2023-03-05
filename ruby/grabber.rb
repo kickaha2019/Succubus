@@ -6,8 +6,8 @@ require 'yaml'
 require_relative 'processor'
 
 class Grabber
-  def initialize( config_dir, cache)
-    @config    = Config.new( config_dir)
+  def initialize( config, cache)
+    @config    = Config.new( config)
     @cache     = cache
     @processor = Processor.new( @config, cache)
     @root      = @config.root_url
@@ -24,20 +24,13 @@ class Grabber
     refs << referral unless (refs.include?( referral) || (referral == url))
   end
 
-  # def add_referrals( referrals, url)
-  #   referrals.each do |ref|
-  #     add_referral( ref, url)
-  #   end
-  # end
-
   def check_files_deleted
     @reachable.each_pair do |url, page|
-      next if page['redirect']
       next if page['secured']
       next if page['comment']
 
       ext = 'html'
-      if @config.site.asset?( url)
+      if @processor.asset?( url)
         ext = url.split('.')[-1]
       end
       unless File.exist?( @cache + "/grabbed/#{page['timestamp']}.#{ext}")
@@ -48,22 +41,41 @@ class Grabber
 
   def clean_cache
     extant = {}
-    @reachable.each_value {|page| extant[page['timestamp'].to_i] = true}
-
-    to_delete = []
-    Dir.entries( @cache + '/grabbed').each do |f|
+    @processor.pages.each_value {|page| extant[page['timestamp'].to_i] = true}
+    clean_cache1( @cache) {|f| /\.txt$/ =~ f}
+    clean_cache1( @cache + '/grabbed') do |f|
       if m = /^(\d+)\.\w*$/.match( f)
-        to_delete << f unless extant[ m[1].to_i]
+        ! extant[ m[1].to_i]
+      else
+        false
       end
-    end
-
-    to_delete.each do |f|
-      File.delete( "#{@cache}/grabbed/#{f}")
     end
   end
 
-  def digest
-    @processor.subprocess 'digest'
+  def clean_cache1( dir)
+    to_delete = []
+    Dir.entries( dir).each do |f|
+      to_delete << f if yield f
+    end
+
+    to_delete.each do |f|
+      File.delete( "#{dir}/#{f}")
+    end
+  end
+
+  def find_links
+    @processor.subprocess 'find_links'
+    @links = Hash.new {|h,k| h[k] = []}
+
+    Dir.entries( @cache).each do |f|
+      if /\.txt/ =~ f
+        IO.readlines( @cache + '/' + f).each do |line|
+          if m = /^(.*)\t(.*)$/.match( line)
+            @links[m[1]] << m[2]
+          end
+        end
+      end
+    end
   end
 
   def get_candidates( limit, explicit)
@@ -76,7 +88,7 @@ class Grabber
     months3 = Time.now.to_i - 90 * 24 * 60 * 60
 
     @reachable.each_pair do |url, info|
-      if @config.site.asset? url
+      if @processor.asset? url
         if info['timestamp'] == 0
           must << url
         end
@@ -118,7 +130,7 @@ class Grabber
       response = http_get( url)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
-        if @config.site.asset?( url)
+        if @processor.asset?( url)
           ext = url.split('.')[-1]
         end
         File.open( "#{@cache}/grabbed/#{ts}.#{ext}", 'wb') do |io|
@@ -134,25 +146,13 @@ class Grabber
         end
 
       elsif response.is_a?( Net::HTTPRedirection)
-        # handled = false
-        # if unify(response['Location']) == url
-        #   response2 = http_get( response['Location'])
-        #   if response2.is_a?( Net::HTTPOK)
-        #     File.open( "#{@cache}/grabbed/#{ts}.html", 'wb') do |io|
-        #       io.write response2.body
-        #     end
-        #     handled = true
-        #   end
-        # end
-
-#        unless handled
           url = response['Location']
-          if @config.login_redirect?( url)
-            info['secured'] = true
-          else
+          # if @config.login_redirect?( url)
+          #   info['secured'] = true
+          # else
             info['comment']  = url
             info['redirect'] = true
-          end
+          #end
 #        end
 
       else
@@ -189,20 +189,17 @@ class Grabber
   end
 
   def reached( referral, url)
-    #url = unify( url)
-
     unless @reachable[url]
       @reachable[url] = {'timestamp' => 0, 'referrals' => [], 'changed' => 0}
       @to_trace << url
 
-      info = @processor.lookup( url)
+      info = @processor.pages[url]
       if info
-        #add_referrals( info.referrals, url)
-        @reachable[url]['timestamp'] = info.timestamp
-        @reachable[url]['redirect']  = true if info.redirect?
-        @reachable[url]['secured']   = true if info.secure?
-        @reachable[url]['comment']   = info.comment if info.comment
-        @reachable[url]['changed']   = info.changed
+        @reachable[url]['timestamp'] = info['timestamp']
+        @reachable[url]['secured']   = true if info['secure']
+        @reachable[url]['comment']   = info['comment'] if info['comment']
+        @reachable[url]['redirect']  = info['redirect'] if info['redirect']
+        @reachable[url]['changed']   = info['changed']
       end
     end
 
@@ -210,21 +207,10 @@ class Grabber
   end
 
   def save_info
-    # @reachable.each_value do |info|
-    #   info['referrals'] = info['referrals'].uniq.select {|ref| ref && (ref.strip != '')} if info['referrals']
-    # end
     File.open( "#{@cache}/grabbed.yaml", 'w') do |io|
       io.print @reachable.to_yaml
     end
   end
-
-  # def to_trace
-  #   pages do |url|
-  #     next if @traced[url]
-  #     return url if @reachable[url]
-  #   end
-  #   nil
-  # end
 
   def trace?( url)
     return false unless @config.in_site( url) # @root == url[0...(@root.size)]
@@ -233,38 +219,24 @@ class Grabber
 
   def trace_from_reachable
     while url = @to_trace.pop
-      info = @processor.lookup( url)
-      next if info.nil?
-      next if info.timestamp == 0
-      #p ['trace_from_reachable2', url, asset?( url)]
-
-      if info.redirect?
-        reached( url, info.comment)
-        next
-      end
-      next if info.error?
-      next if info.asset?
-
-      info.links do |found|
+      @links[url].each do |found|
         if trace?( found)
-          # if /allnews\?created/ =~ found
-          #   p [url, path, found]
-          #   raise 'Ouch'
-          # end
           reached( url, found)
         end
       end
-    end
 
-    # p @reachable
-    # raise 'Dev'
+      if @processor.pages[url] && @processor.pages[url]['redirect']
+        reached( url, @processor.pages[url]['comment'])
+      end
+    end
   end
 end
 
 g = Grabber.new( ARGV[0], ARGV[1])
+g.clean_cache
 puts "... Initialised #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
-g.digest
-puts "... Digested    #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+g.find_links
+puts "... Found links #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.initialise_reachable
 g.trace_from_reachable
 puts "... Traced out  #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
@@ -272,6 +244,5 @@ g.check_files_deleted
 g.get_candidates( ARGV[2].to_i, ARGV[3])
 g.grab_candidates
 puts "... Grabbed     #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
-g.clean_cache
 g.save_info
 puts "... Saved info  #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
