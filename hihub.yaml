@@ -1,0 +1,6 @@
+---
+root_url: https://www.hihub.info/
+workers:  10
+debug_url: xxx
+include_urls: []
+login_redirect_url:   xxx

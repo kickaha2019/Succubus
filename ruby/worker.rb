@@ -11,6 +11,7 @@ class Worker < Processor
   def absolutise( page_url, url)
     return nil if url.nil?
     url = url.strip.sub( /#.*$/, '')
+    url = url[2..-1] if /^\.\// =~ url
     return nil if url == ''
 
     url = url.strip.gsub( '%20', ' ').gsub( '\\', '/')
@@ -60,12 +61,22 @@ class Worker < Processor
   def find_links( url, parsed, debug)
     parsed.children.each do |node|
       if node.name.upcase == 'A'
-        target = absolutise( url, node['href'])
-        if target && local?( target)
-          @output.puts "#{url}\t#{target}"
+        find_links1( url, node['href'])
+      elsif node.name.upcase == 'IMG'
+        find_links1( url, node['src'])
+      elsif node.name.upcase == 'STYLE'
+        node.content.scan( /url\s*\(\s*"([^"]*)"\s*\)\s*/im) do |found|
+          find_links1( url, found[0])
         end
       end
       find_links( url, node, debug)
+    end
+  end
+
+  def find_links1( url, link)
+    target = absolutise( url, link)
+    if target && local?( target)
+      @output.puts "#{url}\t#{target}"
     end
   end
 
