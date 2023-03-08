@@ -7,9 +7,12 @@ require_relative 'config'
 class Processor
   attr_reader :pages
 
-  def initialize( config, cache)
-    @config = config # YAML.load( IO.read( config + '/config.yaml'))
-    @cache = cache
+  def initialize( site_file, cache)
+    require site_file
+    @site_file = site_file
+    site_class = site_file.split('/')[-1].split('.')[0].capitalize
+    @site      = Kernel.const_get( site_class).new
+    @cache     = cache
 
     @pages = {}
     if File.exist?( cache + '/grabbed.yaml')
@@ -29,17 +32,13 @@ class Processor
     end
   end
 
-  def asset?( url)
-    ! html?( url)
-  end
-
-  def html?( url)
-    /\/[^\.\/]*(|\.htm|\.html)$/ =~ url
+  def in_site( url)
+    @site.root_url == url[0...(@site.root_url.size)]
   end
 
   def local?( url)
     return true unless /^\w*:/ =~ url
-    root_url = @config.root_url
+    root_url = @site.root_url
     return false unless url.size > root_url.size
     url[0...root_url.size] == root_url
   end
@@ -50,9 +49,9 @@ class Processor
 
   def subprocess( verb)
     pids = []
-    loop = @config.n_workers
+    loop = 10
     (0...loop).each do |i|
-      pids << spawn( "/Users/peter/Succubus/bin/worker.command #{verb} #{i} #{loop}")
+      pids << spawn( "/Users/peter/Succubus/bin/worker.command #{@site_file} #{@cache} #{verb} #{i} #{loop}")
     end
 
     error = false

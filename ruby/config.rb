@@ -13,14 +13,14 @@ class Config
     url == @config['debug_url']
   end
 
+  def get_site( site_file)
+
+  end
+
   def include_urls
     if @config['include_urls']
       @config['include_urls'].each {|url| yield url}
     end
-  end
-
-  def in_site( url)
-    root_url == url[0...(root_url.size)]
   end
 
   def login_redirect?( url)

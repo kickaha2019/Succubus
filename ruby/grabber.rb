@@ -5,23 +5,14 @@ require 'yaml'
 
 require_relative 'processor'
 
-class Grabber
-  def initialize( config, cache)
-    @config    = Config.new( config)
-    @cache     = cache
-    @processor = Processor.new( @config, cache)
-    @root      = @config.root_url
+class Grabber < Processor
+  def initialize( site_file, cache)
+    super
+    @root      = @site.root_url
     #@traced    = {}
     @to_trace  = []
     @reachable = {}
     @delay     = 0
-  end
-
-  def add_referral( referral, url)
-    return unless referral
-    refs = @reachable[url]['referrals']
-    return if refs.size > 3
-    refs << referral unless (refs.include?( referral) || (referral == url))
   end
 
   def check_files_deleted
@@ -30,7 +21,7 @@ class Grabber
       next if page['comment']
 
       ext = 'html'
-      if @processor.asset?( url)
+      if @site.asset?( url)
         ext = url.split('.')[-1]
       end
       unless File.exist?( @cache + "/grabbed/#{page['timestamp']}.#{ext}")
@@ -41,7 +32,7 @@ class Grabber
 
   def clean_cache
     extant = {}
-    @processor.pages.each_value {|page| extant[page['timestamp'].to_i] = true}
+    @pages.each_value {|page| extant[page['timestamp'].to_i] = true}
     clean_cache1( @cache) {|f| /\.txt$/ =~ f}
     clean_cache1( @cache + '/grabbed') do |f|
       if m = /^(\d+)\.\w*$/.match( f)
@@ -64,7 +55,7 @@ class Grabber
   end
 
   def find_links
-    @processor.subprocess 'find_links'
+    subprocess 'find_links'
     @links = Hash.new {|h,k| h[k] = []}
 
     Dir.entries( @cache).each do |f|
@@ -88,9 +79,11 @@ class Grabber
     months3 = Time.now.to_i - 90 * 24 * 60 * 60
 
     @reachable.each_pair do |url, info|
-      if @processor.asset? url
+      if @site.asset? url
         if info['timestamp'] == 0
           must << url
+        else
+          poss << url
         end
       elsif info['timestamp'] == 0
         must << url
@@ -114,10 +107,8 @@ class Grabber
       ts = Time.now.to_i
 
       old_path = "#{@cache}/grabbed/#{@reachable[url]['timestamp']}.html"
-      referers = @reachable[url]['referrals']
       changed  = @reachable[url]['changed']
       info     = @reachable[url] = {'timestamp' => ts,
-                                    'referrals' => referers,
                                     'changed'   => changed}
 
       begin
@@ -130,7 +121,7 @@ class Grabber
       response = http_get( url)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
-        if @processor.asset?( url)
+        if @site.asset?( url)
           ext = url.split('.')[-1]
         end
         File.open( "#{@cache}/grabbed/#{ts}.#{ext}", 'wb') do |io|
@@ -182,18 +173,18 @@ class Grabber
   end
 
   def initialise_reachable
-    reached( nil, @root)
-    @config.include_urls do |url|
-      reached( nil, url)
+    reached( @root)
+    @site.include_urls do |url|
+      reached( url)
     end
   end
 
-  def reached( referral, url)
+  def reached( url)
     unless @reachable[url]
-      @reachable[url] = {'timestamp' => 0, 'referrals' => [], 'changed' => 0}
+      @reachable[url] = {'timestamp' => 0, 'changed' => 0}
       @to_trace << url
 
-      info = @processor.pages[url]
+      info = @pages[url]
       if info
         @reachable[url]['timestamp'] = info['timestamp']
         @reachable[url]['secured']   = true if info['secure']
@@ -202,8 +193,6 @@ class Grabber
         @reachable[url]['changed']   = info['changed']
       end
     end
-
-    add_referral( referral, url)
   end
 
   def save_info
@@ -213,20 +202,20 @@ class Grabber
   end
 
   def trace?( url)
-    return false unless @config.in_site( url) # @root == url[0...(@root.size)]
-    true
+    return false unless in_site( url)
+    @site.trace?( url)
   end
 
   def trace_from_reachable
     while url = @to_trace.pop
       @links[url].each do |found|
         if trace?( found)
-          reached( url, found)
+          reached( found)
         end
       end
 
-      if @processor.pages[url] && @processor.pages[url]['redirect']
-        reached( url, @processor.pages[url]['comment'])
+      if @pages[url] && @pages[url]['redirect']
+        reached( @pages[url]['comment'])
       end
     end
   end

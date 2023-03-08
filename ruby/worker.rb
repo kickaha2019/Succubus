@@ -3,9 +3,8 @@ require 'yaml'
 require_relative 'processor'
 
 class Worker < Processor
-  def initialize( config_dir, cache)
-    @config = Config.new( config_dir)
-    super( @config, cache)
+  def initialize( site_file, cache)
+    super
   end
 
   def absolutise( page_url, url)
@@ -19,7 +18,7 @@ class Worker < Processor
       (match == '://' ? match : match[0..1])
     end
 
-    root_url = @config.root_url
+    root_url = @site.root_url
     dir_url  = page_url.split('?')[0]
 
     if /^\?/ =~ url
@@ -82,8 +81,8 @@ class Worker < Processor
 
   def loop( verb, counter, every)
     @pages.each_pair do |url, info|
-      next if info['redirect'] || asset?(url)
-      debug = @config.debug_url?( url)
+      next if info['redirect'] || @site.asset?(url)
+      debug = @site.debug_url?( url)
 
       path = @cache + "/grabbed/#{info['timestamp']}.html"
       next unless File.exist?( path)
