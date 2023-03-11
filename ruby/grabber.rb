@@ -54,21 +54,6 @@ class Grabber < Processor
     end
   end
 
-  def find_links
-    subprocess 'find_links'
-    @links = Hash.new {|h,k| h[k] = []}
-
-    Dir.entries( @cache).each do |f|
-      if /\.txt/ =~ f
-        IO.readlines( @cache + '/' + f).each do |line|
-          if m = /^(.*)\t(.*)$/.match( line)
-            @links[m[1]] << m[2]
-          end
-        end
-      end
-    end
-  end
-
   def get_candidates( limit, explicit)
     if explicit
       @candidates = [explicit]
