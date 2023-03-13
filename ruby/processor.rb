@@ -32,8 +32,66 @@ class Processor
     end
   end
 
+  def absolutise( page_url, url)
+    return nil if url.nil?
+    url = url.strip.sub( /#.*$/, '')
+    url = url[2..-1] if /^\.\// =~ url
+    return nil if url == ''
+
+    url = url.strip.gsub( '%20', ' ').gsub( '\\', '/')
+    url = url.gsub( /.\/\//) do |match|
+      (match == '://' ? match : match[0..1])
+    end
+
+    root_url = @site.root_url
+    dir_url  = page_url.split('?')[0]
+
+    if /^\?/ =~ url
+      return dir_url + url
+    end
+
+    if /\/$/ =~ dir_url
+      dir_url = dir_url[0..-2]
+    else
+      dir_url = dir_url.split('/')[0..-2].join('/')
+    end
+
+    while /^\.\.\// =~ url
+      url     = url[3..-1]
+      dir_url = dir_url.split('/')[0..-2].join('/')
+    end
+
+    if /^\// =~ url
+      url = root_url + url[1..-1]
+    elsif /^\w*:/ =~ url
+    else
+      url = dir_url + '/' + url
+    end
+
+    old_url = ''
+    while old_url != url
+      old_url = url
+      url = url.sub( /\/[a-z0-9_\-]+\/\.\.\//i, '/')
+    end
+
+    url1 = url.sub( /^http:/, 'https:')
+    if local?(url1)
+      url = url1
+    end
+
+    url
+  end
+
   def find_links
     subprocess 'find_links'
+    load_links
+  end
+
+  def in_site( url)
+    @site.root_url == url[0...(@site.root_url.size)]
+  end
+
+  def load_links
     @links = Hash.new {|h,k| h[k] = []}
 
     Dir.entries( @cache).each do |f|
@@ -45,10 +103,6 @@ class Processor
         end
       end
     end
-  end
-
-  def in_site( url)
-    @site.root_url == url[0...(@site.root_url.size)]
   end
 
   def local?( url)

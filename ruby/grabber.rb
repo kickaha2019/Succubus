@@ -96,14 +96,15 @@ class Grabber < Processor
       info     = @reachable[url] = {'timestamp' => ts,
                                     'changed'   => changed}
 
+      url1 = url.gsub( ' ', '%20')
       begin
-        URI.parse( url)
+        URI.parse( url1)
       rescue URI::InvalidURIError => bang
         info['comment'] = "#{bang.message}"
         next
       end
 
-      response = http_get( url)
+      response = http_get( url1)
       if response.is_a?( Net::HTTPOK)
         ext = 'html'
         if @site.asset?( url)
@@ -122,13 +123,16 @@ class Grabber < Processor
         end
 
       elsif response.is_a?( Net::HTTPRedirection)
-          url = response['Location']
+          url = absolutise( url, response['Location'])
           # if @config.login_redirect?( url)
           #   info['secured'] = true
           # else
+          if url
             info['comment']  = url
             info['redirect'] = true
-          #end
+          else
+            info['comment']  = 'Redirect to ' + response['Location']
+          end
 #        end
 
       else

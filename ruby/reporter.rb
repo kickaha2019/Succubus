@@ -7,9 +7,16 @@ require_relative 'processor'
 
 class Reporter < Processor
   attr_reader :errors
+
   def initialize( site_file, cache)
     super
     @errors = 0
+
+    @refs = Hash.new {|h,k| h[k] = []}
+    load_links
+    @links.each_pair do |page, links|
+      links.each {|link| @refs[link] << page}
+    end
   end
 
   def close_reports
@@ -66,7 +73,8 @@ FOOTER2
 <style>
 body {display: flex; align-items: center; flex-direction: column-reverse; justify-content: flex-end}
 table {border-collapse: collapse}
-.pages td, .pages th {border: 1px solid black; font-size: 20px; padding: 5px}
+.pages td, .pages th {border: 1px solid black; padding: 5px}
+.pages td, .pages th, span {font-size: 20px}
 .menu {padding-bottom: 20px}
 .menu td {font-size: 30px; padding-left: 10px; padding-right: 10px}
 </style>
@@ -74,6 +82,7 @@ table {border-collapse: collapse}
 <body>
 <div class="pages"><table><tr>
 <th>Page</th>
+<th>Refs</th>
 <th>State</th>
 <th>Comment</th>
 <th>Timestamp</th>
@@ -100,11 +109,19 @@ HEADER1
       line = []
       ext  = @site.asset?( url) ? url.split('.')[-1] : 'html'
       path = "#{@cache}/grabbed/#{info['timestamp']}.#{ext}"
+      url_show = (url.size < 60) ? url : (url[0..59] + '...')
       if File.exist?( path)
-        line << "<tr><td><a target=\"_blank\" href=\"#{path}\">#{url}</a></td>"
+        line << "<tr><td><a target=\"_blank\" title=\"#{url}\" href=\"#{path}\">#{url_show}</a></td>"
       else
-        line << "<tr><td>#{url}</td>"
+        line << "<tr><td><span title=\"#{url}\">#{url_show}</span></td>"
       end
+
+      line << '<td>'
+      refs = @refs[url].uniq
+      (0..2).each do |i|
+        line << "<a href=\"#{refs[i]}\">#{i+1}</a> " if i < refs.size
+      end
+      line << '</td>'
 
       if redirect
         line << "<th bgcolor=\"#{error ? 'red' : 'lime'}\">&rArr;</th>"

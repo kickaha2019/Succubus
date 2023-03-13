@@ -18,6 +18,14 @@ class Alofmethbin
     'xxx'
   end
 
+  def on_node( node)
+    if node.name == 'img'
+      if m = /javascript: showOverlay\( '(.*)'\)/.match( node['onclick'])
+        yield m[1]
+      end
+    end
+  end
+
   def root_url
     'https://alofmethbin.com/'
   end
