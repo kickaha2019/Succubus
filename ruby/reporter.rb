@@ -11,12 +11,7 @@ class Reporter < Processor
   def initialize( site_file, cache)
     super
     @errors = 0
-
-    @refs = Hash.new {|h,k| h[k] = []}
     load_links
-    @links.each_pair do |page, links|
-      links.each {|link| @refs[link] << page}
-    end
   end
 
   def close_reports
@@ -117,7 +112,7 @@ HEADER1
       end
 
       line << '<td>'
-      refs = @refs[url].uniq
+      refs = @refs[url]
       (0..2).each do |i|
         line << "<a href=\"#{refs[i]}\">#{i+1}</a> " if i < refs.size
       end

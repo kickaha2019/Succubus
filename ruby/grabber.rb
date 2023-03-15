@@ -54,6 +54,23 @@ class Grabber < Processor
     end
   end
 
+  def forget_errors
+    to_delete = []
+
+    @pages.each_pair do |url, info|
+      if info['comment'] && (! info['redirect'])
+        to_delete << url
+        @refs[url].each do |ref|
+          to_delete << ref
+        end
+      end
+    end
+
+    to_delete.uniq.each do |url|
+      @pages.delete( url)
+    end
+  end
+
   def get_candidates( limit, explicit)
     if explicit
       @candidates = [explicit]
@@ -184,6 +201,10 @@ class Grabber < Processor
     end
   end
 
+  def root_url
+    @site.root_url
+  end
+
   def save_info
     File.open( "#{@cache}/grabbed.yaml", 'w') do |io|
       io.print @reachable.to_yaml
@@ -211,10 +232,12 @@ class Grabber < Processor
 end
 
 g = Grabber.new( ARGV[0], ARGV[1])
+puts "... Grabbing #{g.root_url}"
 g.clean_cache
 puts "... Initialised #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.find_links
 puts "... Found links #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+g.forget_errors
 g.initialise_reachable
 g.trace_from_reachable
 puts "... Traced out  #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"

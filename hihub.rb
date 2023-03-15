@@ -23,6 +23,9 @@ class Hihub
   end
 
   def trace?( url)
-    ! asset?( url)
+    return false if asset?( url)
+    return false if /\/\?filter_by=/ =~ url
+    return false if /\/\?wpbdp_view=/ =~ url
+    true
   end
 end

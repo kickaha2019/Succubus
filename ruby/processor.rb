@@ -103,6 +103,15 @@ class Processor
         end
       end
     end
+
+    @links.keys.each do |key|
+      @links[key] = @links[key].uniq
+    end
+
+    @refs = Hash.new {|h,k| h[k] = []}
+    @links.each_pair do |page, links|
+      links.each {|link| @refs[link] << page}
+    end
   end
 
   def local?( url)
