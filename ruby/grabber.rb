@@ -121,17 +121,13 @@ class Grabber < Processor
         next
       end
 
-      response = http_get( url1)
+      response = http_get( url1, @site.asset?( url))
       if response.is_a?( Net::HTTPOK)
-        ext = 'html'
-        if @site.asset?( url)
-          ext = url.split('.')[-1]
-        end
-        File.open( "#{@cache}/grabbed/#{ts}.#{ext}", 'wb') do |io|
-          io.write response.body
-        end
+        unless @site.asset?( url)
+          File.open( "#{@cache}/grabbed/#{ts}.html", 'wb') do |io|
+            io.write response.body
+          end
 
-        if (ext == 'html')
           if File.exist?( old_path)
             if response.body != IO.read( old_path)
               info['changed'] = ts
@@ -158,17 +154,13 @@ class Grabber < Processor
     end
   end
 
-  def http_get( url, headers = {})
+  def http_get( url, asset)
     uri = URI.parse( url)
 
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request['Accept']          = 'text/html,application/xhtml+xml,application/xml'
+    request = asset ? Net::HTTP::Head.new(uri.request_uri) : Net::HTTP::Get.new(uri.request_uri)
+    request['Accept']          = asset ? '*/*' : 'text/html,application/xhtml+xml'
     request['Accept-Language'] = 'en-gb'
     request['User-Agent']      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
-
-    headers.each_pair do |k,v|
-      request[k] = v
-    end
 
     use_ssl     = uri.scheme == 'https'
     verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -186,6 +178,10 @@ class Grabber < Processor
   end
 
   def reached( url)
+    if m = /^(.*)#/.match( url)
+      url = m[1]
+    end
+
     unless @reachable[url]
       @reachable[url] = {'timestamp' => 0, 'changed' => 0}
       @to_trace << url

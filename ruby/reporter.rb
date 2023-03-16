@@ -102,10 +102,9 @@ HEADER1
       @n_redirect += 1 if info['redirect']
 
       line = []
-      ext  = @site.asset?( url) ? url.split('.')[-1] : 'html'
-      path = "#{@cache}/grabbed/#{info['timestamp']}.#{ext}"
-      url_show = (url.size < 60) ? url : (url[0..59] + '...')
-      if File.exist?( path)
+      path = "#{@cache}/grabbed/#{info['timestamp']}.html"
+      url_show = (url.size < 65) ? url : (url[0..64] + '...')
+      if @site.asset?( url) && File.exist?( path)
         line << "<tr><td><a target=\"_blank\" title=\"#{url}\" href=\"#{path}\">#{url_show}</a></td>"
       else
         line << "<tr><td><span title=\"#{url}\">#{url_show}</span></td>"
