@@ -76,10 +76,15 @@ class Processor
 
     url1 = url.sub( /^http:/, 'https:')
     if local?(url1)
-      url = url1
+      url = @site.respond_to?( :simplify_url) ? @site.simplify_url( url1) : url1
     end
 
     url
+  end
+
+  def find_classes
+    subprocess 'find_classes'
+    load_classes
   end
 
   def find_links
@@ -91,11 +96,34 @@ class Processor
     @site.root_url == url[0...(@site.root_url.size)]
   end
 
+  def load_classes
+    @classes = Hash.new {|h,k| h[k] = []}
+
+    Dir.entries( @cache).each do |f|
+      if /classes\d*\.txt/ =~ f
+        IO.readlines( @cache + '/' + f).each do |line|
+          if m = /^(.*)\t(.*)$/.match( line)
+            @classes[m[1]] << m[2]
+          end
+        end
+      end
+    end
+
+    @classes.keys.each do |key|
+      @classes[key] = @classes[key].uniq
+    end
+
+    @class_used = Hash.new {|h,k| h[k] = []}
+    @classes.each_pair do |page, links|
+      links.each {|link| @class_used[link] << page}
+    end
+  end
+
   def load_links
     @links = Hash.new {|h,k| h[k] = []}
 
     Dir.entries( @cache).each do |f|
-      if /\.txt/ =~ f
+      if /links\d*\.txt/ =~ f
         IO.readlines( @cache + '/' + f).each do |line|
           if m = /^(.*)\t(.*)$/.match( line)
             @links[m[1]] << m[2]

@@ -5,13 +5,15 @@ require 'yaml'
 
 require_relative 'processor'
 
-class Reporter < Processor
-  attr_reader :errors
-
-  def initialize( site_file, cache)
-    super
-    @errors = 0
-    find_links
+class Classifier < Processor
+  def initialize( site_file, cache, output_dir)
+    super( site_file, cache)
+    @output_dir = output_dir
+    find_classes
+    @group2index = {}
+    @site.class_groups.keys.each do |key|
+      @group2index[key] = (@group2index.size + 1)
+    end
   end
 
   def close_reports
@@ -19,10 +21,10 @@ class Reporter < Processor
   end
 
   def open_reports
-    @files = [
-        File.open( @cache + '/index.html',  'w'),
-        File.open( @cache + '/index1.html', 'w')
-    ]
+    @files = [File.open( @output_dir + '/index.html',  'w')]
+    (1..(@group2index.size)).each do |i|
+      @files << File.open( @output_dir + "/index#{i}.html", 'w')
+    end
   end
 
   def report
@@ -158,6 +160,5 @@ HEADER1
   end
 end
 
-g = Reporter.new( ARGV[0], ARGV[1])
+g = Classifier.new( ARGV[0], ARGV[1], ARGV[2])
 g.report
-exit 1 if g.errors > 0

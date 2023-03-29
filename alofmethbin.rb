@@ -30,6 +30,14 @@ class Alofmethbin
     'https://alofmethbin.com/'
   end
 
+  def simplify_url( url)
+    if m = /^(.*)\?origin=/.match( url)
+      url = m[1]
+    else
+      url
+    end
+  end
+
   def trace?( url)
     true
   end

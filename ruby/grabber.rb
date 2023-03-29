@@ -13,6 +13,7 @@ class Grabber < Processor
     @to_trace  = []
     @reachable = {}
     @delay     = 0
+    @log       = File.open( cache + '/grabber.log', 'w')
   end
 
   def check_files_deleted
@@ -59,6 +60,7 @@ class Grabber < Processor
 
     @pages.each_pair do |url, info|
       if info['comment'] && (! info['redirect'])
+        @log.puts "... Forgetting #{url}"
         to_delete << url
         @refs[url].each do |ref|
           to_delete << ref
@@ -67,8 +69,13 @@ class Grabber < Processor
     end
 
     to_delete.uniq.each do |url|
+      @log.puts "... Deleting #{url}"
       @pages.delete( url)
+      @links.delete( url)
+      @refs.delete( url)
     end
+
+    @log.flush
   end
 
   def get_candidates( limit, explicit)
@@ -121,9 +128,17 @@ class Grabber < Processor
         next
       end
 
-      response = http_get( url1, @site.asset?( url))
+      response = nil
+      get      = local?( url) && (! @site.asset?( url))
+      begin
+        response = http_get( url1, get)
+      rescue Exception => bang
+        info['comment'] = "#{bang.message}"
+        next
+      end
+
       if response.is_a?( Net::HTTPOK)
-        unless @site.asset?( url)
+        if get
           File.open( "#{@cache}/grabbed/#{ts}.html", 'wb') do |io|
             io.write response.body
           end
@@ -154,11 +169,11 @@ class Grabber < Processor
     end
   end
 
-  def http_get( url, asset)
+  def http_get( url, get)
     uri = URI.parse( url)
 
-    request = asset ? Net::HTTP::Head.new(uri.request_uri) : Net::HTTP::Get.new(uri.request_uri)
-    request['Accept']          = asset ? '*/*' : 'text/html,application/xhtml+xml'
+    request = get ? Net::HTTP::Get.new(uri.request_uri) : Net::HTTP::Head.new(uri.request_uri)
+    request['Accept']          = get ? 'text/html,application/xhtml+xml' : '*/*'
     request['Accept-Language'] = 'en-gb'
     request['User-Agent']      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
 
@@ -230,16 +245,17 @@ end
 g = Grabber.new( ARGV[0], ARGV[1])
 puts "... Grabbing #{g.root_url}"
 g.clean_cache
-puts "... Initialised #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+puts "... Initialised   #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.find_links
-puts "... Found links #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+puts "... Found links   #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.forget_errors
+puts "... Forgot errors #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.initialise_reachable
 g.trace_from_reachable
-puts "... Traced out  #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+puts "... Traced out    #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.check_files_deleted
 g.get_candidates( ARGV[2].to_i, ARGV[3])
 g.grab_candidates
-puts "... Grabbed     #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+puts "... Grabbed       #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
 g.save_info
-puts "... Saved info  #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
+puts "... Saved info    #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"
