@@ -145,7 +145,7 @@ class Processor
   def local?( url)
     return true unless /^\w*:/ =~ url
     root_url = @site.root_url
-    return false unless url.size > root_url.size
+    return false unless url.size >= root_url.size
     url[0...root_url.size] == root_url
   end
 

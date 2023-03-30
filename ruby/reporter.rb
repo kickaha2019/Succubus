@@ -20,8 +20,12 @@ class Reporter < Processor
 
   def open_reports
     @files = [
-        File.open( @cache + '/index.html',  'w'),
-        File.open( @cache + '/index1.html', 'w')
+        File.open( @cache + '/index.html',  'w'),    # HTML pages
+        File.open( @cache + '/index1.html', 'w'),    # Assets
+        File.open( @cache + '/index2.html', 'w'),    # External links
+        File.open( @cache + '/index3.html', 'w'),    # Redirects
+        File.open( @cache + '/index4.html', 'w'),    # Errors
+        File.open( @cache + '/index5.html', 'w')     # Ungrabbed
     ]
   end
 
@@ -36,13 +40,15 @@ class Reporter < Processor
   def report_footer
     stats = [
         [0,"Pages(#{@n_all})"],
-        [1,"Errors(#{@n_error})"],
-        [9,"Redirects(#{@n_redirect})"],
+        [1,"Assets(#{@n_asset})"],
+        [2,"External(#{@n_external})"],
+        [3,"Redirects(#{@n_redirect})"],
+        [4,"Errors(#{@n_error})"],
         [9,"Secure(#{@n_secure})"],
-        [9,"New(#{@n_all-@n_grabbed})"]
+        [5,"New(#{@n_all-@n_grabbed})"]
     ]
 
-    write_reports( [0,1], <<FOOTER1)
+    write_reports( [0,1,2,3,4,5], <<FOOTER1)
 </table></div><div class="menu"><table><tr>
 FOOTER1
 
@@ -62,7 +68,7 @@ FOOTER2
   end
 
   def report_header
-    write_reports( [0,1], <<HEADER1)
+    write_reports( [0,1,2,3,4,5], <<HEADER1)
 <html>
 <head>
 <style>
@@ -87,6 +93,8 @@ HEADER1
 
   def report_lines
     @n_all, @n_asset, @n_error, @n_secure, @n_redirect, @n_grabbed = 0, 0, 0, 0, 0, 0
+    @n_external = 0
+
     @pages.keys.sort.each do |url|
       info     = @pages[url]
       asset    = @site.asset?( url)
@@ -100,6 +108,22 @@ HEADER1
       @n_error    += 1 if error
       @n_asset    += 1 if asset
       @n_redirect += 1 if info['redirect']
+      @n_external += 1 unless local?( url)
+
+      files = error ? [4] : []
+      if info['timestamp'] == 0
+        files << 5
+      elsif local?( url)
+        if info['redirect']
+          files << 3
+        elsif asset
+          files << 1
+        else
+          files << 0
+        end
+      else
+        files << 2
+      end
 
       line = []
       path = "#{@cache}/grabbed/#{info['timestamp']}.html"
@@ -147,7 +171,7 @@ HEADER1
 
       line << "</tr>"
 
-      write_reports( [0] + (error ? [1] : []), line.join( "\n"))
+      write_reports( files, line.join( "\n"))
     end
   end
 
