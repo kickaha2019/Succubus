@@ -20,12 +20,10 @@ class Grabber < Processor
     @reachable.each_pair do |url, page|
       next if page['secured']
       next if page['comment']
+      next if @site.asset?( url)
+      next unless local?( url)
 
-      ext = 'html'
-      if @site.asset?( url)
-        ext = url.split('.')[-1]
-      end
-      unless File.exist?( @cache + "/grabbed/#{page['timestamp']}.#{ext}")
+      unless File.exist?( @cache + "/grabbed/#{page['timestamp']}.html")
         page['timestamp'] = 0
       end
     end
@@ -164,7 +162,11 @@ class Grabber < Processor
 #        end
 
       else
-        info['comment'] = "#{response.class.name}: #{response.code}"
+        ignore = false
+        unless get
+          ignore = true if response.is_a?( Net::HTTPForbidden)
+        end
+        info['comment'] = "#{response.class.name}: #{response.code}" unless ignore
       end
     end
   end
@@ -223,7 +225,7 @@ class Grabber < Processor
   end
 
   def trace?( url)
-    return false unless in_site( url)
+    #return false unless in_site( url)
     @site.trace?( url)
   end
 

@@ -39,7 +39,7 @@ class Reporter < Processor
 
   def report_footer
     stats = [
-        [0,"Pages(#{@n_all})"],
+        [0,"Pages(#{@n_grabbed})"],
         [1,"Assets(#{@n_asset})"],
         [2,"External(#{@n_external})"],
         [3,"Redirects(#{@n_redirect})"],
@@ -100,15 +100,16 @@ HEADER1
       asset    = @site.asset?( url)
       redirect = info['redirect']
       error    = info['comment'] && (! redirect)
+      grabbed  = info['timestamp'] > 0
       @errors += 1 if error
 
       #@n_secure   += 1 if @is_secure
       @n_all      += 1
-      @n_grabbed  += 1 if info['timestamp'] > 0
+      @n_grabbed  += 1 if grabbed
       @n_error    += 1 if error
-      @n_asset    += 1 if asset
+      @n_asset    += 1 if asset && grabbed
       @n_redirect += 1 if info['redirect']
-      @n_external += 1 unless local?( url)
+      @n_external += 1 if grabbed && (! local?( url))
 
       files = error ? [4] : []
       if info['timestamp'] == 0

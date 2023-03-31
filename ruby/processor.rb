@@ -92,10 +92,6 @@ class Processor
     load_links
   end
 
-  def in_site( url)
-    @site.root_url == url[0...(@site.root_url.size)]
-  end
-
   def load_classes
     @classes = Hash.new {|h,k| h[k] = []}
 
