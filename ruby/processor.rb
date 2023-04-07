@@ -43,7 +43,8 @@ class Processor
       (match == '://' ? match : match[0..1])
     end
 
-    root_url = @site.root_url
+    root_url = /^(http(?:s|):\/\/[a-zA-Z0-9\-_\.]*\/)/.match( page_url)[0]
+    raise "Bad page URL: #{page_url}" unless root_url
     dir_url  = page_url.split('?')[0]
 
     if /^\?/ =~ url

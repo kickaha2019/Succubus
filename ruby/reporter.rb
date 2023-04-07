@@ -18,6 +18,10 @@ class Reporter < Processor
     @files.each {|io| io.close}
   end
 
+  def h( text)
+    text.gsub( '&', '&amp;').gsub( '<', '&gt;').gsub( '>', '&lt;')
+  end
+
   def open_reports
     @files = [
         File.open( @cache + '/index.html',  'w'),    # HTML pages
@@ -108,7 +112,7 @@ HEADER1
       @n_grabbed  += 1 if grabbed
       @n_error    += 1 if error
       @n_asset    += 1 if asset && grabbed
-      @n_redirect += 1 if info['redirect']
+      @n_redirect += 1 if info['redirect'] && local?( url)
       @n_external += 1 if grabbed && (! local?( url))
 
       files = error ? [4] : []
@@ -128,7 +132,7 @@ HEADER1
 
       line = []
       path = "#{@cache}/grabbed/#{info['timestamp']}.html"
-      url_show = (url.size < 65) ? url : (url[0..64] + '...')
+      url_show = h((url.size < 75) ? url : (url[0..74] + '...'))
       if (! @site.asset?( url)) && File.exist?( path)
         line << "<tr><td><a target=\"_blank\" title=\"#{url}\" href=\"#{path}\">#{url_show}</a></td>"
       else
@@ -162,7 +166,9 @@ HEADER1
         line << "<th bgcolor=\"red\">&cross;</th>"
       end
 
-      line << "<td>#{info['comment']}</td>"
+      comment      = info['comment'] ? info['comment'] : ''
+      comment_show = h((comment.size < 75) ? comment : (comment[0..74] + '...'))
+      line << "<td title=\"#{comment}\">#{comment_show}</td>"
 
       if info['timestamp'] == 0
         line << "<td></td>"

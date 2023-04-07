@@ -40,7 +40,7 @@ class Worker < Processor
 
   def w_find_links1(url, link)
     target = absolutise( url, link)
-    if target # && local?( target)
+    if target && (/^http(s):/ =~ target) # && local?( target)
       @output.puts "#{url}\t#{target}"
     end
   end
