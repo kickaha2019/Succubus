@@ -32,7 +32,11 @@ class Hihub
         'https://www.hihub.info/wp-content/uploads/2019/09/cropped-schoolhill19081.jpg',
         # https://www.hihub.info/news/virtual-cafe-now-open-for-business/
         # https://www.hihub.info/features/colins-tech-tips-pt-1/
-        'https://www.hihub.info/hicafe/'
+        'https://www.hihub.info/hicafe/',
+        # https://www.hihub.info/events/wi-april-meeting/
+        'https://www.hihub.info/wp-content/uploads/2019/09/Cambridge-Federation-badge.gif',
+        # https://www.hihub.info/events/hatha-yoga/
+        'https://www.hihub.info/events/hatha-yoga/paulineyoga@gmail.com'
     ]
     ignore.each do |i|
       return false if i == url

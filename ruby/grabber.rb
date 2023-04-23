@@ -148,7 +148,7 @@ class Grabber < Processor
           end
         end
 
-      elsif response.is_a?( Net::HTTPRedirection)
+      elsif get && response.is_a?( Net::HTTPRedirection)
           url = absolutise( url, response['Location'])
           # if @config.login_redirect?( url)
           #   info['secured'] = true
@@ -164,7 +164,9 @@ class Grabber < Processor
       else
         ignore = false
         unless get
+          ignore = true if response.is_a?( Net::HTTPRedirection)
           ignore = true if response.is_a?( Net::HTTPForbidden)
+          ignore = true if response.is_a?( Net::HTTPMethodNotAllowed)
         end
         info['comment'] = "#{response.class.name}: #{response.code}" unless ignore
       end
@@ -201,7 +203,7 @@ class Grabber < Processor
 
     unless @reachable[url]
       @reachable[url] = {'timestamp' => 0, 'changed' => 0}
-      @to_trace << url
+      @to_trace << url if local?( url)
 
       info = @pages[url]
       if info
