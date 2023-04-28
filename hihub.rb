@@ -24,7 +24,9 @@ class Hihub
 
   def trace?( url)
     ignore = [
+        # https://www.hihub.info/privacy-policy/
         'https://ico.org.uk/global/contact-us/email/',
+        # https://www.hihub.info/printable-versions/
         'https://www.hihub.info/wp-content/uploads/2020/11/Newsletter-News-and-Features-2020-10.pdf',
         # https://www.hihub.info/events/members-coffee-morning/
         # https://www.hihub.info/events/proposed-new-science-park-talk/
@@ -36,7 +38,14 @@ class Hihub
         # https://www.hihub.info/events/wi-april-meeting/
         'https://www.hihub.info/wp-content/uploads/2019/09/Cambridge-Federation-badge.gif',
         # https://www.hihub.info/events/hatha-yoga/
-        'https://www.hihub.info/events/hatha-yoga/paulineyoga@gmail.com'
+        'https://www.hihub.info/events/hatha-yoga/paulineyoga@gmail.com',
+        # https://www.hihub.info/events/smokehouse-market/
+        # https://www.hihub.info/events/jazz-at-histon-smokehouse/
+        # https://www.hihub.info/events/crafty-kids-easter-fair/
+        'https://www.hihub.info/wp-content/uploads/2021/08/Histon-Smokehouse-Logo.jpg',
+        # https://www.hihub.info/news-in-brief/local-book-launch-for-two-local-authors/
+        'https://www.bloomsbury.com/uk/great-hamster-getaway-9781408878934/'
+        # NOTIFIED 25th April 2023
     ]
     ignore.each do |i|
       return false if i == url

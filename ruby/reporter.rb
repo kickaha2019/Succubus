@@ -130,13 +130,13 @@ HEADER1
         files << 2
       end
 
-      line = []
-      path = "#{@cache}/grabbed/#{info['timestamp']}.html"
+      line     = []
+      path     = "#{@cache}/grabbed/#{info['timestamp']}.html"
       url_show = h((url.size < 75) ? url : (url[0..74] + '...'))
       if (! @site.asset?( url)) && File.exist?( path)
         line << "<tr><td><a target=\"_blank\" title=\"#{url}\" href=\"#{path}\">#{url_show}</a></td>"
       else
-        line << "<tr><td><span title=\"#{url}\">#{url_show}</span></td>"
+        line << "<tr><td><a target=\"_blank\" href=\"#{url}\">#{url_show}</a></td>"
       end
 
       line << '<td>'
@@ -168,7 +168,11 @@ HEADER1
 
       comment      = info['comment'] ? info['comment'] : ''
       comment_show = h((comment.size < 75) ? comment : (comment[0..74] + '...'))
-      line << "<td title=\"#{comment}\">#{comment_show}</td>"
+      if /^http/ =~ comment
+        line << "<td><a target=\"_blank\" href=\"#{comment}\">#{comment_show}</a></td>"
+      else
+        line << "<td title=\"#{comment}\">#{comment_show}</td>"
+      end
 
       if info['timestamp'] == 0
         line << "<td></td>"

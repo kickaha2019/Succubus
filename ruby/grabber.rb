@@ -148,14 +148,18 @@ class Grabber < Processor
           end
         end
 
-      elsif get && response.is_a?( Net::HTTPRedirection)
-          url = absolutise( url, response['Location'])
+      elsif response.is_a?( Net::HTTPRedirection)
+          url1 = absolutise( url, response['Location'])
           # if @config.login_redirect?( url)
           #   info['secured'] = true
           # else
-          if url
-            info['comment']  = url
-            info['redirect'] = true
+          if url1
+            if get
+              info['comment']  = url1
+              info['redirect'] = true
+            elsif ! similar_url?( url, url1)
+              info['comment']  = url1
+            end
           else
             info['comment']  = 'Redirect to ' + response['Location']
           end
@@ -216,6 +220,26 @@ class Grabber < Processor
     end
   end
 
+  def reduce_url( url)
+    if m = /^https:(.*)$/.match( url)
+      url = 'http:' + m[1]
+    end
+
+    if m = /^(http:\/\/[a-zA-Z0-9\.\-_]*):\d+(\/.*)$/.match( url)
+      url = m[1] + m[2]
+    end
+
+    if m = /^(.*)\/\/www\.(.*)$/.match( url)
+      url = m[1] + '//' + m[2]
+    end
+
+    if m = /^(.*)\/$/.match( url)
+      url = m[1]
+    end
+
+    url
+  end
+
   def root_url
     @site.root_url
   end
@@ -226,8 +250,22 @@ class Grabber < Processor
     end
   end
 
+  def similar_url?( url1, url2)
+    url1 = reduce_url( url1)
+    url2 = reduce_url( url2)
+
+    if (/\/$/ =~ url1) && (url1 == url2[0...(url1.size)])
+      return true
+    end
+
+    if m = /^(.*)\/us\/en\/(.*)$/.match( url2)
+      return true if url1 == "#{m[1]}/#{m[2]}"
+    end
+
+    url1 == url2
+  end
+
   def trace?( url)
-    #return false unless in_site( url)
     @site.trace?( url)
   end
 
@@ -239,7 +277,7 @@ class Grabber < Processor
         end
       end
 
-      if @pages[url] && @pages[url]['redirect']
+      if local?( url) && @pages[url] && @pages[url]['redirect']
         reached( @pages[url]['comment'])
       end
     end
