@@ -113,6 +113,9 @@ class Grabber < Processor
       puts "... Grabbing #{url}"
       ts = Time.now.to_i
 
+      unless @reachable[url]
+        @reachable[url] = {'timestamp' => 0, 'changed' => 0}
+      end
       old_path = "#{@cache}/grabbed/#{@reachable[url]['timestamp']}.html"
       changed  = @reachable[url]['changed']
       info     = @reachable[url] = {'timestamp' => ts,
@@ -254,7 +257,7 @@ class Grabber < Processor
     url1 = reduce_url( url1)
     url2 = reduce_url( url2)
 
-    if (/\/$/ =~ url1) && (url1 == url2[0...(url1.size)])
+    if (url1 + '/') == url2[0..(url1.size)]
       return true
     end
 

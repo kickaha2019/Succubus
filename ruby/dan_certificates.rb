@@ -11,19 +11,24 @@ class DanCertificates
     @dir     = nil
     @country = 'UK'
     @refresh = true
+    @output  = nil
 
     args.each do |arg|
       if m = /^dir=(.*)$/.match( arg)
         @dir     = m[1]
       elsif m = /^refresh=(.*)$/.match( arg)
-        @refresh = (m[1].downcase == 'true')
+        @refresh = (/^(Y|true|yes)$/i =~ m[1])
       elsif m = /^country=(.*)$/.match( arg)
         @country = m[1]
+      elsif m = /^output=(.*)$/.match( arg)
+        @output  = m[1]
       else
         raise "Unexpected argument: #{arg}"
       end
     end
+
     raise 'No working directory specified' unless @dir
+    @output = "#{@dir}/report.csv" unless @output
   end
 
   def cache_versions
@@ -34,6 +39,30 @@ class DanCertificates
       end
     end
     versions.sort
+  end
+
+  def derive_dan_grades
+    @players.each_value do |player|
+      grade, date, lowest = 0, '', 100000
+      (9..(player['history'].size-2)).each do |i|
+        r   = player['history'][-2-i]
+        if r.nil?
+          p ['DEBUG1', player['pin']]
+        end
+        r10 = player['history'][-2-i+10]
+
+        lowest = r10['rating'] if r10['rating'] < lowest
+        if r['rating'] >= lowest
+          g = (r['rating'] - 2000) / 100
+          if g > grade
+            grade, date = g, r['date']
+          end
+        end
+      end
+
+      player['grade'] = grade
+      player['when']  = date
+    end
   end
 
   def extract_table( doc, extract_columns)
@@ -71,6 +100,21 @@ class DanCertificates
     end
   end
 
+  def generate_report
+    File.open( @output, 'w') do |io|
+      io.puts "Pin,First name,Last name,Club,Grade,Date"
+      dan_players = @players.values.select {|player| player['grade'] > 0}
+
+      dan_players.sort_by! {|player| player['last_name'] + 'ZZZ' + player['first_name']}
+
+      dan_players.each do |player|
+        io.puts <<PLAYER
+#{player['pin']},#{player['first_name']},#{player['last_name']},#{player['club']},#{player['grade']},#{player['when']}
+PLAYER
+      end
+    end
+  end
+
   def get_player_history(pin)
     html    = http_get( "#{EGD}Player_Card.php?&key=#{pin}")
     html.value
@@ -81,13 +125,17 @@ class DanCertificates
     columns = ['Tournament Code','Date','GoR before_>_after']
     extract_table( doc, columns) do |tcode, date, gor_change|
       gor = gor_change.split(' --> ')
-      history << [tcode,date,gor[1].to_i]
+      history << {'tournament' => tcode,
+                  'date'       => date,
+                  'rating'     => gor[1].to_i}
     end
 
-    history << ['','',gor[0]]
+    history << {'tournament' => '', 'date' => '1970-01-01', 'rating' => gor[0].to_i}
     history
   end
 
+  # https://europeangodatabase.eu/EGD/Find_Player.php?ricerca=1&country_code=UK&viewStart=viewStart=200&orderBy=orderBy=Last_Name&orderDir=orderDir=ASC
+  # curl -X POST -d 'ricerca=1&country_code=UK&viewStart=viewStart=200&orderBy=orderBy=Last_Name&orderDir=orderDir=ASC' https://europeangodatabase.eu/EGD/Find_Player.php
   def get_players_page( from)
     args = ['ricerca=1',
             "country_code=#{@country}",
@@ -95,17 +143,38 @@ class DanCertificates
             'orderBy=orderBy=Last_Name',
             'orderDir=orderDir=ASC']
 
-    html = http_get( "#{EGD}Find_Player.php?" + args.join('&'))
+    puts "... Listing players from #{from}"
+    html = http_post( "#{EGD}Find_Player.php", args.join('&'))
     html.value
-    # File.open( "#{@dir}/temp.html", 'w') {|io| io.print html.body}
+    File.open( "#{@dir}/temp.html", 'w') {|io| io.print html.body}
     Nokogiri::HTML( html.body).root
   end
 
   def http_get( url)
-    sleep 10
+    sleep 30
     uri = URI.parse( url)
 
     request = Net::HTTP::Get.new(uri.request_uri)
+    request['Accept']          = 'text/html,application/xhtml+xml'
+    request['Accept-Language'] = 'en-gb'
+    request['User-Agent']      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
+
+    use_ssl     = uri.scheme == 'https'
+    verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+    Net::HTTP.start( uri.hostname, uri.port, :use_ssl => use_ssl, :verify_mode => verify_mode) {|http|
+      http.request( request)
+    }
+  end
+
+  def http_post( url, data)
+    # p ['http_post', url, data]
+    # raise 'Dev'
+    sleep 30
+    uri = URI.parse( url)
+
+    request = Net::HTTP::Post.new(uri.request_uri)
+    request.body               = data
     request['Accept']          = 'text/html,application/xhtml+xml'
     request['Accept-Language'] = 'en-gb'
     request['User-Agent']      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
@@ -122,6 +191,13 @@ class DanCertificates
     versions = cache_versions
     if versions.size > 0
       @players = YAML.load( IO.read( "#{@dir}/#{versions[0]}.yaml"))
+      puts "*** Remove this code"
+      @players.each_pair do |pin, info|
+        info['pin'] = pin
+        info['history'].each do |rec|
+          rec['rating'] = rec['rating'].to_i
+        end
+      end
     else
       @players = {}
     end
@@ -129,10 +205,13 @@ class DanCertificates
 
   def refresh_cached_data
     if @refresh
-      from = 0
-      while from >= 0
-        doc = get_players_page(from)
-        from = -1
+      from      = 0
+      last_from = -1
+
+      while from > last_from
+        doc       = get_players_page(from)
+        last_from = from
+
         doc.css( 'a').each do |link|
           next unless link.content == 'Next'
           if m = /viewStart=(\d+)&/.match( link['href'])
@@ -146,7 +225,8 @@ class DanCertificates
           tournaments = tournaments.to_i
           unless (tournaments < 10) || (@players[pin] && (@players[pin]['tournaments'] == tournaments))
             puts "... Fetching player history for #{first_name} #{last_name}"
-            @players[pin] = {'first_name'  => first_name,
+            @players[pin] = {'pin'         => pin,
+                             'first_name'  => first_name,
                              'last_name'   => last_name,
                              'club'        => club,
                              'tournaments' => tournaments,
@@ -169,3 +249,5 @@ end
 dc = DanCertificates.new( ARGV)
 dc.load_cached_data
 dc.refresh_cached_data
+dc.derive_dan_grades
+dc.generate_report
