@@ -46,9 +46,6 @@ class DanCertificates
       grade, date, lowest = 0, '', 100000
       (9..(player['history'].size-2)).each do |i|
         r   = player['history'][-2-i]
-        if r.nil?
-          p ['DEBUG1', player['pin']]
-        end
         r10 = player['history'][-2-i+10]
 
         lowest = r10['rating'] if r10['rating'] < lowest
@@ -115,19 +112,42 @@ PLAYER
     end
   end
 
-  def get_player_history(pin)
-    html    = http_get( "#{EGD}Player_Card.php?&key=#{pin}")
-    html.value
-    doc     = Nokogiri::HTML( html.body).root
-    history = []
+  def get_next( doc)
+    doc.css( 'a').each do |link|
+      next unless link.content == 'Next'
+      if m = /viewStart=(\d+)&/.match( link['href'])
+        return m[1].to_i
+      end
+    end
+    -1
+  end
 
+  def get_player_history(pin)
+    from, last_from = 0, -1
+    history = []
     gor     = [0,0]
     columns = ['Tournament Code','Date','GoR before_>_after']
-    extract_table( doc, columns) do |tcode, date, gor_change|
-      gor = gor_change.split(' --> ')
-      history << {'tournament' => tcode,
-                  'date'       => date,
-                  'rating'     => gor[1].to_i}
+
+    while from > last_from
+      last_from = from
+
+      args = ["key=#{pin}",
+              "viewStart=viewStart=#{from}",
+              'orderBy=orderBy=Tournament_Date,Tournament_Code',
+              'orderDir=orderDir=DESC']
+
+      html = http_post( "#{EGD}Player_Card.php", args.join('&'))
+      html.value
+      #File.open( "#{@dir}/temp1.html", 'w') {|io| io.print html.body}
+      doc  = Nokogiri::HTML( html.body).root
+      from = get_next( doc)
+
+      extract_table( doc, columns) do |tcode, date, gor_change|
+        gor = gor_change.split(' --> ')
+        history << {'tournament' => tcode,
+                    'date'       => date,
+                    'rating'     => gor[1].to_i}
+      end
     end
 
     history << {'tournament' => '', 'date' => '1970-01-01', 'rating' => gor[0].to_i}
@@ -146,7 +166,7 @@ PLAYER
     puts "... Listing players from #{from}"
     html = http_post( "#{EGD}Find_Player.php", args.join('&'))
     html.value
-    File.open( "#{@dir}/temp.html", 'w') {|io| io.print html.body}
+    #File.open( "#{@dir}/temp.html", 'w') {|io| io.print html.body}
     Nokogiri::HTML( html.body).root
   end
 
@@ -170,7 +190,7 @@ PLAYER
   def http_post( url, data)
     # p ['http_post', url, data]
     # raise 'Dev'
-    sleep 30
+    sleep 10
     uri = URI.parse( url)
 
     request = Net::HTTP::Post.new(uri.request_uri)
@@ -191,13 +211,13 @@ PLAYER
     versions = cache_versions
     if versions.size > 0
       @players = YAML.load( IO.read( "#{@dir}/#{versions[0]}.yaml"))
-      puts "*** Remove this code"
-      @players.each_pair do |pin, info|
-        info['pin'] = pin
-        info['history'].each do |rec|
-          rec['rating'] = rec['rating'].to_i
-        end
-      end
+      # puts "*** Remove this code"
+      # @players.each_pair do |pin, info|
+      #   info['pin'] = pin
+      #   info['history'].each do |rec|
+      #     rec['rating'] = rec['rating'].to_i
+      #   end
+      # end
     else
       @players = {}
     end
@@ -211,19 +231,14 @@ PLAYER
       while from > last_from
         doc       = get_players_page(from)
         last_from = from
-
-        doc.css( 'a').each do |link|
-          next unless link.content == 'Next'
-          if m = /viewStart=(\d+)&/.match( link['href'])
-            from = m[1].to_i
-          end
-        end
+        from      = get_next( doc)
 
         columns = ['Pin Player','First Name','Last Name','Club','Total tournaments']
         extract_table( doc, columns) do |pin, first_name, last_name, club, tournaments|
           pin         = pin.to_i
           tournaments = tournaments.to_i
-          unless (tournaments < 10) || (@players[pin] && (@players[pin]['tournaments'] == tournaments))
+
+          if (tournaments >= 10) && (@players[pin].nil? || (@players[pin]['tournaments'] != tournaments))
             puts "... Fetching player history for #{first_name} #{last_name}"
             @players[pin] = {'pin'         => pin,
                              'first_name'  => first_name,

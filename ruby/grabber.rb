@@ -160,7 +160,7 @@ class Grabber < Processor
             if get
               info['comment']  = url1
               info['redirect'] = true
-            elsif ! similar_url?( url, url1)
+            elsif @site.report_redirect( url, url1)
               info['comment']  = url1
             end
           else
@@ -223,26 +223,6 @@ class Grabber < Processor
     end
   end
 
-  def reduce_url( url)
-    if m = /^https:(.*)$/.match( url)
-      url = 'http:' + m[1]
-    end
-
-    if m = /^(http:\/\/[a-zA-Z0-9\.\-_]*):\d+(\/.*)$/.match( url)
-      url = m[1] + m[2]
-    end
-
-    if m = /^(.*)\/\/www\.(.*)$/.match( url)
-      url = m[1] + '//' + m[2]
-    end
-
-    if m = /^(.*)\/$/.match( url)
-      url = m[1]
-    end
-
-    url
-  end
-
   def root_url
     @site.root_url
   end
@@ -251,21 +231,6 @@ class Grabber < Processor
     File.open( "#{@cache}/grabbed.yaml", 'w') do |io|
       io.print @reachable.to_yaml
     end
-  end
-
-  def similar_url?( url1, url2)
-    url1 = reduce_url( url1)
-    url2 = reduce_url( url2)
-
-    if (url1 + '/') == url2[0..(url1.size)]
-      return true
-    end
-
-    if m = /^(.*)\/us\/en\/(.*)$/.match( url2)
-      return true if url1 == "#{m[1]}/#{m[2]}"
-    end
-
-    url1 == url2
   end
 
   def trace?( url)

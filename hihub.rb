@@ -18,6 +18,10 @@ class Hihub
     'xxx'
   end
 
+  def report_redirect( from, to)
+    false
+  end
+
   def root_url
     'https://www.hihub.info/'
   end
