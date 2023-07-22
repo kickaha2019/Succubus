@@ -7,6 +7,34 @@ class Hihub
     false
   end
 
+  def find_links?( url, parsed)
+    past = Time.now - 31 * 24 * 60 * 60
+    before, after = 0, 0
+
+    parsed.css( 'time').each do |meta|
+      if m = /^(\d\d\d\d)-(\d\d)-(\d\d)T/.match( meta['datetime'])
+        if Time.gm( m[1].to_i, m[2].to_i, m[3].to_i) < past
+          before += 1
+        else
+          after += 1
+        end
+      end
+    end
+
+    parsed.css( 'script').each do |script|
+      if m = /"endDate":\s*"(\d\d\d\d)-(\d\d)-(\d\d)"/m.match( script.text)
+        if Time.gm( m[1].to_i, m[2].to_i, m[3].to_i) < past
+          before += 1
+        else
+          after += 1
+        end
+      end
+    end
+
+    return true if after > 0
+    before == 0
+  end
+
   def html?( url)
     ! asset?( url)
   end
@@ -28,28 +56,6 @@ class Hihub
 
   def trace?( url)
     ignore = [
-        # https://www.hihub.info/privacy-policy/
-        'https://ico.org.uk/global/contact-us/email/',
-        # https://www.hihub.info/printable-versions/
-        'https://www.hihub.info/wp-content/uploads/2020/11/Newsletter-News-and-Features-2020-10.pdf',
-        # https://www.hihub.info/events/members-coffee-morning/
-        # https://www.hihub.info/events/proposed-new-science-park-talk/
-        # https://www.hihub.info/events/village-society-talk/
-        'https://www.hihub.info/wp-content/uploads/2019/09/cropped-schoolhill19081.jpg',
-        # https://www.hihub.info/news/virtual-cafe-now-open-for-business/
-        # https://www.hihub.info/features/colins-tech-tips-pt-1/
-        'https://www.hihub.info/hicafe/',
-        # https://www.hihub.info/events/wi-april-meeting/
-        'https://www.hihub.info/wp-content/uploads/2019/09/Cambridge-Federation-badge.gif',
-        # https://www.hihub.info/events/hatha-yoga/
-        'https://www.hihub.info/events/hatha-yoga/paulineyoga@gmail.com',
-        # https://www.hihub.info/events/smokehouse-market/
-        # https://www.hihub.info/events/jazz-at-histon-smokehouse/
-        # https://www.hihub.info/events/crafty-kids-easter-fair/
-        'https://www.hihub.info/wp-content/uploads/2021/08/Histon-Smokehouse-Logo.jpg',
-        # https://www.hihub.info/news-in-brief/local-book-launch-for-two-local-authors/
-        'https://www.bloomsbury.com/uk/great-hamster-getaway-9781408878934/'
-        # NOTIFIED 25th April 2023
     ]
     ignore.each do |i|
       return false if i == url

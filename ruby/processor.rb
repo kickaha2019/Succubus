@@ -43,8 +43,9 @@ class Processor
       (match == '://' ? match : match[0..1])
     end
 
-    root_url = /^(http(?:s|):\/\/[a-zA-Z0-9\-_\.]*\/)/.match( page_url)[0]
+    root_url = /^(http(?:s|):\/\/[a-zA-Z0-9\-_\.]*\/)/.match( page_url + '/')
     raise "Bad page URL: #{page_url}" unless root_url
+    root_url = root_url[0]
     dir_url  = page_url.split('?')[0]
 
     if /^\?/ =~ url

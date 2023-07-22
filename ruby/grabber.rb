@@ -133,6 +133,9 @@ class Grabber < Processor
       get      = local?( url) && (! @site.asset?( url))
       begin
         response = http_get( url1, get)
+        if response.is_a?( Net::HTTPNotFound) && (! get)
+          response = http_get( url1, true)
+        end
       rescue Exception => bang
         info['comment'] = "#{bang.message}"
         next
@@ -171,9 +174,12 @@ class Grabber < Processor
       else
         ignore = false
         unless get
-          ignore = true if response.is_a?( Net::HTTPRedirection)
           ignore = true if response.is_a?( Net::HTTPForbidden)
           ignore = true if response.is_a?( Net::HTTPMethodNotAllowed)
+          ignore = true if response.is_a?( Net::HTTPRedirection)
+          ignore = true if response.is_a?( Net::HTTPServiceUnavailable)
+          ignore = true if response.is_a?( Net::HTTPInternalServerError)
+          ignore = true if response.is_a?( Net::HTTPTooManyRequests)
         end
         info['comment'] = "#{response.class.name}: #{response.code}" unless ignore
       end
@@ -250,9 +256,21 @@ class Grabber < Processor
       end
     end
   end
+
+  def xxx
+    p @site.split_url( 'https://www.imagemagick.org/')
+    p @site.split_url( 'https://imagemagick.org/index.php')
+    p @site.similar_url?( 'https://www.imagemagick.org/',
+                          'https://imagemagick.org/index.php')
+  end
 end
 
 g = Grabber.new( ARGV[0], ARGV[1])
+#g.xxx
+#raise 'Dev'
+#resp = g.http_get( 'https://www.audleytravel.com/', false)
+#resp.value
+#raise 'Dev'
 puts "... Grabbing #{g.root_url}"
 g.clean_cache
 puts "... Initialised   #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"

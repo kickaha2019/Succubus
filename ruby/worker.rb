@@ -82,7 +82,7 @@ class Worker < Processor
         @output.puts "#{url}\t#{clazz}"
       end
     elsif verb == 'find_links'
-      w_find_links(url, parsed.root, debug)
+      w_find_links(url, parsed.root, debug) if @site.find_links?( url, parsed.root)
     end
   end
 

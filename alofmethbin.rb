@@ -7,6 +7,10 @@ class Alofmethbin
     false
   end
 
+  def find_links?( url, parsed)
+    true
+  end
+
   def html?( url)
     ! asset?( url)
   end
@@ -26,26 +30,6 @@ class Alofmethbin
     end
   end
 
-  def reduce_url( url)
-    if m = /^https:(.*)$/.match( url)
-      url = 'http:' + m[1]
-    end
-
-    if m = /^(http:\/\/[a-zA-Z0-9\.\-_]*):\d+(\/.*)$/.match( url)
-      url = m[1] + m[2]
-    end
-
-    if m = /^(.*)\/\/www\.(.*)$/.match( url)
-      url = m[1] + '//' + m[2]
-    end
-
-    if m = /^(.*)\/$/.match( url)
-      url = m[1]
-    end
-
-    url
-  end
-
   def report_redirect( from, to)
     ! similar_url?( from, to)
   end
@@ -55,17 +39,24 @@ class Alofmethbin
   end
 
   def similar_url?( url1, url2)
-    url1 = reduce_url( url1)
-    url2 = reduce_url( url2)
+    server1, path1 = split_url( url1)
+    server2, path2 = split_url( url2)
 
-    if (url1 + '/') == url2[0..(url1.size)]
-      return true
+    if server1.size < server2.size
+      server1, server2 = server2, server1
     end
 
-    return true if url1 == url2
+    if server1.size > server2.size
+      return false unless server2 == server1[-server2.size..-1]
+      return false unless /^\./ =~ server1[(-server2.size-1)..-1]
+    else
+      return false unless server1 == server2
+    end
 
-    parts1 = url1.split( '/')
-    parts2 = url2.split( '/')
+    return true if path1 == path2
+
+    parts1 = path1.split( '/')
+    parts2 = path2.split( '/')
 
     while (parts1.size > 0) && (parts1[0] == parts2[0])
       parts1, parts2 = parts1[1..-1], parts2[1..-1]
@@ -89,6 +80,20 @@ class Alofmethbin
     else
       url
     end
+  end
+
+  def split_url( url)
+    if m = /^http(?:s|):\/\/([^\/]*)$/.match( url)
+      return m[1], ''
+    end
+
+    if m = /^http(?:s|):\/\/([^\/]*)\/(.*)$/.match( url)
+      path = m[2]
+      path = path[0...-1] if /\/$/ =~ path
+      return m[1], path
+    end
+
+    return url, ''
   end
 
   def trace?( url)
