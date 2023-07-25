@@ -267,8 +267,8 @@ end
 
 g = Grabber.new( ARGV[0], ARGV[1])
 #g.xxx
-#raise 'Dev'
-#resp = g.http_get( 'https://www.audleytravel.com/', false)
+#resp = g.http_get( 'https://www.usgo.org/go-internet', false)
+#p resp
 #resp.value
 #raise 'Dev'
 puts "... Grabbing #{g.root_url}"
