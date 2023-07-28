@@ -34,19 +34,25 @@ class Processor
 
   def absolutise( page_url, url)
     return nil if url.nil?
-    url = url.strip.sub( /#.*$/, '')
-    url = url[2..-1] if /^\.\// =~ url
-    return nil if url == ''
-
-    url = url.strip.gsub( '%20', ' ').gsub( '\\', '/')
-    url = url.gsub( /.\/\//) do |match|
-      (match == '://' ? match : match[0..1])
-    end
+    return nil if /@/ =~ url
 
     root_url = /^(http(?:s|):\/\/[a-zA-Z0-9\-_\.]*\/)/.match( page_url + '/')
     raise "Bad page URL: #{page_url}" unless root_url
     root_url = root_url[0]
     dir_url  = page_url.split('?')[0]
+
+    url = url.strip.sub( /#.*$/, '')
+    url = url[2..-1] if /^\.\// =~ url
+    return nil if url == ''
+
+    if /^\/\// =~ url
+      url = /^([^:]*:)/.match( root_url)[1] + url
+    end
+
+    url = url.strip.gsub( '%20', ' ').gsub( '\\', '/')
+    url = url.gsub( /.\/\//) do |match|
+      (match == '://' ? match : match[0..1])
+    end
 
     if /^\?/ =~ url
       return dir_url + url

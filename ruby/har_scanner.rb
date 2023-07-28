@@ -7,6 +7,29 @@ class HarScanner
     @har = JSON.parse( IO.read( path))
   end
 
+  def find_receives
+    receives   = []
+    page_start = to_date( @har['log']['pages'][0]['startedDateTime'])
+
+    @har['log']['entries'].each do |entry|
+      t = 1000 * (to_date( entry['startedDateTime']) - page_start)
+      timings = entry['timings']
+
+      STATES.each do |state|
+        unless timings[state].nil? || (timings[state] <= 0)
+          if state == 'receive'
+            receives << [t, timings[state], entry['request']['url']]
+          end
+          t += timings[state]
+        end
+      end
+    end
+
+    receives.sort_by do |receive|
+      receive[0]
+    end
+  end
+
   def report_date( text)
     to_date( text).to_s
   end
@@ -50,6 +73,33 @@ class HarScanner
     "#{count} fetches, #{size} bytes"
   end
 
+  def report_receiving
+    receives = find_receives
+
+    receiving, t = 0, 0
+    receives.each do |receive|
+      rfrom, rfor = receive[0], receive[1]
+      if rfrom + rfor < t
+        #p [receive[2], rfrom, t, receiving]
+        next
+      end
+
+      if t > rfrom
+        rfor = rfor - (t - rfrom)
+      else
+        t = rfrom
+      end
+
+      receiving += rfor
+      t = t + rfor
+      #p [receive[2], rfrom, t, receiving]
+    end
+
+    page0 = @har['log']['pages'][0]
+    time0 = page0['pageTimings']
+    "%d ms, %0.2f%%" % [receiving, (100.0 * receiving) / (time0['onContentLoad'] + time0['onLoad'])]
+  end
+
   def report_stats( path)
     page0 = @har['log']['pages'][0]
     time0 = page0['pageTimings']
@@ -59,9 +109,10 @@ class HarScanner
       io.puts "Page:        #{page0['title']}"
       io.puts "Took:        #{report_time( time0['onContentLoad'] + time0['onLoad'])}"
       io.puts "Files:       #{report_fetches(/.*/)}"
-      io.puts "CSS files:   #{report_fetches(/\.css$/)}"
-      io.puts "JS files:    #{report_fetches(/\.js$/)}"
-      io.puts "Image files: #{report_fetches(/\.(jpg|jpeg|gif|png|webp)$/i)}"
+      io.puts "CSS files:   #{report_fetches(/\.css($|\?)/)}"
+      io.puts "JS files:    #{report_fetches(/\.js($|\?)/)}"
+      io.puts "Image files: #{report_fetches(/\.(jpg|jpeg|gif|png|webp)($|\?)/i)}"
+      io.puts "Receiving:   #{report_receiving}"
     end
   end
 
