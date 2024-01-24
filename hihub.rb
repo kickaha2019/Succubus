@@ -4,14 +4,15 @@ class Hihub
   end
 
   def debug_url?( url)
+    return true if 'https://www.hihub.info/news/the-farmers-market-is-back/' == url
     false
   end
 
-  def find_links?( url, parsed)
+  def find_links?( url, parsed, debug)
     past = Time.now - 31 * 24 * 60 * 60
     before, after = 0, 0
 
-    parsed.css( 'time').each do |meta|
+    parsed.css( 'div.td-pb-row:first-child time').each do |meta|
       if m = /^(\d\d\d\d)-(\d\d)-(\d\d)T/.match( meta['datetime'])
         if Time.gm( m[1].to_i, m[2].to_i, m[3].to_i) < past
           before += 1
@@ -20,6 +21,10 @@ class Hihub
         end
       end
     end
+
+    p ['find_links?', url, before, after] if debug
+    return true if after > 0
+    return false if before > 0
 
     parsed.css( 'script').each do |script|
       if m = /"endDate":\s*"(\d\d\d\d)-(\d\d)-(\d\d)"/m.match( script.text)
@@ -54,7 +59,7 @@ class Hihub
     'https://www.hihub.info/'
   end
 
-  def trace?( url)
+  def trace?( page, url)
     ignore = [
     ]
     ignore.each do |i|

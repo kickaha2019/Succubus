@@ -7,7 +7,7 @@ class Alofmethbin
     false
   end
 
-  def find_links?( url, parsed)
+  def find_links?( url, parsed, debug)
     true
   end
 
@@ -41,6 +41,20 @@ class Alofmethbin
   def similar_url?( url1, url2)
     server1, path1 = split_url( url1)
     server2, path2 = split_url( url2)
+
+    if m = /^www\.(.*)$/.match( server1)
+      server1 = m[1]
+    end
+    if m = /^www\.(.*)$/.match( server2)
+      server2 = m[1]
+    end
+
+    if m = /^(.*):\d+$/.match( server1)
+      server1 = m[1]
+    end
+    if m = /^(.*):\d+$/.match( server2)
+      server2 = m[1]
+    end
 
     if server1.size < server2.size
       server1, server2 = server2, server1
@@ -96,7 +110,8 @@ class Alofmethbin
     return url, ''
   end
 
-  def trace?( url)
+  def trace?( page, url)
+    return false if %r{^https://alofmethbin.com/pagoda/game.php\?} =~ page
     true
   end
 end

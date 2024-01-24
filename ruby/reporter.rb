@@ -142,7 +142,7 @@ HEADER1
       line << '<td>'
       refs = @refs[url]
       (0..2).each do |i|
-        line << "<a href=\"#{refs[i]}\">#{i+1}</a> " if i < refs.size
+        line << "<a target=\"_blank\" href=\"#{refs[i]}\">#{i+1}</a> " if i < refs.size
       end
       line << '</td>'
 

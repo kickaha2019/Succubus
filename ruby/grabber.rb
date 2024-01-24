@@ -133,7 +133,7 @@ class Grabber < Processor
       get      = local?( url) && (! @site.asset?( url))
       begin
         response = http_get( url1, get)
-        if response.is_a?( Net::HTTPNotFound) && (! get)
+        unless response.is_a?( Net::HTTPOK) || get
           response = http_get( url1, true)
         end
       rescue Exception => bang
@@ -174,7 +174,9 @@ class Grabber < Processor
       else
         ignore = false
         unless get
+          ignore = true if response.is_a?( Net::HTTPBadRequest)
           ignore = true if response.is_a?( Net::HTTPForbidden)
+          ignore = true if response.is_a?( Net::HTTPGone)
           ignore = true if response.is_a?( Net::HTTPMethodNotAllowed)
           ignore = true if response.is_a?( Net::HTTPRedirection)
           ignore = true if response.is_a?( Net::HTTPServiceUnavailable)
@@ -239,14 +241,14 @@ class Grabber < Processor
     end
   end
 
-  def trace?( url)
-    @site.trace?( url)
+  def trace?( page, url)
+    @site.trace?( page, url)
   end
 
   def trace_from_reachable
     while url = @to_trace.pop
       @links[url].each do |found|
-        if trace?( found)
+        if trace?( url, found)
           reached( found)
         end
       end
@@ -267,10 +269,10 @@ end
 
 g = Grabber.new( ARGV[0], ARGV[1])
 #g.xxx
-#resp = g.http_get( 'https://www.usgo.org/go-internet', false)
-#p resp
-#resp.value
-#raise 'Dev'
+# resp = g.http_get( 'https://www.xoximilco.com/en/world-heritage/', false)
+# p resp
+# resp.value
+# raise 'Dev'
 puts "... Grabbing #{g.root_url}"
 g.clean_cache
 puts "... Initialised   #{Time.now.strftime( '%Y-%m-%d %H:%M:%S')}"

@@ -22,25 +22,26 @@ class Worker < Processor
     parsed.children.each do |node|
       if @site.respond_to?( :on_node)
         @site.on_node( node) do |ref|
-          w_find_links1(url, ref)
+          w_find_links1(url, ref, debug)
         end
       end
       if node.name.upcase == 'A'
-        w_find_links1(url, node['href'])
+        w_find_links1(url, node['href'], debug)
       elsif node.name.upcase == 'IMG'
-        w_find_links1(url, node['src'])
+        w_find_links1(url, node['src'], debug)
       elsif node.name.upcase == 'STYLE'
         node.content.scan( /url\s*\(\s*"([^"]*)"\s*\)\s*/im) do |found|
-          w_find_links1(url, found[0])
+          w_find_links1(url, found[0], debug)
         end
       end
       w_find_links(url, node, debug)
     end
   end
 
-  def w_find_links1(url, link)
+  def w_find_links1(url, link, debug)
     target = absolutise( url, link)
     if target && (/^http(s):/ =~ target) # && local?( target)
+      p ['w_find_links1', url, target] if debug
       @output.puts "#{url}\t#{target}"
     end
   end
@@ -82,7 +83,9 @@ class Worker < Processor
         @output.puts "#{url}\t#{clazz}"
       end
     elsif verb == 'find_links'
-      w_find_links(url, parsed.root, debug) if @site.find_links?( url, parsed.root)
+      if @site.find_links?( url, parsed.root, debug)
+        w_find_links(url, parsed.root, debug)
+      end
     end
   end
 
