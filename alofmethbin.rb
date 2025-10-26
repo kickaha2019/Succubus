@@ -90,7 +90,7 @@ class Alofmethbin
 
   def simplify_url( url)
     if m = /^(.*)\?origin=/.match( url)
-      url = m[1]
+      m[1]
     else
       url
     end
@@ -112,6 +112,8 @@ class Alofmethbin
 
   def trace?( page, url)
     return false if %r{^https://alofmethbin.com/pagoda/game.php\?} =~ page
+    return false if %r{^https://maps.apple.com/} =~ url
+    return false if %r{^https://www.heathrow.com/} =~ url
     true
   end
 end

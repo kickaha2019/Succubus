@@ -141,6 +141,7 @@ HEADER1
 
       line << '<td>'
       refs = @refs[url]
+      refs = [info['from']] if info['from'] && refs.empty?
       (0..2).each do |i|
         line << "<a target=\"_blank\" href=\"#{refs[i]}\">#{i+1}</a> " if i < refs.size
       end

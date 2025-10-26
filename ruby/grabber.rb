@@ -82,26 +82,46 @@ class Grabber < Processor
       return
     end
 
-    must, recent, poss = [], [], []
+    must, recent, poss, ancient = [], [], [], []
+    year    = Time.now.to_i - 365 * 24 * 60 * 60
     months3 = Time.now.to_i - 90 * 24 * 60 * 60
 
-    @reachable.each_pair do |url, info|
-      if @site.asset? url
-        if info['timestamp'] == 0
+    File.open('/tmp/candidates.tsv', 'w') do |f|
+      f.puts "status\ttimestamp\turl"
+      @reachable.each_pair do |url, info|
+        if @site.asset? url
+          if info['timestamp'] == 0
+            f.puts "must\t\t#{url}"
+            must << url
+          elsif info['timestamp'] < year
+            ancient << url
+            f.puts "ancient\t#{Time.at(info['timestamp']).strftime('%Y-%m-%d')}\t#{url}"
+          else
+            poss << url
+            f.puts "poss\t#{Time.at(info['timestamp']).strftime('%Y-%m-%d')}\t#{url}"
+          end
+        elsif info['timestamp'] == 0
+          f.puts "must\t\t#{url}"
           must << url
+        elsif info['changed'] > months3
+          recent << url
+          f.puts "recent\t#{Time.at(info['timestamp']).strftime('%Y-%m-%d')}\t#{url}"
+        elsif info['timestamp'] < year
+          ancient << url
+          f.puts "ancient\t#{Time.at(info['timestamp']).strftime('%Y-%m-%d')}\t#{url}"
         else
           poss << url
+          f.puts "poss\t#{Time.at(info['timestamp']).strftime('%Y-%m-%d')}\t#{url}"
         end
-      elsif info['timestamp'] == 0
-        must << url
-      elsif info['changed'] > months3
-        recent << url
-      else
-        poss << url
       end
     end
 
+    puts "... #{must.size} must candidates"
+    puts "... #{ancient.size} ancient candidates"
+    puts "... #{recent.size} recent candidates"
+    puts "... #{poss.size} possible candidates"
     @candidates = (must +
+                   ancient.sort_by {|url| @reachable[url]['timestamp']} +
                    recent.sort_by {|url| @reachable[url]['timestamp']} +
                    poss.sort_by {|url| @reachable[url]['timestamp']})[0...limit]
   end
@@ -133,6 +153,7 @@ class Grabber < Processor
       get      = local?( url) && (! @site.asset?( url))
       begin
         response = http_get( url1, get)
+        #unless response.is_a?( Net::HTTPOK) || response.is_a?( Net::HTTPFound) || get
         unless response.is_a?( Net::HTTPOK) || get
           response = http_get( url1, true)
         end
@@ -192,9 +213,13 @@ class Grabber < Processor
     uri = URI.parse( url)
 
     request = get ? Net::HTTP::Get.new(uri.request_uri) : Net::HTTP::Head.new(uri.request_uri)
-    request['Accept']          = get ? 'text/html,application/xhtml+xml' : '*/*'
+    request['Accept']          = get ? 'text/html,application/xhtml+xml,application/xml' : '*/*'
     request['Accept-Language'] = 'en-gb'
     request['User-Agent']      = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
+    request['Referer']         = 'https://www.google.com/'
+    request['Sec-Fetch-Dest']  = 'document'
+    request['Sec-Fetch-Mode']  = 'navigate'
+    request['Sec-Fetch-Site']  = 'none'
 
     use_ssl     = uri.scheme == 'https'
     verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -205,19 +230,19 @@ class Grabber < Processor
   end
 
   def initialise_reachable
-    reached( @root)
+    reached( nil, @root)
     @site.include_urls do |url|
-      reached( url)
+      reached( nil, url)
     end
   end
 
-  def reached( url)
+  def reached( from, url)
     if m = /^(.*)#/.match( url)
       url = m[1]
     end
 
     unless @reachable[url]
-      @reachable[url] = {'timestamp' => 0, 'changed' => 0}
+      @reachable[url] = {'timestamp' => 0, 'changed' => 0, 'from' => from}
       @to_trace << url if local?( url)
 
       info = @pages[url]
@@ -249,12 +274,12 @@ class Grabber < Processor
     while url = @to_trace.pop
       @links[url].each do |found|
         if trace?( url, found)
-          reached( found)
+          reached( url, found)
         end
       end
 
       if local?( url) && @pages[url] && @pages[url]['redirect']
-        reached( @pages[url]['comment'])
+        reached( url, @pages[url]['comment'])
       end
     end
   end

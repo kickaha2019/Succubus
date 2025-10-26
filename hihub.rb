@@ -9,7 +9,23 @@ class Hihub
   end
 
   def find_links?( url, parsed, debug)
-    past = Time.now - 31 * 24 * 60 * 60
+    past  = Time.now - 31 * 24 * 60 * 60
+    first = true
+    parsed.css('time.entry-date').each do |entry_date|
+      if first
+        if m = /^(\d\d\d\d)-(\d\d)-(\d\d)T/.match( entry_date['datetime'])
+          if Time.gm( m[1].to_i, m[2].to_i, m[3].to_i) < past
+            return false
+          end
+        end
+      end
+      first = false
+    end
+
+    unless url == root_url
+      return true
+    end
+
     before, after = 0, 0
 
     parsed.css( 'div.td-pb-row:first-child time').each do |meta|
@@ -69,6 +85,7 @@ class Hihub
     return false if /\/\?filter_by=/ =~ url
     return false if /\/\?occurrence=/ =~ url
     return false if /\/\?wpbdp_view=/ =~ url
+    return false if %r{https://www.linkedin.com/in/} =~ url
     return false if /^https:\/\/www\.facebook\.com\/sharer\.php\?/ =~ url
     return false if /^https:\/\/www\.facebook\.com\/sharer\/sharer\.php\?/ =~ url
     return false if /^https:\/\/pinterest\.com\/pin\/create\/button\/\?/ =~ url
